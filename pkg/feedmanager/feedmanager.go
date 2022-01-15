@@ -5,11 +5,13 @@ import (
 	"sync"
 	"time"
 
+	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/feed"
 	"nimona.io/pkg/hyperspace/resolver"
+	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -20,8 +22,6 @@ import (
 
 type (
 	// FeedManager manages feeds for the same identity.
-	// TODO(geoah): fix identity
-	// WARNING: Currently broken until we have a way to retrieve the identity.
 	FeedManager interface {
 		RegisterFeed(rootType string, eventTypes ...string) error
 	}
@@ -30,6 +30,8 @@ type (
 		resolver          resolver.Resolver
 		objectstore       objectstore.Store
 		objectmanager     objectmanager.ObjectManager
+		configstore       configstore.Store
+		keystreammanager  keystream.Manager
 		contentTypesMutex sync.RWMutex
 		contentTypes      map[string][]string // map[rootType][]eventTypes
 	}
@@ -41,50 +43,50 @@ func New(
 	res resolver.Resolver,
 	str objectstore.Store,
 	man objectmanager.ObjectManager,
+	cfg configstore.Store,
+	ksm keystream.Manager,
 ) (*feedManager, error) {
 	m := &feedManager{
-		network:       net,
-		resolver:      res,
-		objectstore:   str,
-		objectmanager: man,
+		network:          net,
+		resolver:         res,
+		objectstore:      str,
+		objectmanager:    man,
+		configstore:      cfg,
+		keystreammanager: ksm,
 		contentTypes: map[string][]string{
-			"stream:nimona.io/schema/relationship": {
-				"event:nimona.io/schema/relationship.Added",
-				"event:nimona.io/schema/relationship.Removed",
+			"nimona.io/schema/relationship": {
+				"nimona.io/schema/relationship.Added",
+				"nimona.io/schema/relationship.Removed",
 			},
 		},
 	}
 
-	// TODO(geoah): fix identity
 	// if there is no primary identity key set, we should wait for one to be
 	// set before initializing the manager
-	// if m.getIdentityPublicKey().IsEmpty() {
-	// 	localPeerUpdates, lpDone := m.localpeer.ListenForUpdates()
-	// 	go func() {
-	// 		for {
-	// 			defer lpDone()
-	// 			update := <-localPeerUpdates
-	// 			if update == localpeer.EventIdentityUpdated {
-	// 				// TODO should we panic?
-	// 				m.initialize(ctx) // nolint: errcheck
-	// 				return
-	// 			}
-	// 		}
-	// 	}()
-	// } else if err := m.initialize(ctx); err != nil {
-	// 	return m, fmt.Errorf("error initializing feed manager, %w", err)
-	// }
+	// TODO: Improve error checking
+	if m.getLocalDID() == did.Empty {
+		go func() {
+			_, err := m.keystreammanager.WaitForController(context.TODO())
+			if err != nil {
+				return
+			}
+			m.initialize(ctx) // nolint: errcheck
+		}()
+	} else if err := m.initialize(ctx); err != nil {
+		return m, fmt.Errorf("error initializing feed manager, %w", err)
+	}
 
 	return m, nil
 }
 
-func (m *feedManager) getIdentityPublicKey() crypto.PublicKey {
-	return crypto.EmptyPublicKey
-	// TODO(geoah): fix identity
-	// return m.localpeer.GetIdentityPublicKey()
+func (m *feedManager) getLocalDID() did.DID {
+	ctrl, err := m.keystreammanager.GetController()
+	if err != nil || ctrl == nil {
+		return did.Empty
+	}
+	return ctrl.GetKeyStream().GetDID()
 }
 
-// nolint: unused // TODO(geoah): fix identity
 func (m *feedManager) initialize(ctx context.Context) error {
 	subs := m.objectmanager.Subscribe()
 	go func() {
@@ -99,7 +101,7 @@ func (m *feedManager) initialize(ctx context.Context) error {
 }
 
 func (m *feedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
-	if m.getIdentityPublicKey().IsEmpty() {
+	if m.getLocalDID() == did.Empty {
 		return nil
 	}
 
@@ -123,7 +125,7 @@ func (m *feedManager) createFeed(
 
 	// create a feed to the given type
 	feedRoot := GetFeedRoot(
-		m.getIdentityPublicKey(),
+		m.getLocalDID(),
 		streamType,
 	)
 	feedRootObj, err := object.Marshal(feedRoot)
@@ -268,11 +270,10 @@ func (m *feedManager) RegisterFeed(
 	return m.createFeedsForRegisteredTypes(context.New())
 }
 
-// nolint: unused // TODO(geoah): fix identity
 func (m *feedManager) handleObjects(
 	sub objectmanager.ObjectSubscription,
 ) error {
-	identityKey := m.getIdentityPublicKey()
+	identityKey := m.getLocalDID()
 	peerKey := m.network.GetPeerKey().PublicKey()
 	for {
 		obj, err := sub.Read()
@@ -331,28 +332,6 @@ func (m *feedManager) handleObjects(
 			logger.Warn("error storing feed event", log.Error(err))
 			continue
 		}
-		// _, err = m.objectstore.Get(feedStreamHash)
-		// if err != nil { // && !errors.Is(err, objectstore.ErrNotFound) {
-		// 	// TODO log
-		// 	continue
-		// }
-		// feedEvent.Metadata.Parents = object.Parents{
-		// 	"*": []tilde.Digest{
-		// 		feedStreamHash,
-		// 	},
-		// }
-		// if !errors.Is(err, objectstore.ErrNotFound) {
-		// 	leaves, err := m.objectstore.GetStreamLeaves(feedStreamHash)
-		// 	if err == nil {
-		// 		tilde.SortDigests(leaves)
-		// 		feedEvent.Metadata.Parents["*"] = leaves
-		// 	}
-		// }
-
-		// if err := m.objectstore.Put(feedEvent.ToObject()); err != nil {
-		// 	// TODO log
-		// 	continue
-		// }
 	}
 }
 
@@ -363,8 +342,12 @@ func (m *feedManager) handleObjects(
 // 	objectType string,
 // 	recipients ...*peer.ConnectionInfo,
 // ) (object.ReadCloser, error) {
+// 	id := m.getLocalDID()
+// 	if id == did.Empty {
+// 		return nil, errors.Error("no did")
+// 	}
 // 	feedRoot := GetFeedRoot(
-// 		m.getIdentityPublicKey().PublicKey(),
+// 		id,
 // 		getTypeForFeed(objectType),
 // 	)
 
@@ -381,7 +364,6 @@ func (m *feedManager) handleObjects(
 // 	return m.objectstore.GetByStream(feedRootHash)
 // }
 
-// nolint: unused // TODO(geoah): fix identity
 func (m *feedManager) isRegisteredContentType(
 	contentType string,
 ) (string, bool) {
@@ -402,13 +384,13 @@ func (m *feedManager) isRegisteredContentType(
 }
 
 func GetFeedRoot(
-	owner crypto.PublicKey,
+	owner did.DID,
 	feedType string,
 ) *feed.FeedStreamRoot {
 	return &feed.FeedStreamRoot{
 		ObjectType: feedType,
 		Metadata: object.Metadata{
-			Owner: owner.DID(),
+			Owner: owner,
 		},
 	}
 }
