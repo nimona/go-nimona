@@ -164,18 +164,6 @@ func New(
 	return h, nil
 }
 
-// TODO(geoah): fix identity
-// func (h *Hub) SetPeerCertificate(r *object.CertificateResponse) {
-// 	h.Lock()
-// 	defer h.Unlock()
-// 	h.daemon.ObjectStore().Pin(object.MustMarshal(r).Hash())
-// 	h.daemon.ObjectStore().Put(object.MustMarshal(r))
-// 	h.peerCertificateResponse = r
-// 	b, _ := json.Marshal(object.MustMarshal(r))
-// 	h.daemon.Preferences().Put(pkPeerCertificate, string(b))
-// 	h.daemon.LocalPeer().SetPeerCertificate(r)
-// }
-
 func (h *Hub) GetIdentityDID() *did.DID {
 	keyStreamController, err := h.daemon.KeyStreamManager().GetController()
 	if err != nil || keyStreamController == nil {
