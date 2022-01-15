@@ -1,118 +1,140 @@
 package feedmanager_test
 
-// TODO(geoah): fix identity
-// func TestManager_Integration(t *testing.T) {
-// 	// construct local bootstrap peer
-// 	bootstrapConnectionInfo := testutils.NewTestBootstrapPeer(t)
+import (
+	"fmt"
+	"testing"
+	"time"
 
-// 	time.Sleep(time.Second * 5)
+	"github.com/stretchr/testify/require"
+	"nimona.io/internal/fixtures"
+	"nimona.io/pkg/config"
+	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/daemon"
+	"nimona.io/pkg/hyperspace/resolver"
+	"nimona.io/pkg/keystream"
+	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
+	"nimona.io/pkg/testutils"
+)
 
-// 	// construct new identity key
-// 	id, err := crypto.NewEd25519PrivateKey()
-// 	require.NoError(t, err)
+func Test_Manager_Integration(t *testing.T) {
+	// construct local bootstrap peer
+	bootstrapConnectionInfo := testutils.NewTestBootstrapPeer(t)
 
-// 	// construct peer 0
-// 	p0 := newDaemon(t, "p0", id, bootstrapConnectionInfo)
-// 	defer p0.Close()
+	time.Sleep(time.Second * 5)
 
-// 	time.Sleep(time.Second)
+	// construct new identity key
+	id, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
 
-// 	// construct peer 1
-// 	p1 := newDaemon(t, "p1", id, bootstrapConnectionInfo)
-// 	defer p1.Close()
+	// construct peer 0
+	p0 := newDaemon(t, "p0", id, bootstrapConnectionInfo)
+	_, err = p0.KeyStreamManager().NewController(nil)
+	require.NoError(t, err)
 
-// 	fmt.Println("p0", p0.LocalPeer().GetPeerKey().PublicKey())
-// 	fmt.Println("p1", p1.LocalPeer().GetPeerKey().PublicKey())
+	defer p0.Close()
 
-// 	// put a new stream on p0
-// 	o0 := object.MustMarshal(
-// 		&fixtures.TestStream{
-// 			Metadata: object.Metadata{
-// 				Owner: id.PublicKey().DID(),
-// 			},
-// 			Nonce: "foo",
-// 		},
-// 	)
-// 	_, err = p0.ObjectManager().Put(context.TODO(), o0)
-// 	require.NoError(t, err)
+	time.Sleep(time.Second)
 
-// 	// wait until resolver sees provider
-// 	found := false
-// 	for i := 0; i < 10; i++ {
-// 		r, err := p1.Resolver().Lookup(
-// 			context.New(
-// 				context.WithTimeout(time.Second),
-// 			),
-// 			resolver.LookupByHash(o0.Hash()),
-// 		)
-// 		if err != nil {
-// 			continue
-// 		}
-// 		if len(r) > 0 {
-// 			found = true
-// 			break
-// 		}
-// 		time.Sleep(time.Second * 2)
-// 	}
-// 	require.True(t, found)
+	// construct peer 1
+	p1 := newDaemon(t, "p1", id, bootstrapConnectionInfo)
+	defer p1.Close()
 
-// 	time.Sleep(time.Second * 2)
+	// create new delegation request
+	dr1, c1ch, err := p1.KeyStreamManager().NewDelegationRequest(
+		context.Background(), // no timeout
+		keystream.DelegationRequestVendor{},
+		keystream.Permissions{},
+	)
+	require.NoError(t, err)
 
-// 	// wait a bit, and check stream on p1
-// 	g0, err := p1.ObjectStore().Get(o0.Hash())
-// 	require.NoError(t, err)
-// 	require.NotNil(t, g0)
-// }
+	// pass dr to delegator handler
+	err = p0.KeyStreamManager().HandleDelegationRequest(
+		context.Background(),
+		dr1,
+	)
+	require.NoError(t, err)
 
-// func newDaemon(
-// 	t *testing.T,
-// 	name string,
-// 	id crypto.PrivateKey,
-// 	bootstrapConnectionInfo *peer.ConnectionInfo,
-// ) daemon.Daemon {
-// 	d, err := daemon.New(
-// 		context.Background(),
-// 		daemon.WithConfigOptions(
-// 			config.WithDefaultPath(
-// 				t.TempDir(),
-// 			),
-// 			config.WithDefaultListenOnLocalIPs(),
-// 			config.WithDefaultListenOnPrivateIPs(),
-// 			config.WithDefaultBootstraps([]peer.Shorthand{
-// 				peer.Shorthand(
-// 					fmt.Sprintf(
-// 						"%s@%s",
-// 						bootstrapConnectionInfo.PublicKey.String(),
-// 						bootstrapConnectionInfo.Addresses[0],
-// 					),
-// 				),
-// 			},
-// 			),
-// 		),
-// 	)
-// 	require.NoError(t, err)
-// 	time.Sleep(time.Second)
+	// and wait for the controller
+	c1 := <-c1ch
+	require.NotNil(t, c1)
 
-// 	peerKey := d.LocalPeer().GetPeerKey()
-// 	csr := &object.CertificateRequest{
-// 		Metadata: object.Metadata{
-// 			Owner: peerKey.PublicKey().DID(),
-// 		},
-// 		Nonce:      rand.String(8),
-// 		VendorName: "foo",
-// 	}
-// 	csrObj := object.MustMarshal(csr)
-// 	csr.Metadata.Signature, err = object.NewSignature(peerKey, csrObj)
-// 	require.NoError(t, err)
+	// fmt.Println("p0", p0.LocalPeer().GetPeerKey().PublicKey())
+	// fmt.Println("p1", p1.LocalPeer().GetPeerKey().PublicKey())
 
-// 	// TODO(geoah): fix identity
-// 	// csrRes, err := object.NewCertificate(id, *csr, true, "bar")
-// 	// require.NoError(t, err)
+	// put a new stream on p0
+	o0 := object.MustMarshal(
+		&fixtures.TestStream{
+			Metadata: object.Metadata{
+				Owner: id.PublicKey().DID(),
+			},
+			Nonce: "foo",
+		},
+	)
+	err = p0.ObjectManager().Put(context.TODO(), o0)
+	require.NoError(t, err)
 
-// 	// err = d.FeedManager().RegisterFeed(fixtures.TestStreamType)
-// 	// require.NoError(t, err)
+	// wait until resolver sees provider
+	found := false
+	for i := 0; i < 10; i++ {
+		r, err := p1.Resolver().Lookup(
+			context.New(
+				context.WithTimeout(time.Second),
+			),
+			resolver.LookupByHash(o0.Hash()),
+		)
+		if err != nil {
+			continue
+		}
+		if len(r) > 0 {
+			found = true
+			break
+		}
+		time.Sleep(time.Second * 2)
+	}
+	require.True(t, found)
 
-// 	// d.LocalPeer().SetPeerCertificate(csrRes)
+	time.Sleep(time.Second * 2)
 
-// 	return d
-// }
+	// wait a bit, and check stream on p1
+	g0, err := p1.ObjectStore().Get(o0.Hash())
+	require.NoError(t, err)
+	require.NotNil(t, g0)
+}
+
+func newDaemon(
+	t *testing.T,
+	name string,
+	id crypto.PrivateKey,
+	bootstrapConnectionInfo *peer.ConnectionInfo,
+) daemon.Daemon {
+	d, err := daemon.New(
+		context.Background(),
+		daemon.WithConfigOptions(
+			config.WithDefaultPath(
+				t.TempDir(),
+			),
+			config.WithDefaultListenOnLocalIPs(),
+			config.WithDefaultListenOnPrivateIPs(),
+			config.WithDefaultBootstraps([]peer.Shorthand{
+				peer.Shorthand(
+					fmt.Sprintf(
+						"%s@%s",
+						bootstrapConnectionInfo.PublicKey.String(),
+						bootstrapConnectionInfo.Addresses[0],
+					),
+				),
+			},
+			),
+		),
+	)
+	require.NoError(t, err)
+
+	d.FeedManager().RegisterFeed(
+		fixtures.TestStreamType,
+	)
+
+	time.Sleep(time.Second)
+	return d
+}
