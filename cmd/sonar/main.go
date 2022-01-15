@@ -13,6 +13,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
+	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -85,12 +86,16 @@ func main() {
 		bootstrapPeers = append(bootstrapPeers, bootstrapPeer)
 	}
 
+	// construct keystream manager
+	ksm := keystream.NewDummyKeyManager(nil, nil, nil)
+
 	// construct new resolver
 	res := resolver.New(
 		ctx,
 		inet,
 		cfg.Peer.PrivateKey,
 		nil,
+		ksm,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
