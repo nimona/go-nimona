@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/geoah/go-pubsub"
+
 	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
@@ -17,6 +18,8 @@ import (
 const (
 	ErrControllerNotFound = errors.Error("keystream: controller not found")
 )
+
+//go:generate mockgen -destination=../keystreammock/keystreammock_generated.go -package=keystreammock -source=keymanager.go
 
 type (
 	Manager interface {
