@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -14,6 +15,8 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/provider"
+	"nimona.io/pkg/keystream"
+	"nimona.io/pkg/keystreammock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -75,7 +78,7 @@ func TestResolver_Integration(t *testing.T) {
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: p2.PublicKey(),
 		},
-		PeerVector: hyperspace.New("foo", "bar"),
+		PeerVector: hyperspace.New("foo", "bar", p2.PublicKey().DID().String()),
 	}
 	pr3 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
@@ -91,11 +94,17 @@ func TestResolver_Integration(t *testing.T) {
 
 	// construct resolver
 	str1 := tempObjectStore(t)
+	ksm := keystreammock.NewMockManager(gomock.NewController(t))
+	ksm.EXPECT().
+		GetController().
+		Return(nil, keystream.ErrControllerNotFound).
+		AnyTimes()
 	res := New(
 		context.New(),
 		net1,
 		k1,
 		str1,
+		ksm,
 		WithBoostrapPeers(pr0.ConnectionInfo),
 	)
 
@@ -103,6 +112,13 @@ func TestResolver_Integration(t *testing.T) {
 	pr, err := res.Lookup(context.New(), LookupByHash(tilde.Digest("bar")))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
+
+	// lookup by owner
+	pr, err = res.Lookup(context.New(), LookupByOwner(p2.PublicKey().DID()))
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []*peer.ConnectionInfo{
+		pr2.ConnectionInfo,
+	}, pr)
 
 	t.Run("object added", func(t *testing.T) {
 		// add new object to pr1 store

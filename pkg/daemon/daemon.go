@@ -122,12 +122,23 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		return nil, fmt.Errorf("starting sql store: %w", err)
 	}
 
+	// construct key stream manager
+	ksm, err := keystream.NewKeyManager(
+		nnet,
+		str,
+		prf,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("constructing keystream manager, %w", err)
+	}
+
 	// construct new resolver
 	res := resolver.New(
 		ctx,
 		inet,
 		cfg.Peer.PrivateKey,
 		str,
+		ksm,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 
@@ -149,19 +160,11 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		res,
 		str,
 		man,
+		prf,
+		ksm,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("constructing feed manager, %w", err)
-	}
-
-	// construct key stream manager
-	ksm, err := keystream.NewKeyManager(
-		nnet,
-		str,
-		prf,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("constructing keystream manager, %w", err)
 	}
 
 	d.config = *cfg

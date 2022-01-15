@@ -1,7 +1,10 @@
 package resolver
 
 import (
+	"fmt"
+
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/tilde"
 )
@@ -76,6 +79,35 @@ func LookupByPeerKey(keys ...crypto.PublicKey) LookupOption {
 					}
 					sig := p.Metadata.Signature
 					if sig.Key.Equals(key) {
+						return true
+					}
+				}
+				return false
+			},
+		)
+	}
+}
+
+// LookupByOwner matches the owner
+func LookupByOwner(owners ...did.DID) LookupOption {
+	return func(opts *LookupOptions) {
+		for _, o := range owners {
+			opts.Lookups = append(opts.Lookups, o.String())
+		}
+		opts.Filters = append(
+			opts.Filters,
+			func(p *hyperspace.Announcement) bool {
+				fmt.Println("!!!")
+				fmt.Println("!!!")
+				fmt.Println("!!!")
+				fmt.Println("!!!")
+				for _, o := range owners {
+					owner := p.Metadata.Owner
+					fmt.Println(">>", owner, o)
+					if owner == did.Empty {
+						continue
+					}
+					if owner.Equals(o) {
 						return true
 					}
 				}

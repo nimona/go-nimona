@@ -14,6 +14,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
+	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -51,6 +52,7 @@ type (
 		bootstrapPeers                 []*peer.ConnectionInfo
 		blocklist                      *cache.Cache
 		hashes                         *TildeDigestSyncList
+		keyStreamManager               keystream.Manager
 	}
 	// Option for customizing a new resolver
 	Option func(*resolver)
@@ -63,6 +65,7 @@ func New(
 	network net.Network,
 	peerKey crypto.PrivateKey,
 	str *sqlobjectstore.Store,
+	ksm keystream.Manager,
 	opts ...Option,
 ) Resolver {
 	r := &resolver{
@@ -77,6 +80,7 @@ func New(
 		bootstrapPeers:                 []*peer.ConnectionInfo{},
 		blocklist:                      cache.New(time.Second*5, time.Second*60),
 		hashes:                         &TildeDigestSyncList{},
+		keyStreamManager:               ksm,
 	}
 
 	for _, opt := range opts {
@@ -378,12 +382,12 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	for _, c := range hashes {
 		hs = append(hs, c.String())
 	}
-	// TODO(geoah): fix identity
-	// if c := r.localpeer.GetPeerCertificate(); c != nil {
-	// 	if !c.Metadata.Signature.IsEmpty() {
-	// 		hs = append(hs, c.Metadata.Signature.Signer.String())
-	// 	}
-	// }
+	// if we have an keystream then add that, if not, add the peer's
+	if ksc, err := r.keyStreamManager.GetController(); err == nil {
+		hs = append(hs, ksc.GetKeyStream().GetDID().String())
+	} else {
+		hs = append(hs, r.peerKey.PublicKey().DID().String())
+	}
 	vec := hyperspace.New(hs...)
 
 	if lastAnnouncement != nil &&
