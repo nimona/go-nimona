@@ -7,7 +7,7 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
@@ -482,10 +482,10 @@ func (m *manager) announceStreamChildren(
 
 	// find ephemeral subscriptions for this stream
 	// TODO do we really need ephemeral subscriptions?
-	subscribersMap := map[string]struct{}{}
+	subscribersMap := map[did.DID]struct{}{}
 	m.subscriptions.Range(func(_ tilde.Digest, sub *stream.Subscription) bool {
 		// TODO check expiry
-		subscribersMap[sub.Metadata.Owner.String()] = struct{}{}
+		subscribersMap[sub.Metadata.Owner] = struct{}{}
 		return true
 	})
 
@@ -507,13 +507,14 @@ func (m *manager) announceStreamChildren(
 		if obj.Metadata.Owner.IsEmpty() {
 			continue
 		}
-		subscribersMap[obj.Metadata.Owner.String()] = struct{}{}
+		subscribersMap[obj.Metadata.Owner] = struct{}{}
 	}
 
 	// remove self
-	delete(subscribersMap, m.network.GetPeerKey().PublicKey().String())
+	// TODO(geoah): fix identity
+	// delete(subscribersMap, m.network.GetPeerKey().PublicKey())
 
-	subscribers := []string{}
+	subscribers := []did.DID{}
 	for subscriber := range subscribersMap {
 		subscribers = append(subscribers, subscriber)
 	}
@@ -536,40 +537,42 @@ func (m *manager) announceStreamChildren(
 		ObjectHashes: children,
 	}
 	for _, subscriber := range subscribers {
+		// TODO(geoah): fix identity
 		// TODO figure out if subscribers are peers or identities? how?
 		// TODO verify that subscriber has access to this object/stream
-		k := crypto.PublicKey{}
-		if err := k.UnmarshalString(subscriber); err != nil {
-			logger.Info(
-				"error unmarshaling subscriber key",
-				log.String("subscriber", subscriber),
-				log.Error(err),
-			)
-			continue
-		}
 		ao, err := object.Marshal(announcement)
 		if err != nil {
 			logger.Info(
 				"error marshaling announcement",
 				log.Error(err),
-				log.String("subscriber", subscriber),
+				log.String("subscriber", subscriber.String()),
 			)
 			continue
 		}
-		err = m.network.Send(ctx, ao, k)
-		if err != nil {
-			logger.Info(
-				"error sending announcement",
+		subPeers, err := m.resolver.Lookup(ctx, resolver.LookupByOwner(subscriber))
+		for _, subPeer := range subPeers {
+			err = m.network.Send(
+				ctx,
+				ao,
+				subPeer.PublicKey,
+				network.SendWithConnectionInfo(subPeer),
+			)
+			if err != nil {
+				logger.Info(
+					"error sending announcement",
+					log.Error(err),
+					log.String("subscriber", subscriber.String()),
+					log.String("peer.PublicKey", subPeer.PublicKey.String()),
+					log.Strings("peer.Addresses", subPeer.Addresses),
+				)
+				continue
+			}
+			logger.Debug(
+				"sent announcement",
+				log.Any("sub", subscriber),
 				log.Error(err),
-				log.String("subscriber", subscriber),
 			)
-			continue
 		}
-		logger.Debug(
-			"sent announcement",
-			log.Any("sub", subscriber),
-			log.Error(err),
-		)
 	}
 }
 
