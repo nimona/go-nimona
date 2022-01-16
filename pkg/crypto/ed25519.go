@@ -64,7 +64,7 @@ func (k PublicKey) String() string {
 
 func (k PublicKey) DID() did.DID {
 	return did.DID{
-		Method:   did.MethodKey,
+		Method:   did.MethodPublicKey,
 		Identity: k.String(),
 	}
 }
