@@ -23,6 +23,7 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -80,8 +81,8 @@ type (
 	Resolver interface {
 		LookupPeer(
 			ctx context.Context,
-			publicKey crypto.PublicKey,
-		) (*peer.ConnectionInfo, error)
+			id did.DID,
+		) ([]*peer.ConnectionInfo, error)
 	}
 	// Network interface for mocking
 	Network interface {
@@ -95,7 +96,7 @@ type (
 		Send(
 			ctx context.Context,
 			object *object.Object,
-			publicKey crypto.PublicKey,
+			id did.DID,
 			sendOptions ...SendOption,
 		) error
 		Listen(
@@ -212,22 +213,20 @@ func (w *network) RegisterResolver(
 
 func (w *network) lookup(
 	ctx context.Context,
-	publicKey crypto.PublicKey,
-) (*peer.ConnectionInfo, error) {
+	id did.DID,
+) ([]*peer.ConnectionInfo, error) {
 	resolvers := w.resolvers.List()
 	if len(resolvers) == 0 {
 		return nil, errors.Error("no resolvers")
 	}
 	var errs error
 	for _, r := range resolvers {
-		c, err := r.LookupPeer(ctx, publicKey)
+		cs, err := r.LookupPeer(ctx, id)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 			continue
 		}
-		if c != nil {
-			return c, nil
-		}
+		return cs, nil
 	}
 	return nil, errs
 }
@@ -347,7 +346,7 @@ func (w *network) handleConnection(
 			)
 
 			w.inboxes.Publish(&Envelope{
-				Sender:  remotePeerKey,
+				Sender:  remotePeerKey.DID(),
 				Payload: payload,
 			})
 		}
@@ -417,7 +416,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 					context.WithTimeout(time.Second),
 				),
 				fwd.Payload,
-				fwd.Recipient,
+				fwd.Recipient.DID(),
 			)
 
 			if err != nil {
@@ -513,7 +512,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			)
 
 			w.inboxes.Publish(&Envelope{
-				Sender:  fwd.Sender,
+				Sender:  fwd.Sender.DID(),
 				Payload: o,
 			})
 			continue
@@ -526,10 +525,10 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 func (w *network) Send(
 	ctx context.Context,
 	o *object.Object,
-	p crypto.PublicKey,
+	id did.DID,
 	opts ...SendOption,
 ) error {
-	if p.Equals(w.peerKey.PublicKey()) {
+	if id.Equals(w.peerKey.PublicKey().DID()) {
 		return ErrCannotSendToSelf
 	}
 
@@ -538,7 +537,12 @@ func (w *network) Send(
 		r(opt)
 	}
 
-	dedupKey := ctx.CorrelationID() + p.String() + o.Hash().String()
+	dedupKey := fmt.Sprintf(
+		"%s/%s/%s",
+		ctx.CorrelationID(),
+		id.String(),
+		o.Hash().String(),
+	)
 	if _, ok := w.deduplist.Get(dedupKey); ok {
 		return ErrAlreadySentDuringContext
 	}
@@ -594,7 +598,7 @@ func (w *network) Send(
 		err = w.Send(
 			ctx,
 			dfo,
-			relayConnInfo.PublicKey,
+			relayConnInfo.PublicKey.DID(),
 			SendWithConnectionInfo(relayConnInfo),
 		)
 		if err != nil {
@@ -647,9 +651,16 @@ func (w *network) Send(
 		relays = opt.connectionInfo.Relays
 	}
 
-	// dial with basic connection info
-	if c == nil {
-		c, err = w.net.Dial(ctx, &peer.ConnectionInfo{PublicKey: p})
+	recipientPublicKey, err := crypto.PublicKeyFromDID(id)
+
+	// dial with basic connection info if the did is a public key
+	if c == nil && err == nil && recipientPublicKey != nil {
+		c, err = w.net.Dial(
+			ctx,
+			&peer.ConnectionInfo{
+				PublicKey: *recipientPublicKey,
+			},
+		)
 		if err != nil {
 			errs = multierror.Append(
 				errs,
@@ -660,16 +671,27 @@ func (w *network) Send(
 
 	// lookup with basic connection info
 	if c == nil {
-		ci, err = w.lookup(ctx, p)
+		cs, err := w.lookup(ctx, id)
 		if err != nil {
 			errs = multierror.Append(
 				errs,
 				fmt.Errorf("error looking up peer: %w", err),
 			)
 		}
+		// for now we just keep the latest one
+		for _, csi := range cs {
+			if ci == nil || csi.Version > ci.Version {
+				ci = csi
+			}
+		}
+		// make note of the relays from the connection info
 		// TODO: should we append or replace the relays?
 		if ci != nil && len(ci.Relays) > 0 {
 			relays = append(relays, ci.Relays...)
+		}
+		// set the public key for future use
+		if ci != nil {
+			recipientPublicKey = &ci.PublicKey
 		}
 	}
 
@@ -700,9 +722,9 @@ func (w *network) Send(
 	}
 
 	// if all else fails, send via relay
-	if !sent && len(relays) > 0 {
+	if !sent && len(relays) > 0 && recipientPublicKey != nil {
 		for _, relay := range relays {
-			err := sendViaRelay(ctx, relay, p, o)
+			err := sendViaRelay(ctx, relay, *recipientPublicKey, o)
 			if err != nil {
 				errs = multierror.Append(
 					errs,

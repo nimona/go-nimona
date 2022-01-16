@@ -12,6 +12,7 @@ import (
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -53,7 +54,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n1.Send(
 		context.Background(),
 		testObj,
-		n2.GetPeerKey().PublicKey(),
+		n2.GetPeerKey().PublicKey().DID(),
 		SendWithConnectionInfo(
 			&peer.ConnectionInfo{
 				PublicKey: n2.GetPeerKey().PublicKey(),
@@ -75,7 +76,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObj,
-		n1.GetPeerKey().PublicKey(),
+		n1.GetPeerKey().PublicKey().DID(),
 		SendWithConnectionInfo(
 			&peer.ConnectionInfo{
 				PublicKey: n1.GetPeerKey().PublicKey(),
@@ -106,7 +107,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		err = n1.Send(
 			context.Background(),
 			testObj,
-			n2.GetPeerKey().PublicKey(),
+			n2.GetPeerKey().PublicKey().DID(),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
 					PublicKey: n2.GetPeerKey().PublicKey(),
@@ -119,7 +120,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		err = n2.Send(
 			context.Background(),
 			testObj,
-			k1.PublicKey(),
+			k1.PublicKey().DID(),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
 					PublicKey: k1.PublicKey(),
@@ -152,7 +153,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			err = n1.Send(
 				context.Background(),
 				reqo,
-				n2.GetPeerKey().PublicKey(),
+				n2.GetPeerKey().PublicKey().DID(),
 				SendWithConnectionInfo(
 					&peer.ConnectionInfo{
 						PublicKey: n2.GetPeerKey().PublicKey(),
@@ -180,7 +181,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		n2.Send(
 			context.Background(),
 			reso,
-			n1.GetPeerKey().PublicKey(),
+			n1.GetPeerKey().PublicKey().DID(),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
 					PublicKey: n1.GetPeerKey().PublicKey(),
@@ -269,7 +270,7 @@ func TestNetwork_Relay(t *testing.T) {
 	err = n1.Send(
 		context.Background(),
 		testObj,
-		p0.PublicKey,
+		p0.PublicKey.DID(),
 		SendWithConnectionInfo(p0),
 	)
 	require.NoError(t, err)
@@ -278,7 +279,7 @@ func TestNetwork_Relay(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObj,
-		p0.PublicKey,
+		p0.PublicKey.DID(),
 		SendWithConnectionInfo(p0),
 	)
 	require.NoError(t, err)
@@ -288,7 +289,7 @@ func TestNetwork_Relay(t *testing.T) {
 	err = n1.Send(
 		context.Background(),
 		testObjFromP1,
-		p2.PublicKey,
+		p2.PublicKey.DID(),
 		SendWithConnectionInfo(p2),
 	)
 	require.NoError(t, err)
@@ -308,7 +309,7 @@ func TestNetwork_Relay(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObjFromP2,
-		p1.PublicKey,
+		p1.PublicKey.DID(),
 		SendWithConnectionInfo(p1),
 	)
 	require.NoError(t, err)
@@ -342,15 +343,17 @@ func Test_network_lookup(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *peer.ConnectionInfo
+		want    []*peer.ConnectionInfo
 		wantErr bool
 	}{{
 		name: "one resolver, returns, should pass",
 		fields: fields{
 			resolvers: []Resolver{
 				&testResolver{
-					peers: map[string]*peer.ConnectionInfo{
-						fooConnInfo.PublicKey.String(): fooConnInfo,
+					peers: map[string][]*peer.ConnectionInfo{
+						p0.PublicKey().DID().String(): {
+							fooConnInfo,
+						},
 					},
 				},
 			},
@@ -358,17 +361,21 @@ func Test_network_lookup(t *testing.T) {
 		args: args{
 			publicKey: fooConnInfo.PublicKey,
 		},
-		want: fooConnInfo,
+		want: []*peer.ConnectionInfo{
+			fooConnInfo,
+		},
 	}, {
 		name: "two resolver, second returns, should pass",
 		fields: fields{
 			resolvers: []Resolver{
 				&testResolver{
-					peers: map[string]*peer.ConnectionInfo{},
+					peers: map[string][]*peer.ConnectionInfo{},
 				},
 				&testResolver{
-					peers: map[string]*peer.ConnectionInfo{
-						fooConnInfo.PublicKey.String(): fooConnInfo,
+					peers: map[string][]*peer.ConnectionInfo{
+						p0.PublicKey().DID().String(): {
+							fooConnInfo,
+						},
 					},
 				},
 			},
@@ -376,16 +383,18 @@ func Test_network_lookup(t *testing.T) {
 		args: args{
 			publicKey: fooConnInfo.PublicKey,
 		},
-		want: fooConnInfo,
+		want: []*peer.ConnectionInfo{
+			fooConnInfo,
+		},
 	}, {
 		name: "two resolver, none returns, should fail",
 		fields: fields{
 			resolvers: []Resolver{
 				&testResolver{
-					peers: map[string]*peer.ConnectionInfo{},
+					peers: map[string][]*peer.ConnectionInfo{},
 				},
 				&testResolver{
-					peers: map[string]*peer.ConnectionInfo{},
+					peers: map[string][]*peer.ConnectionInfo{},
 				},
 			},
 		},
@@ -407,7 +416,7 @@ func Test_network_lookup(t *testing.T) {
 			for _, r := range tt.fields.resolvers {
 				w.RegisterResolver(r)
 			}
-			got, err := w.lookup(context.Background(), tt.args.publicKey)
+			got, err := w.lookup(context.Background(), tt.args.publicKey.DID())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -442,7 +451,7 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 					"foo": tilde.String("bar"),
 				},
 			},
-			k1.PublicKey(),
+			k1.PublicKey().DID(),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
 					PublicKey: k1.PublicKey(),
@@ -463,14 +472,14 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 }
 
 type testResolver struct {
-	peers map[string]*peer.ConnectionInfo
+	peers map[string][]*peer.ConnectionInfo
 }
 
 func (r *testResolver) LookupPeer(
 	ctx context.Context,
-	publicKey crypto.PublicKey,
-) (*peer.ConnectionInfo, error) {
-	c, ok := r.peers[publicKey.String()]
+	id did.DID,
+) ([]*peer.ConnectionInfo, error) {
+	c, ok := r.peers[id.String()]
 	if !ok || c == nil {
 		return nil, errors.Error("not found")
 	}

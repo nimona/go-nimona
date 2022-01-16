@@ -11,6 +11,7 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
@@ -39,8 +40,8 @@ type (
 		) ([]*peer.ConnectionInfo, error)
 		LookupPeer(
 			ctx context.Context,
-			publicKey crypto.PublicKey,
-		) (*peer.ConnectionInfo, error)
+			id did.DID,
+		) ([]*peer.ConnectionInfo, error)
 	}
 	resolver struct {
 		peerKey                        crypto.PrivateKey
@@ -163,16 +164,9 @@ func New(
 
 func (r *resolver) LookupPeer(
 	ctx context.Context,
-	publicKey crypto.PublicKey,
-) (*peer.ConnectionInfo, error) {
-	ps, err := r.Lookup(ctx, LookupByPeerKey(publicKey))
-	if err != nil {
-		return nil, err
-	}
-	if len(ps) == 0 {
-		return nil, nil
-	}
-	return ps[0], nil
+	id did.DID,
+) ([]*peer.ConnectionInfo, error) {
+	return r.Lookup(ctx, LookupByOwner(id))
 }
 
 // Lookup finds and returns peer infos from a fingerprint

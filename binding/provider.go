@@ -289,11 +289,19 @@ func (p *Provider) RequestStream(
 			ctx := context.New(
 				context.WithTimeout(10 * time.Second),
 			)
-			_, err := p.objectmanager.Request(ctx, rootHash, recipient)
+			_, err := p.objectmanager.Request(
+				ctx,
+				rootHash,
+				recipient.PublicKey.DID(),
+			)
 			if err != nil {
 				return
 			}
-			r, err := p.objectmanager.RequestStream(ctx, rootHash, recipient)
+			r, err := p.objectmanager.RequestStream(
+				ctx,
+				rootHash,
+				recipient.PublicKey.DID(),
+			)
 			if err != nil {
 				return
 			}

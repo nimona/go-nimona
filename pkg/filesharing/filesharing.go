@@ -10,12 +10,11 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
-	"nimona.io/pkg/peer"
 )
 
 var ErrTransferRejected = errors.New("transfer rejected")
@@ -31,7 +30,7 @@ type (
 		RequestTransfer(
 			ctx context.Context,
 			file *File,
-			peerKey crypto.PublicKey,
+			id did.DID,
 		) (string, error)
 		RespondTransfer(
 			ctx context.Context,
@@ -53,7 +52,7 @@ type (
 	}
 	Transfer struct {
 		Request TransferRequest
-		Peer    crypto.PublicKey
+		ID      did.DID
 	}
 )
 
@@ -72,7 +71,7 @@ func New(
 func (fsh *fileSharer) RequestTransfer(
 	ctx context.Context,
 	file *File,
-	peerReq crypto.PublicKey,
+	id did.DID,
 ) (string, error) {
 	nonce := rand.String(8)
 	req := &TransferRequest{
@@ -88,7 +87,7 @@ func (fsh *fileSharer) RequestTransfer(
 	err = fsh.net.Send(
 		ctx,
 		ro,
-		peerReq,
+		id,
 	)
 	if err != nil {
 		return "", err
@@ -154,7 +153,7 @@ func (fsh *fileSharer) handleObjects(
 				continue
 			}
 			trf := &Transfer{
-				Peer:    env.Sender,
+				ID:      env.Sender,
 				Request: *req,
 			}
 
@@ -188,9 +187,7 @@ func (fsh *fileSharer) RequestFile(
 		chObj, err := fsh.objmgr.Request(
 			ctx,
 			ch,
-			&peer.ConnectionInfo{
-				PublicKey: transfer.Peer,
-			},
+			transfer.ID,
 		)
 		if err != nil {
 			return nil, err
@@ -229,7 +226,7 @@ func (fsh *fileSharer) RequestFile(
 	if err := fsh.net.Send(
 		ctx,
 		doneObj,
-		transfer.Peer,
+		transfer.ID,
 	); err != nil {
 		return f, err
 	}
@@ -250,7 +247,7 @@ func (fsh *fileSharer) RespondTransfer(
 	if err != nil {
 		return err
 	}
-	err = fsh.net.Send(ctx, ro, transfer.Peer)
+	err = fsh.net.Send(ctx, ro, transfer.ID)
 	if err != nil {
 		return err
 	}

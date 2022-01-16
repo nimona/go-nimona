@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"

@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/blob"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/filesharing"
 	"nimona.io/pkg/tilde"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
@@ -32,9 +32,9 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 		) network.Network
 	}
 	type args struct {
-		ctx     context.Context
-		file    filesharing.File
-		peerKey crypto.PublicKey
+		ctx  context.Context
+		file filesharing.File
+		id   did.DID
 	}
 	tests := []struct {
 		name    string
@@ -73,7 +73,7 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 			nonce, err := fsh.RequestTransfer(
 				tt.args.ctx,
 				&tt.args.file,
-				tt.args.peerKey,
+				tt.args.id,
 			)
 			if tt.wantErr {
 				assert.Error(t, err)

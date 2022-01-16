@@ -9,9 +9,9 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	context "nimona.io/pkg/context"
+	did "nimona.io/pkg/did"
 	object "nimona.io/pkg/object"
 	objectmanager "nimona.io/pkg/objectmanager"
-	peer "nimona.io/pkg/peer"
 	tilde "nimona.io/pkg/tilde"
 )
 
@@ -82,38 +82,33 @@ func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
 }
 
 // Request mocks base method.
-func (m *MockObjectManager) Request(ctx context.Context, hash tilde.Digest, peer *peer.ConnectionInfo) (*object.Object, error) {
+func (m *MockObjectManager) Request(ctx context.Context, hash tilde.Digest, id did.DID) (*object.Object, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Request", ctx, hash, peer)
+	ret := m.ctrl.Call(m, "Request", ctx, hash, id)
 	ret0, _ := ret[0].(*object.Object)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Request indicates an expected call of Request.
-func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, peer interface{}) *gomock.Call {
+func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockObjectManager)(nil).Request), ctx, hash, peer)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockObjectManager)(nil).Request), ctx, hash, id)
 }
 
 // RequestStream mocks base method.
-func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash tilde.Digest, recipients ...*peer.ConnectionInfo) (object.ReadCloser, error) {
+func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash tilde.Digest, id did.DID) (object.ReadCloser, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, rootHash}
-	for _, a := range recipients {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "RequestStream", varargs...)
+	ret := m.ctrl.Call(m, "RequestStream", ctx, rootHash, id)
 	ret0, _ := ret[0].(object.ReadCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RequestStream indicates an expected call of RequestStream.
-func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash interface{}, recipients ...interface{}) *gomock.Call {
+func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, rootHash}, recipients...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), ctx, rootHash, id)
 }
 
 // Subscribe mocks base method.

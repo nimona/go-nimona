@@ -226,7 +226,7 @@ func (m *manager) HandleDelegationRequest(
 	err = m.network.Send(
 		ctx,
 		doObj,
-		dr.InitiatorConnectionInfo.PublicKey,
+		dr.InitiatorConnectionInfo.PublicKey.DID(),
 		network.SendWithConnectionInfo(
 			dr.InitiatorConnectionInfo,
 		),

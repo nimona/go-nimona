@@ -14,7 +14,6 @@ import (
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
-	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
 	"nimona.io/pkg/tilde"
 )
@@ -42,12 +41,12 @@ type (
 		Request(
 			ctx context.Context,
 			hash tilde.Digest,
-			peer *peer.ConnectionInfo,
+			id did.DID,
 		) (*object.Object, error)
 		RequestStream(
 			ctx context.Context,
 			rootHash tilde.Digest,
-			recipients ...*peer.ConnectionInfo,
+			id did.DID,
 		) (object.ReadCloser, error)
 		AddStreamSubscription(
 			ctx context.Context,
@@ -127,9 +126,9 @@ func (m *manager) isWellKnownEphemeral(
 func (m *manager) RequestStream(
 	ctx context.Context,
 	rootHash tilde.Digest,
-	recipients ...*peer.ConnectionInfo,
+	recipient did.DID,
 ) (object.ReadCloser, error) {
-	if len(recipients) == 0 {
+	if recipient == did.Empty {
 		return m.objectstore.GetByStream(rootHash)
 	}
 
@@ -159,11 +158,6 @@ func (m *manager) RequestStream(
 		}
 	}()
 
-	// TODO support more than 1 recipient
-	if len(recipients) > 1 {
-		panic(errors.Error("currently only a single recipient is supported"))
-	}
-
 	// TODO we should first request and store stream root I guess
 
 	req := &stream.Request{
@@ -177,7 +171,7 @@ func (m *manager) RequestStream(
 	if err := m.network.Send(
 		ctx,
 		ro,
-		recipients[0].PublicKey,
+		recipient,
 	); err != nil {
 		return nil, err
 	}
@@ -191,7 +185,7 @@ func (m *manager) RequestStream(
 		return nil, ErrTimeout
 	}
 
-	if err := m.fetchFromLeaves(ctx, leaves, recipients[0]); err != nil {
+	if err := m.fetchFromLeaves(ctx, leaves, recipient); err != nil {
 		return nil, err
 	}
 
@@ -201,7 +195,7 @@ func (m *manager) RequestStream(
 func (m *manager) fetchFromLeaves(
 	ctx context.Context,
 	leaves []tilde.Digest,
-	recipient *peer.ConnectionInfo,
+	recipient did.DID,
 ) error {
 	// TODO refactor to remove buffer
 	objectHashes := make(chan tilde.Digest, 1000)
@@ -292,7 +286,7 @@ func (m *manager) fetchFromLeaves(
 func (m *manager) Request(
 	ctx context.Context,
 	hash tilde.Digest,
-	pr *peer.ConnectionInfo,
+	pr did.DID,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
 	errCh := make(chan error)
@@ -337,7 +331,7 @@ func (m *manager) Request(
 	if err := m.network.Send(
 		ctx,
 		ro,
-		pr.PublicKey,
+		pr,
 	); err != nil {
 		return nil, err
 	}
@@ -554,7 +548,7 @@ func (m *manager) announceStreamChildren(
 			err = m.network.Send(
 				ctx,
 				ao,
-				subPeer.PublicKey,
+				subPeer.PublicKey.DID(),
 				network.SendWithConnectionInfo(subPeer),
 			)
 			if err != nil {
@@ -759,29 +753,11 @@ func (m *manager) handleStreamAnnouncement(
 		}
 	}
 
-	pr, err := m.resolver.Lookup(
-		ctx,
-		resolver.LookupByPeerKey(env.Sender),
-	)
-	if err != nil {
-		logger.Warn(
-			"error looking up sender, will still attempt to send response",
-			log.Error(err),
-		)
-	}
-
-	// still create a connection in case we still have an open connection
-	if len(pr) == 0 {
-		pr = []*peer.ConnectionInfo{{
-			PublicKey: env.Sender,
-		}}
-	}
-
 	// fetch announced objects and their parents
 	if err := m.fetchFromLeaves(
 		ctx,
 		ann.ObjectHashes,
-		pr[0],
+		env.Sender,
 	); err != nil {
 		return err
 	}

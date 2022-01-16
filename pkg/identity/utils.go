@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/hyperspace/resolver"
 	object "nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
@@ -13,14 +13,14 @@ import (
 // TODO Implement
 func Lookup(
 	ctx context.Context,
-	idKey crypto.PublicKey,
+	id did.DID,
 	res resolver.Resolver,
 	man objectmanager.ObjectManager,
 ) (*Profile, error) {
 	// TODO check key usage is identity
 	streamRoot := &ProfileStreamRoot{
 		Metadata: object.Metadata{
-			Owner: idKey.DID(),
+			Owner: id,
 		},
 	}
 	streamRootObj, err := object.Marshal(streamRoot)
@@ -29,20 +29,10 @@ func Lookup(
 	}
 	streamRootHash := streamRootObj.Hash()
 
-	recipients, err := res.Lookup(
-		ctx,
-		resolver.LookupByPeerKey(
-			idKey,
-		),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error looking up stream providers, %w", err)
-	}
-
 	_, err = man.RequestStream(
 		ctx,
 		streamRootHash,
-		recipients...,
+		id,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to request stream, %w", err)

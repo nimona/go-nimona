@@ -14,6 +14,7 @@ import (
 	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/hyperspace/resolvermock"
 	"nimona.io/pkg/network"
@@ -30,9 +31,7 @@ import (
 func TestManager_Request(t *testing.T) {
 	testPeerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	testPeer := &peer.ConnectionInfo{
-		PublicKey: testPeerKey.PublicKey(),
-	}
+	testDID := testPeerKey.PublicKey().DID()
 	f00 := &object.Object{
 		Type: "foo",
 		Data: tilde.Map{
@@ -46,7 +45,7 @@ func TestManager_Request(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		rootHash tilde.Digest
-		peer     *peer.ConnectionInfo
+		id       did.DID
 	}
 	tests := []struct {
 		name    string
@@ -85,7 +84,7 @@ func TestManager_Request(t *testing.T) {
 		args: args{
 			ctx:      context.Background(),
 			rootHash: f00.Hash(),
-			peer:     testPeer,
+			id:       testDID,
 		},
 		want: f00,
 	}}
@@ -98,7 +97,7 @@ func TestManager_Request(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.peer)
+			got, err := m.Request(tt.args.ctx, tt.args.rootHash, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -188,7 +187,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient crypto.PublicKey,
+							id did.DID,
 							opts ...network.SendOption,
 						) error {
 							assert.Equal(t, want, obj)
@@ -251,7 +250,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							recipient crypto.PublicKey,
+							id did.DID,
 							opts ...network.SendOption,
 						) error {
 							assert.Equal(t, want, obj)
@@ -308,9 +307,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 func TestManager_RequestStream(t *testing.T) {
 	testPeerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	testPeer := &peer.ConnectionInfo{
-		PublicKey: testPeerKey.PublicKey(),
-	}
+	testDID := testPeerKey.PublicKey().DID()
 	f00 := &object.Object{
 		Type:     "foo",
 		Metadata: object.Metadata{},
@@ -350,7 +347,7 @@ func TestManager_RequestStream(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		rootHash tilde.Digest
-		peer     *peer.ConnectionInfo
+		id       did.DID
 	}
 	tests := []struct {
 		name    string
@@ -449,7 +446,7 @@ func TestManager_RequestStream(t *testing.T) {
 		args: args{
 			ctx:      context.Background(),
 			rootHash: f00.Hash(),
-			peer:     testPeer,
+			id:       testDID,
 		},
 		want: []*object.Object{
 			f00,
@@ -467,7 +464,7 @@ func TestManager_RequestStream(t *testing.T) {
 					return "7"
 				},
 			}
-			got, err := m.RequestStream(tt.args.ctx, tt.args.rootHash, tt.args.peer)
+			got, err := m.RequestStream(tt.args.ctx, tt.args.rootHash, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("manager.RequestStream() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -592,7 +589,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient crypto.PublicKey,
+						id did.DID,
 						opts ...network.SendOption,
 					) error {
 						assert.Equal(t, want, obj)
@@ -658,7 +655,7 @@ func TestManager_handleStreamRequest(t *testing.T) {
 					DoAndReturn(func(
 						ctx context.Context,
 						obj *object.Object,
-						recipient crypto.PublicKey,
+						id did.DID,
 						opts ...network.SendOption,
 					) error {
 						assert.Equal(t, want, obj)
@@ -1128,6 +1125,13 @@ func TestManager_Append(t *testing.T) {
 				m := resolvermock.NewMockResolver(
 					gomock.NewController(t),
 				)
+				m.EXPECT().Lookup(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					[]*peer.ConnectionInfo{},
+					nil,
+				)
 				return m
 			},
 			receivedSubscriptions: []*object.Object{
@@ -1226,6 +1230,13 @@ func TestManager_Append(t *testing.T) {
 			resolver: func(t *testing.T) resolver.Resolver {
 				m := resolvermock.NewMockResolver(
 					gomock.NewController(t),
+				)
+				m.EXPECT().Lookup(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					[]*peer.ConnectionInfo{},
+					nil,
 				)
 				return m
 			},
