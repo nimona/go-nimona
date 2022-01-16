@@ -80,19 +80,19 @@ func Test_requester_Request(t *testing.T) {
 				mobm.EXPECT().Request(
 					gomock.Any(),
 					object.MustMarshal(blob1).Hash(),
-					peer1,
+					peer1.PublicKey.DID(),
 				).Return(object.MustMarshal(blob1), nil).MaxTimes(1)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
 					object.MustMarshal(chunk1).Hash(),
-					peer1,
+					peer1.PublicKey.DID(),
 				).Return(object.MustMarshal(chunk1), nil)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
 					object.MustMarshal(chunk2).Hash(),
-					peer1,
+					peer1.PublicKey.DID(),
 				).Return(object.MustMarshal(chunk2), nil)
 
 				return mobm

@@ -7,6 +7,7 @@ import (
 	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -58,7 +59,7 @@ func (m *MockNetworkSimple) SubscribeOnce(
 func (m *MockNetworkSimple) Send(
 	ctx context.Context,
 	obj *object.Object,
-	rec crypto.PublicKey,
+	id did.DID,
 	opt ...network.SendOption,
 ) error {
 	m.mutex.Lock()

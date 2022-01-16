@@ -212,7 +212,7 @@ func (m *feedManager) createFeed(
 							context.WithTimeout(time.Second),
 						),
 						objHash,
-						connInfo,
+						connInfo.PublicKey.DID(),
 					)
 					if err != nil {
 						continue
@@ -249,7 +249,7 @@ func (m *feedManager) createFeed(
 				context.WithTimeout(time.Second*5),
 			),
 			feedRootHash,
-			connInfo,
+			connInfo.PublicKey.DID(),
 		)
 		if err != nil {
 			continue

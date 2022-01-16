@@ -161,7 +161,7 @@ func (r *manager) Request(
 	obj, err := r.objectmanager.Request(
 		ctx,
 		hash,
-		peers[0],
+		peers[0].PublicKey.DID(),
 	)
 	if err != nil {
 		logger.Error("failed to retrieve blob", log.Error(err))
@@ -185,7 +185,7 @@ func (r *manager) Request(
 		chObj, err := r.objectmanager.Request(
 			ctx,
 			ch,
-			peers[0],
+			peers[0].PublicKey.DID(),
 		)
 		if err != nil {
 			logger.Error("failed to request chunk", log.Error(err))

@@ -199,7 +199,7 @@ func main() {
 						"nonce": tilde.String(rand.String(8)),
 					},
 				},
-				recipient.PublicKey,
+				recipient.PublicKey.DID(),
 			); err != nil {
 				logger.Error(
 					"error sending ping to peer",
