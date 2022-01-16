@@ -15,8 +15,8 @@ var Empty = DID{}
 type Method string
 
 const (
-	MethodKey    Method = "key"
-	MethodNimona Method = "nimona"
+	MethodPublicKey Method = "key"
+	MethodNimona    Method = "nimona"
 )
 
 const (
