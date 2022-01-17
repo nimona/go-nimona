@@ -9,8 +9,10 @@ import (
 
 	"nimona.io/internal/net"
 	"nimona.io/pkg/config"
+	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
+	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -160,7 +162,7 @@ func (c *chat) subscribe(
 			cr, err := c.objectmanager.RequestStream(
 				reqCtx,
 				conversationRootHash,
-				p,
+				p.PublicKey.DID(),
 			)
 			if err != nil {
 				c.logger.Warn(
@@ -244,7 +246,7 @@ func main() {
 	net.RegisterRelays(bootstrapPeers...)
 
 	// construct object store
-	db, err := sql.Open("sqlite3", filepath.Join(nConfig.Path, "chat.db"))
+	db, err := sql.Open("sqlite3", filepath.Join(nConfig.Path, "chat.sqlite"))
 	if err != nil {
 		logger.Fatal("error opening sql file", log.Error(err))
 	}
@@ -252,6 +254,18 @@ func main() {
 	str, err := sqlobjectstore.New(db)
 	if err != nil {
 		logger.Fatal("error starting sql store", log.Error(err))
+	}
+
+	// construct configstore db
+	pdb, err := sql.Open("sqlite", filepath.Join(nConfig.Path, "config.sqlite"))
+	if err != nil {
+		logger.Fatal("opening sql file for configstore", log.Error(err))
+	}
+
+	// construct configstore
+	prf, err := configstore.NewSQLProvider(pdb)
+	if err != nil {
+		logger.Fatal("constructing configstore provider", log.Error(err))
 	}
 
 	// construct hypothetical root in order to get a root hash
@@ -262,12 +276,23 @@ func main() {
 	conversationRootObject := object.MustMarshal(conversationRoot)
 	conversationRootHash := conversationRootObject.Hash()
 
+	// construct key stream manager
+	ksm, err := keystream.NewKeyManager(
+		net,
+		str,
+		prf,
+	)
+	if err != nil {
+		logger.Fatal("constructing keystream manager", log.Error(err))
+	}
+
 	// construct new resolver
 	res := resolver.New(
 		ctx,
 		nnet,
 		nConfig.Peer.PrivateKey,
 		str,
+		ksm,
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 

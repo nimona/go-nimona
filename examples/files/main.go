@@ -17,6 +17,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace/resolver"
+	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
@@ -168,7 +169,7 @@ func (ft *fileTransfer) findAndRequest(
 		return nil, errors.Error("no providers found")
 	}
 
-	obj, err := ft.objectmanager.Request(ctx, hash, peers[0])
+	obj, err := ft.objectmanager.Request(ctx, hash, peers[0].PublicKey.DID())
 	if err != nil {
 		return nil, err
 	}
@@ -303,6 +304,7 @@ func newFileTransfer(
 		nnet,
 		cfg.nconf.Peer.PrivateKey,
 		str,
+		keystream.NewDummyKeyManager(),
 		resolver.WithBoostrapPeers(bootstrapPeers...),
 	)
 	ft.resolver = res
