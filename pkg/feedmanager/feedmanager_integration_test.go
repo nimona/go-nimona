@@ -23,7 +23,7 @@ func Test_Manager_Integration(t *testing.T) {
 	// construct local bootstrap peer
 	bootstrapConnectionInfo := testutils.NewTestBootstrapPeer(t)
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second)
 
 	// construct new identity key
 	id, err := crypto.NewEd25519PrivateKey()
@@ -41,6 +41,8 @@ func Test_Manager_Integration(t *testing.T) {
 	// construct peer 1
 	p1 := newDaemon(t, "p1", id, bootstrapConnectionInfo)
 	defer p1.Close()
+
+	time.Sleep(time.Second)
 
 	// create new delegation request
 	dr1, c1ch, err := p1.KeyStreamManager().NewDelegationRequest(
@@ -61,8 +63,9 @@ func Test_Manager_Integration(t *testing.T) {
 	c1 := <-c1ch
 	require.NotNil(t, c1)
 
-	// fmt.Println("p0", p0.LocalPeer().GetPeerKey().PublicKey())
-	// fmt.Println("p1", p1.LocalPeer().GetPeerKey().PublicKey())
+	// wait for resolver to pick up the new controller and publish a new
+	// connection info
+	time.Sleep(time.Second)
 
 	// put a new stream on p0
 	o0 := object.MustMarshal(
