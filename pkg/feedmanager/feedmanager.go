@@ -121,11 +121,11 @@ func (m *feedManager) createFeed(
 	streamType string,
 	eventTypes []string,
 ) error {
-	ownPeer := m.network.GetPeerKey().PublicKey()
+	id := m.getLocalDID()
 
 	// create a feed to the given type
 	feedRoot := GetFeedRoot(
-		m.getLocalDID(),
+		id,
 		streamType,
 	)
 	feedRootObj, err := object.Marshal(feedRoot)
@@ -152,7 +152,11 @@ func (m *feedManager) createFeed(
 	}
 
 	// add a subscription to the feed's stream
-	err = m.objectmanager.AddStreamSubscription(ctx, feedRootHash)
+	err = m.objectmanager.AddStreamSubscription(
+		ctx,
+		feedRootHash,
+		id,
+	)
 	if err != nil {
 		return fmt.Errorf("error trying to subscribe to feed, %w", err)
 	}
@@ -180,7 +184,7 @@ func (m *feedManager) createFeed(
 				continue
 			}
 
-			if feedAdded.Metadata.Owner.Equals(ownPeer.DID()) {
+			if feedAdded.Metadata.Owner.Equals(id) {
 				continue
 			}
 
@@ -194,12 +198,11 @@ func (m *feedManager) createFeed(
 						context.WithParent(ctx),
 						context.WithTimeout(time.Second),
 					),
-					// TODO lookup by something better?
-					// we were using `resolver.LookupByHash(objHash)` but it was
-					// not really working as we don't seem to be publishing
-					// stream events.
 					// TODO we should at least be caching possible peers
-					resolver.LookupByHash(feedRootHash),
+					// TODO: we used to lookup by hash which for some reason
+					// caused the integration test to be very flaky; this is an
+					// attempt to improve on that.
+					resolver.LookupByOwner(id),
 				)
 				if err != nil {
 					// TODO log
@@ -235,7 +238,9 @@ func (m *feedManager) createFeed(
 			context.WithParent(ctx),
 			context.WithTimeout(time.Second*5),
 		),
-		resolver.LookupByHash(feedRootHash),
+		// TODO same as earlier we are now looking up all peers with the same
+		// owner rather than the ones providing the same stream
+		resolver.LookupByOwner(id),
 	)
 	if err != nil {
 		return fmt.Errorf("error looking for other feed providers, %w", err)
