@@ -51,6 +51,7 @@ type (
 		AddStreamSubscription(
 			ctx context.Context,
 			rootHash tilde.Digest,
+			subscriber did.DID,
 		) error
 		Subscribe(
 			lookupOptions ...LookupOption,
@@ -865,13 +866,12 @@ func (m *manager) Append(
 func (m *manager) AddStreamSubscription(
 	ctx context.Context,
 	rootHash tilde.Digest,
+	subscriber did.DID,
 ) error {
 	r, err := m.objectstore.GetByStream(rootHash)
 	if err != nil {
 		return fmt.Errorf("error trying to get stream objects, %w", err)
 	}
-
-	pub := m.network.GetPeerKey().PublicKey()
 
 	for {
 		o, err := r.Read()
@@ -891,7 +891,7 @@ func (m *manager) AddStreamSubscription(
 			continue
 		}
 
-		if !s.Metadata.Owner.Equals(pub.DID()) {
+		if !s.Metadata.Owner.Equals(subscriber) {
 			continue
 		}
 
@@ -904,7 +904,7 @@ func (m *manager) AddStreamSubscription(
 
 	s := &stream.Subscription{
 		Metadata: object.Metadata{
-			Owner: pub.DID(),
+			Owner: subscriber,
 			Root:  rootHash,
 		},
 		RootHashes: []tilde.Digest{
