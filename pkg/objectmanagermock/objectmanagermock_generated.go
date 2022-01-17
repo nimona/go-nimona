@@ -39,17 +39,17 @@ func (m *MockObjectManager) EXPECT() *MockObjectManagerMockRecorder {
 }
 
 // AddStreamSubscription mocks base method.
-func (m *MockObjectManager) AddStreamSubscription(ctx context.Context, rootHash tilde.Digest) error {
+func (m *MockObjectManager) AddStreamSubscription(ctx context.Context, rootHash tilde.Digest, subscriber did.DID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddStreamSubscription", ctx, rootHash)
+	ret := m.ctrl.Call(m, "AddStreamSubscription", ctx, rootHash, subscriber)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddStreamSubscription indicates an expected call of AddStreamSubscription.
-func (mr *MockObjectManagerMockRecorder) AddStreamSubscription(ctx, rootHash interface{}) *gomock.Call {
+func (mr *MockObjectManagerMockRecorder) AddStreamSubscription(ctx, rootHash, subscriber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStreamSubscription", reflect.TypeOf((*MockObjectManager)(nil).AddStreamSubscription), ctx, rootHash)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStreamSubscription", reflect.TypeOf((*MockObjectManager)(nil).AddStreamSubscription), ctx, rootHash, subscriber)
 }
 
 // Append mocks base method.
