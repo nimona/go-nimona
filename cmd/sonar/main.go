@@ -87,7 +87,7 @@ func main() {
 	}
 
 	// construct keystream manager
-	ksm := keystream.NewDummyKeyManager(nil, nil, nil)
+	ksm := keystream.NewDummyKeyManager()
 
 	// construct new resolver
 	res := resolver.New(

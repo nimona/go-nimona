@@ -1,22 +1,15 @@
 package keystream
 
 import (
-	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/network"
-	"nimona.io/pkg/sqlobjectstore"
 )
 
 type (
 	dummyManager struct{}
 )
 
-func NewDummyKeyManager(
-	net network.Network,
-	objectStore *sqlobjectstore.Store,
-	configStore configstore.Store,
-) Manager {
+func NewDummyKeyManager() Manager {
 	return &dummyManager{}
 }
 
