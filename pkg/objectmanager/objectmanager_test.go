@@ -1430,11 +1430,19 @@ func TestManager_Integration_AddStreamSubscription(t *testing.T) {
 	require.NoError(t, err)
 
 	// subscribe to stream
-	err = man.AddStreamSubscription(context.TODO(), rootObj.Hash())
+	err = man.AddStreamSubscription(
+		context.TODO(),
+		rootObj.Hash(),
+		peerKey.PublicKey().DID(),
+	)
 	require.NoError(t, err)
 
 	// subscribe to stream
-	err = man.AddStreamSubscription(context.TODO(), rootObj.Hash())
+	err = man.AddStreamSubscription(
+		context.TODO(),
+		rootObj.Hash(),
+		peerKey.PublicKey().DID(),
+	)
 	require.NoError(t, err)
 
 	// check if the subscription has been added once
