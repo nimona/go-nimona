@@ -1,6 +1,7 @@
 package net
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -24,6 +25,7 @@ func TestNetConnectionSuccess(t *testing.T) {
 		BindLocal: true,
 	})
 	assert.NoError(t, err)
+	time.Sleep(time.Second)
 
 	done := make(chan bool)
 
@@ -34,59 +36,71 @@ func TestNetConnectionSuccess(t *testing.T) {
 	}
 
 	// attempt to dial own address, should fail
-	_, err = n1.Dial(ctx, &peer.ConnectionInfo{
-		PublicKey: n1.peerKey.PublicKey(),
-		Addresses: n1.Addresses(),
-	})
-	require.Equal(t, ErrAllAddressesBlocked, err)
-
-	// wait for new connections on n1
-	scs := make(chan Connection)
-	n1.RegisterConnectionHandler(func(c Connection) {
-		scs <- c
-	})
-
-	// dial n1 from n2
-	go func() {
-		cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
+	t.Run("dial own address, should error", func(t *testing.T) {
+		_, err = n1.Dial(ctx, &peer.ConnectionInfo{
 			PublicKey: n1.peerKey.PublicKey(),
 			Addresses: n1.Addresses(),
 		})
-		assert.NoError(t, err)
-		err = cconn.Write(context.Background(), resObj)
-		assert.NoError(t, err)
-		done <- true
-	}()
+		require.Equal(t, ErrAllAddressesBlocked, err)
+	})
 
-	// wait for connection
-	var sc Connection
-	select {
-	case sc = <-scs:
-	case <-time.After(time.Second):
-		t.Error("timed out waiting for connection")
-		t.FailNow()
-	}
+	// dial n1 from n2
+	t.Run("dial n1 from n2", func(t *testing.T) {
+		// wait for new connections on n1
+		scs := make(chan Connection)
+		n1.RegisterConnectionHandler(func(c Connection) {
+			fmt.Println("handing connection on n1")
+			scs <- c
+		})
 
-	// start listening for incoming messages
-	scReader := sc.Read(ctx)
+		go func() {
+			cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
+				PublicKey: n1.peerKey.PublicKey(),
+				Addresses: n1.Addresses(),
+			})
+			assert.NoError(t, err)
+			fmt.Println("dialed n2")
+			time.Sleep(time.Second)
+			fmt.Println("writing foobar to n2")
+			err = cconn.Write(context.Background(), resObj)
+			assert.NoError(t, err)
+			fmt.Println("wrote foobar to n2, done")
+			done <- true
+		}()
 
-	// wait for ping message
-	gotObj, err := scReader.Read()
-	require.NoError(t, err)
-	require.Equal(t, "ping", gotObj.Type)
+		// wait for connection
+		var sc Connection
+		select {
+		case sc = <-scs:
+		case <-time.After(time.Second):
+			t.Error("timed out waiting for connection")
+			t.FailNow()
+		}
 
-	// wait for foobar message
-	gotObj, err = scReader.Read()
-	require.NoError(t, err)
-	require.EqualValues(t, resObj, gotObj)
+		// start listening for incoming messages
+		fmt.Println("waiting for messages")
+		scReader := sc.Read(ctx)
 
-	// wait for done
-	select {
-	case <-done:
-	case <-time.After(time.Second):
-		t.Error("timed out waiting for done")
-		t.Fail()
-	}
+		// wait for ping message
+		fmt.Println("waiting for ping")
+		gotObj, err := scReader.Read()
+		require.NoError(t, err)
+		require.Equal(t, "ping", gotObj.Type)
+
+		// wait for foobar message
+		fmt.Println("waiting for foobar")
+		gotObj, err = scReader.Read()
+		require.NoError(t, err)
+		require.EqualValues(t, resObj, gotObj)
+
+		// wait for done
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Error("timed out waiting for done")
+			t.Fail()
+		}
+	})
 }
 
 func TestNetDialBackoff(t *testing.T) {

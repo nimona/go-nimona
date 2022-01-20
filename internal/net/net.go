@@ -155,9 +155,9 @@ func (n *network) Dial(
 
 	// go through all addresses and try to dial them
 	for _, address := range p.Addresses {
-		// check if address is currently blocklisted
+		// check if address is currently blocked
 		if n.isAddressBlocked(p.PublicKey, address) {
-			logger.Debug("address is blocklisted, skipping")
+			logger.Debug("address is blocked, skipping")
 			continue
 		}
 		// get protocol from address
