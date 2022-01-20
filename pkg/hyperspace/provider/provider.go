@@ -277,7 +277,8 @@ func (p *Provider) distributeAnnouncement(
 		log.String("method", "provider.distributeAnnouncement"),
 	)
 	n := 0
-	for _, ci := range p.providerCache.List() {
+	providersList := p.providerCache.List()
+	for _, ci := range providersList {
 		pc, err := p.network.Dial(ctx, ci.ConnectionInfo)
 		if err != nil {
 			logger.Debug("could not dial peer", log.Error(err))
@@ -298,7 +299,11 @@ func (p *Provider) distributeAnnouncement(
 		}
 		n++
 	}
-	logger.Info("forwarded announcement to other provider", log.Int("n", n))
+	logger.Info(
+		"forwarded announcement to other provider",
+		log.Int("total", len(providersList)),
+		log.Int("success", n),
+	)
 }
 
 func (p *Provider) announceSelf() {
