@@ -87,6 +87,7 @@ func NewKeyManager(
 				return nil, err
 			}
 			m.controller = c
+			m.topic.Publish(c)
 		}
 	}
 
@@ -132,6 +133,12 @@ func (m *manager) GetController() (Controller, error) {
 }
 
 func (m *manager) WaitForController(ctx context.Context) (Controller, error) {
+	m.mutex.RLock()
+	c := m.controller
+	m.mutex.RUnlock()
+	if c != nil {
+		return c, nil
+	}
 	select {
 	case c := <-m.topic.Subscribe():
 		return c, nil
