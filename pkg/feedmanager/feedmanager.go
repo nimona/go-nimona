@@ -196,10 +196,6 @@ func (m *feedManager) createFeed(
 				continue
 			}
 
-			if feedAdded.Metadata.Owner.Equals(id) {
-				continue
-			}
-
 			for _, objHash := range feedAdded.ObjectHash {
 				// check if we already have this object
 				if _, err := m.objectstore.Get(objHash); err == nil {
