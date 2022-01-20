@@ -108,7 +108,19 @@ func (m *feedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
 	m.contentTypesMutex.RLock()
 	defer m.contentTypesMutex.RUnlock()
 
+	logger := log.
+		FromContext(ctx).
+		Named("feedmanager").
+		With(
+			log.String("localDID", m.getLocalDID().String()),
+		)
+
 	for streamType, eventTypes := range m.contentTypes {
+		logger.Debug(
+			"registering feed",
+			log.String("streamType", streamType),
+			log.Strings("eventTypes", eventTypes),
+		)
 		if err := m.createFeed(ctx, streamType, eventTypes); err != nil {
 			return fmt.Errorf("error registering feed, %w", err)
 		}
@@ -279,7 +291,6 @@ func (m *feedManager) handleObjects(
 	sub objectmanager.ObjectSubscription,
 ) error {
 	identityKey := m.getLocalDID()
-	peerKey := m.network.GetPeerKey().PublicKey()
 	for {
 		obj, err := sub.Read()
 		if errors.Is(err, object.ErrReaderDone) {
@@ -323,7 +334,7 @@ func (m *feedManager) handleObjects(
 		feedEvent := &feed.Added{
 			Metadata: object.Metadata{
 				Root:  feedStreamHash,
-				Owner: peerKey.DID(),
+				Owner: identityKey,
 			},
 			ObjectHash: []tilde.Digest{
 				objHash,
@@ -334,7 +345,11 @@ func (m *feedManager) handleObjects(
 			continue
 		}
 		if _, err := m.objectmanager.Append(ctx, feedEventObj); err != nil {
-			logger.Warn("error storing feed event", log.Error(err))
+			logger.Warn(
+				"error storing feed event",
+				log.String("feedStreamHash", feedStreamHash.String()),
+				log.Error(err),
+			)
 			continue
 		}
 	}
