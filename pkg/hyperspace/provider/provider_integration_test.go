@@ -129,6 +129,8 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		},
 	}
 
+	time.Sleep(time.Second)
+
 	// net1 is a normal peer
 	net1, k1 := newPeer(t)
 
@@ -156,6 +158,8 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		},
 	)
 
+	time.Sleep(time.Second)
+
 	// add a couple more random peers to the provider's cache
 	pr2k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
@@ -175,6 +179,8 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	}
 	prv.Put(pr2)
 	prv.Put(pr3)
+
+	time.Sleep(time.Second)
 
 	// lookup "foo" as net1
 	ctx := context.New(context.WithTimeout(time.Second))
