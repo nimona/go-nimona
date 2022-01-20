@@ -65,6 +65,10 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 
 	// net1 is another provider
 	net1, k1 := newPeer(t)
+	pr1 := &peer.ConnectionInfo{
+		PublicKey: k1.PublicKey(),
+		Addresses: net1.Addresses(),
+	}
 
 	// net 2 is a normal peer
 	net2, k2 := newPeer(t)
@@ -81,12 +85,12 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	}
 
 	// construct providers
-	time.Sleep(250 * time.Millisecond)
+	time.Sleep(time.Second)
 	prv0, err := New(
 		context.New(),
 		net0,
 		k0,
-		nil,
+		[]*peer.ConnectionInfo{pr1},
 	)
 	require.NoError(t, err)
 	prv1, err := New(
@@ -98,7 +102,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	require.NoError(t, err)
 
 	// net2 announces to provider 0
-	time.Sleep(250 * time.Millisecond)
+	time.Sleep(time.Second)
 	c2, err := net2.Dial(context.New(), pr0)
 	require.NoError(t, err)
 	err = c2.Write(
@@ -107,11 +111,11 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// wait a bit and check if both provder have cached the peer
-	time.Sleep(250 * time.Millisecond)
+	// wait a bit and check if both providers have cached the peer
+	time.Sleep(time.Second)
 	_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
 	assert.NoError(t, existsInPrv1)
-	time.Sleep(250 * time.Millisecond)
+	time.Sleep(time.Second)
 	_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
 	assert.NoError(t, existsInPrv2)
 }
