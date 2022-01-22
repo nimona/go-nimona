@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -84,6 +85,8 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 		PeerCapabilities: []string{"foo", "bar"},
 	}
 
+	time.Sleep(time.Second * 2)
+
 	// construct providers
 	prv0, err := New(
 		context.New(
@@ -104,7 +107,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 
 	t.Run("net2 announces to prv0, should propagate", func(t *testing.T) {
 		// net2 announces to provider 0
@@ -127,11 +130,25 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 		time.Sleep(time.Second)
 
 		// wait a bit and check if both providers have cached the peer
-
-		_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+		var existsInPrv1 error
+		for i := 0; i < 10; i++ {
+			_, existsInPrv1 = prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+			if existsInPrv1 != nil {
+				time.Sleep(time.Second)
+				fmt.Println("existsInPrv1 failed", i+1, "times")
+				continue
+			}
+		}
 		assert.NoError(t, existsInPrv1)
-
-		_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+		var existsInPrv2 error
+		for i := 0; i < 10; i++ {
+			_, existsInPrv2 = prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+			if existsInPrv2 != nil {
+				time.Sleep(time.Second)
+				fmt.Println("existsInPrv2 failed", i+1, "times")
+				continue
+			}
+		}
 		assert.NoError(t, existsInPrv2)
 	})
 }
