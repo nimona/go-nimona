@@ -18,6 +18,7 @@ require (
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
+	github.com/Tv0ridobro/data-structure v0.0.0-20211109171617-a6f942be577d // indirect
 	github.com/atotto/clipboard v0.1.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
