@@ -100,7 +100,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	nnet.RegisterRelays(bootstrapPeers...)
 
 	// construct configstore db
-	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "config.sqlite"))
+	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "config.sqlite")+"?_pragma=busy_timeout%3d10000")
 	if err != nil {
 		return nil, fmt.Errorf("opening sql file for configstore: %w", err)
 	}
@@ -112,7 +112,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// construct object store
-	db, err := sql.Open("sqlite", filepath.Join(cfg.Path, "object.sqlite"))
+	db, err := sql.Open("sqlite", filepath.Join(cfg.Path, "object.sqlite")+"?_pragma=busy_timeout%3d10000")
 	if err != nil {
 		return nil, fmt.Errorf("opening sql file: %w", err)
 	}
