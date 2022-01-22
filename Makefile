@@ -68,7 +68,7 @@ $(eval $(call tool,golds,go101.org/golds@v0.2.0))
 $(eval $(call tool,mockgen,github.com/golang/mock/mockgen@v1.5.0))
 $(eval $(call tool,wwhrd,github.com/frapposelli/wwhrd@v0.4.0))
 $(eval $(call tool,golines,github.com/segmentio/golines@v0.1.0))
-$(eval $(call tool,go-mod-upgrade,github.com/oligot/go-mod-upgrade@v0.6.1))
+$(eval $(call tool,go-mod-upgrade,github.com/oligot/go-mod-upgrade@v0.7.0))
 $(eval $(call tool,goreleaser,github.com/goreleaser/goreleaser@v0.177.0))
 
 $(eval $(call inttool,codegen))
