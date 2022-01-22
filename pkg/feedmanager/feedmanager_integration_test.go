@@ -79,11 +79,14 @@ func Test_Manager_Integration(t *testing.T) {
 	err = p0.ObjectManager().Put(context.TODO(), o0)
 	require.NoError(t, err)
 
+	time.Sleep(time.Second * 5)
+
 	// wait until resolver sees provider
 	found := false
 	for i := 0; i < 10; i++ {
 		r, err := p1.Resolver().Lookup(
 			context.New(
+				context.WithCorrelationID("p1.resolver.lookup"),
 				context.WithTimeout(time.Second),
 			),
 			resolver.LookupByHash(o0.Hash()),
@@ -99,7 +102,7 @@ func Test_Manager_Integration(t *testing.T) {
 	}
 	require.True(t, found)
 
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 5)
 
 	// wait a bit, and check stream on p1
 	g0, err := p1.ObjectStore().Get(o0.Hash())
@@ -114,7 +117,9 @@ func newDaemon(
 	bootstrapConnectionInfo *peer.ConnectionInfo,
 ) daemon.Daemon {
 	d, err := daemon.New(
-		context.Background(),
+		context.New(
+			context.WithCorrelationID(name),
+		),
 		daemon.WithConfigOptions(
 			config.WithDefaultPath(
 				t.TempDir(),
