@@ -284,6 +284,8 @@ func TestNetwork_Relay(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	time.Sleep(time.Second)
+
 	// now we should be able to send from p1 to p2
 	sub := n2.Subscribe(FilterByObjectType("foo"))
 	err = n1.Send(
@@ -302,6 +304,8 @@ func TestNetwork_Relay(t *testing.T) {
 		testObjFromP1.Metadata.Signature,
 		env.Payload.Metadata.Signature,
 	)
+
+	time.Sleep(time.Second)
 
 	// send from p2 to p1
 	sub = n1.Subscribe(FilterByObjectType("foo"))
