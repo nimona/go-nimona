@@ -6,6 +6,8 @@ import (
 	"io"
 	"sync"
 
+	"github.com/Tv0ridobro/data-structure/list"
+
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -41,6 +43,17 @@ type (
 
 		pubsub ObjectPubSub
 		mutex  sync.RWMutex // R used to check if closed
+
+		// Buffer allows us to hold the last x number of objects received by
+		// this connection and replay them when a new subscription is created.
+		// This is done as subscriptions some times are not created fast enough
+		// after a new connection is created and the subscribers are losing
+		// objects. This is especially annoying in tests.
+		// TODO revisit the way we deal with subscriptions in order to try and
+		// avoid this buffer.
+		buffer     *list.List[*object.Object]
+		bufferLock sync.RWMutex
+		bufferSize int
 	}
 )
 
@@ -112,14 +125,45 @@ func (c *connection) Read(ctx context.Context) object.ReadCloser {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
+	c.bufferLock.RLock()
+	previousObjects := c.buffer.GetAll()
+	c.bufferLock.RUnlock()
+
 	errCh := make(chan error)
+	objCh := make(chan *object.Object)
 	sub := c.pubsub.Subscribe()
+	go func() {
+		for _, o := range previousObjects {
+			objCh <- o
+		}
+		// TODO: This is pretty wasteful, we need to first push the buffered
+		// items and then continue with all published objects, but this go
+		// routine is not really ideal.
+		subCh := sub.Channel()
+		for {
+			o, ok := <-subCh
+			if !ok {
+				return
+			}
+			objCh <- o
+		}
+	}()
 	return object.NewReadCloser(
 		ctx,
-		sub.Channel(),
+		objCh,
 		errCh,
 		c.closer,
 	)
+}
+
+func (c *connection) publish(o *object.Object) {
+	c.bufferLock.Lock()
+	c.buffer.PushBack(o)
+	if c.buffer.Len() > c.bufferSize {
+		c.buffer.PopFront()
+	}
+	c.bufferLock.Unlock()
+	c.pubsub.Publish(o)
 }
 
 func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
@@ -132,6 +176,9 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
 		pubsub:     NewObjectPubSub(),
 		mutex:      sync.RWMutex{},
 		closer:     make(chan struct{}),
+		buffer:     &list.List[*object.Object]{},
+		bufferLock: sync.RWMutex{},
+		bufferSize: 8,
 	}
 
 	go func() {
@@ -141,7 +188,7 @@ func newConnection(conn io.ReadWriteCloser, incoming bool) *connection {
 				c.Close()
 				return
 			}
-			c.pubsub.Publish(o)
+			c.publish(o)
 		}
 	}()
 

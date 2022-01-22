@@ -3,6 +3,7 @@ go 1.18
 module nimona.io
 
 require (
+	github.com/Tv0ridobro/data-structure v0.0.0-20211109171617-a6f942be577d
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/buger/jsonparser v1.1.1
 	github.com/docker/go-units v0.4.0
