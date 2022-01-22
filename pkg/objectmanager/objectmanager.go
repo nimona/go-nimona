@@ -628,9 +628,7 @@ func (m *manager) handleObjectRequest(
 		return err
 	}
 
-	robj := object.Copy(obj)
-
-	resp.Object = robj
+	resp.Object = object.Copy(obj)
 
 	ro, err := object.Marshal(resp)
 	if err != nil {
@@ -849,7 +847,9 @@ func (m *manager) Append(
 	// announce to subscribers
 	m.announceStreamChildren(
 		context.New(
-			context.WithCorrelationID(ctx.CorrelationID()),
+			context.WithCorrelationID(
+				ctx.CorrelationID(),
+			),
 			// TODO timeout?
 		),
 		root,

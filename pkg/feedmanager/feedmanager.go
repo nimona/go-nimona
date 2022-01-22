@@ -26,6 +26,7 @@ type (
 		RegisterFeed(rootType string, eventTypes ...string) error
 	}
 	feedManager struct {
+		logger            log.Logger
 		network           network.Network
 		resolver          resolver.Resolver
 		objectstore       objectstore.Store
@@ -47,6 +48,12 @@ func New(
 	ksm keystream.Manager,
 ) (*feedManager, error) {
 	m := &feedManager{
+		logger: log.FromContext(
+			context.New(
+				context.WithParent(ctx),
+				context.WithCorrelationID("feedmanager"),
+			),
+		).Named("feedmanager"),
 		network:          net,
 		resolver:         res,
 		objectstore:      str,
@@ -108,12 +115,9 @@ func (m *feedManager) createFeedsForRegisteredTypes(ctx context.Context) error {
 	m.contentTypesMutex.RLock()
 	defer m.contentTypesMutex.RUnlock()
 
-	logger := log.
-		FromContext(ctx).
-		Named("feedmanager").
-		With(
-			log.String("localDID", m.getLocalDID().String()),
-		)
+	logger := m.logger.With(
+		log.String("localDID", m.getLocalDID().String()),
+	)
 
 	for streamType, eventTypes := range m.contentTypes {
 		logger.Debug(
@@ -207,10 +211,7 @@ func (m *feedManager) createFeed(
 						context.WithTimeout(time.Second),
 					),
 					// TODO we should at least be caching possible peers
-					// TODO: we used to lookup by hash which for some reason
-					// caused the integration test to be very flaky; this is an
-					// attempt to improve on that.
-					resolver.LookupByOwner(id),
+					resolver.LookupByHash(objHash),
 				)
 				if err != nil {
 					// TODO log
@@ -226,12 +227,24 @@ func (m *feedManager) createFeed(
 						connInfo.PublicKey.DID(),
 					)
 					if err != nil {
+						m.logger.Warn(
+							"error requesting feed.Added object",
+							log.String("objHash", objHash.String()),
+							log.String("peer", connInfo.PublicKey.DID().String()),
+							log.Error(err),
+						)
 						continue
 					}
 					if err := m.objectmanager.Put(
 						ctx,
 						o,
 					); err != nil {
+						m.logger.Warn(
+							"error storing feed.Added object",
+							log.String("objHash", objHash.String()),
+							log.String("peer", connInfo.PublicKey.DID().String()),
+							log.Error(err),
+						)
 						continue
 					}
 					break
@@ -297,14 +310,11 @@ func (m *feedManager) handleObjects(
 		}
 
 		ctx := context.Background()
-		logger := log.
-			FromContext(ctx).
-			Named("feedmanager").
-			With(
-				log.String("method", "feedmanager.handleObjects"),
-				log.String("payload.type", obj.Type),
-				log.String("payload.hash", obj.Hash().String()),
-			)
+		logger := m.logger.With(
+			log.String("method", "feedmanager.handleObjects"),
+			log.String("payload.type", obj.Type),
+			log.String("payload.hash", obj.Hash().String()),
+		)
 
 		objType := obj.Type
 		objHash := obj.Hash()
