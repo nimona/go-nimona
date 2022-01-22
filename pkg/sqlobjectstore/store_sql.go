@@ -85,6 +85,21 @@ func New(
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
+	// set pragmas
+
+	_, err := db.Exec("PRAGMA busy_timeout=5000")
+	if err != nil {
+		return nil, fmt.Errorf("error setting pragmas, %w", err)
+	}
+
+	// and verify they were set
+	actualPragmaBusyTimeout := 0
+	row := db.QueryRow("PRAGMA busy_timeout")
+	row.Scan(&actualPragmaBusyTimeout)
+	if actualPragmaBusyTimeout != 5000 {
+		return nil, fmt.Errorf("unable to set busy_timeout pragma")
+	}
+
 	// Initialize the garbage collector in the background to run every minute
 	go func() {
 		for {
