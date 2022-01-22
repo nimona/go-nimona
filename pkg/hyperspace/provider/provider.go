@@ -94,7 +94,8 @@ func New(
 				ConnectionInfo: ci,
 				PeerCapabilities: []string{
 					hyperspace.AnnouncementType,
-					hyperspace.LookupRequestType,
+					hyperspace.LookupByDIDRequestType,
+					hyperspace.LookupByDigestRequestType,
 				},
 			},
 			providerCacheTTL,
@@ -145,16 +146,26 @@ func (p *Provider) handleObject(
 				log.Error(err),
 			)
 		}
-	case hyperspace.LookupRequestType:
-		v := &hyperspace.LookupRequest{}
+	case hyperspace.LookupByDigestRequestType:
+		v := &hyperspace.LookupByDigestRequest{}
 		if err := object.Unmarshal(o, v); err != nil {
 			logger.Warn(
-				"error decoding lookup request",
+				"error decoding LookupByDigestRequest",
 				log.Error(err),
 			)
 			return
 		}
-		p.handlePeerLookup(ctx, v, s, o)
+		p.handlePeerLookupByDigest(ctx, v, s, o)
+	case hyperspace.LookupByDIDRequestType:
+		v := &hyperspace.LookupByDIDRequest{}
+		if err := object.Unmarshal(o, v); err != nil {
+			logger.Warn(
+				"error decoding LookupByDIDRequest",
+				log.Error(err),
+			)
+			return
+		}
+		p.handlePeerLookupByDID(ctx, v, s, o)
 	}
 }
 
@@ -184,16 +195,16 @@ func (p *Provider) handleAnnouncement(
 	return nil
 }
 
-func (p *Provider) handlePeerLookup(
+func (p *Provider) handlePeerLookupByDigest(
 	ctx context.Context,
-	q *hyperspace.LookupRequest,
+	q *hyperspace.LookupByDigestRequest,
 	s crypto.PublicKey,
 	o *object.Object,
 ) {
 	ctx = context.FromContext(ctx)
 	logger := log.FromContext(ctx).With(
-		log.String("method", "provider.handlePeerLookup"),
-		log.Any("q.vector", q.QueryVector),
+		log.String("method", "provider.handlePeerLookupByDigest"),
+		log.Any("q.digest", q.Digest),
 	)
 
 	if !s.IsEmpty() {
@@ -215,7 +226,7 @@ func (p *Provider) handlePeerLookup(
 
 	logger.Debug("handling peer lookup")
 
-	ans := p.peerCache.Lookup(hyperspace.Bloom(q.QueryVector))
+	ans := p.peerCache.LookupByDigest(q.Digest)
 
 	ctx = context.New(
 		context.WithParent(ctx),
@@ -228,7 +239,84 @@ func (p *Provider) handlePeerLookup(
 			Owner: p.peerKey.PublicKey().DID(),
 		},
 		Nonce:         q.Nonce,
-		QueryVector:   q.QueryVector,
+		Announcements: ans,
+	}
+
+	pr := &peer.ConnectionInfo{
+		PublicKey: s,
+	}
+
+	reso, err := object.Marshal(res)
+	if err != nil {
+		logger.Debug("could not marshal lookup response",
+			log.Error(err),
+		)
+		return
+	}
+
+	pc, err := p.network.Dial(ctx, pr)
+	if err != nil {
+		logger.Debug("could not dial peer",
+			log.Error(err),
+		)
+		return
+	}
+
+	err = pc.Write(ctx, reso)
+	if err != nil {
+		logger.Debug("could not write lookup response", log.Error(err))
+		return
+	}
+
+	logger.With(
+		log.Int("n", len(ans)),
+	).Debug("handling done, sent n peers")
+}
+
+func (p *Provider) handlePeerLookupByDID(
+	ctx context.Context,
+	q *hyperspace.LookupByDIDRequest,
+	s crypto.PublicKey,
+	o *object.Object,
+) {
+	ctx = context.FromContext(ctx)
+	logger := log.FromContext(ctx).With(
+		log.String("method", "provider.handlePeerLookupByDID"),
+		log.Any("q.owner", q.Owner),
+	)
+
+	if !s.IsEmpty() {
+		logger = logger.With(
+			log.String("sender", s.String()),
+		)
+	}
+
+	if !o.Metadata.Signature.Signer.IsEmpty() {
+		logger = logger.With(
+			log.String(
+				"o.signer",
+				o.Metadata.Signature.Signer.String(),
+			),
+		)
+	}
+
+	promIncRequestsCounter.Inc()
+
+	logger.Debug("handling peer lookup")
+
+	ans := p.peerCache.LookupByDID(q.Owner)
+
+	ctx = context.New(
+		context.WithParent(ctx),
+	)
+
+	promIncResponsesHistogram.Observe(float64(len(ans)))
+
+	res := &hyperspace.LookupResponse{
+		Metadata: object.Metadata{
+			Owner: p.peerKey.PublicKey().DID(),
+		},
+		Nonce:         q.Nonce,
 		Announcements: ans,
 	}
 
@@ -326,7 +414,8 @@ func (p *Provider) announceSelf() {
 		},
 		PeerCapabilities: []string{
 			hyperspace.AnnouncementType,
-			hyperspace.LookupRequestType,
+			hyperspace.LookupByDIDRequestType,
+			hyperspace.LookupByDigestRequestType,
 		},
 	}
 	// make sure we have our own peer in the peer cache

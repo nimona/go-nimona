@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"database/sql"
+	"fmt"
 	"path"
 	"testing"
 	"time"
@@ -78,7 +79,7 @@ func TestResolver_Integration(t *testing.T) {
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: p2.PublicKey(),
 		},
-		PeerVector: hyperspace.New("foo", "bar", p2.PublicKey().DID().String()),
+		Digests: []tilde.Digest{"foo", "bar"},
 	}
 	pr3 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
@@ -87,7 +88,7 @@ func TestResolver_Integration(t *testing.T) {
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: p3.PublicKey(),
 		},
-		PeerVector: hyperspace.New("foo"),
+		Digests: []tilde.Digest{"foo"},
 	}
 	prv.Put(pr2)
 	prv.Put(pr3)
@@ -99,6 +100,12 @@ func TestResolver_Integration(t *testing.T) {
 		GetController().
 		Return(nil, keystream.ErrControllerNotFound).
 		AnyTimes()
+	ksm.EXPECT().
+		WaitForController(
+			gomock.Any(),
+		).
+		Return(nil, fmt.Errorf("something")).
+		AnyTimes()
 	res := New(
 		context.New(),
 		net1,
@@ -109,12 +116,12 @@ func TestResolver_Integration(t *testing.T) {
 	)
 
 	// lookup by content
-	pr, err := res.Lookup(context.New(), LookupByHash(tilde.Digest("bar")))
+	pr, err := res.Lookup(context.New(), LookupByDigest("bar"))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
 
 	// lookup by owner
-	pr, err = res.Lookup(context.New(), LookupByOwner(p2.PublicKey().DID()))
+	pr, err = res.Lookup(context.New(), LookupByDID(p2.PublicKey().DID()))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{
 		pr2.ConnectionInfo,
@@ -134,7 +141,7 @@ func TestResolver_Integration(t *testing.T) {
 		time.Sleep(250 * time.Millisecond)
 
 		// lookup by hash
-		pr, err := res.Lookup(context.New(), LookupByHash(obj1hash))
+		pr, err := res.Lookup(context.New(), LookupByDigest(obj1hash))
 		require.NoError(t, err)
 		assert.Len(t, pr, 1)
 		assert.Equal(t,

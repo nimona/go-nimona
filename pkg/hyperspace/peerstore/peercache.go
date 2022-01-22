@@ -9,7 +9,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/hyperspace"
+	"nimona.io/pkg/tilde"
 )
 
 type (
@@ -162,11 +164,34 @@ func (m *PeerCache) List() []*hyperspace.Announcement {
 }
 
 // Lookup -
-func (m *PeerCache) Lookup(q hyperspace.Bloom) []*hyperspace.Announcement {
+func (m *PeerCache) LookupByDID(o did.DID) []*hyperspace.Announcement {
 	ps := []*hyperspace.Announcement{}
 	m.m.Range(func(_, p interface{}) bool {
-		if hyperspace.Bloom(p.(entry).pr.PeerVector).Test(q) {
-			ps = append(ps, p.(entry).pr)
+		pe := p.(entry)
+		switch o.Method {
+		case did.MethodNimona:
+			if pe.pr.Metadata.Owner.Equals(o) {
+				ps = append(ps, pe.pr)
+			}
+		case did.MethodPublicKey:
+			if pe.pr.ConnectionInfo.PublicKey.DID().Equals(o) {
+				ps = append(ps, pe.pr)
+			}
+		}
+		return true
+	})
+	return ps
+}
+
+// Lookup -
+func (m *PeerCache) LookupByDigest(d tilde.Digest) []*hyperspace.Announcement {
+	ps := []*hyperspace.Announcement{}
+	m.m.Range(func(_, p interface{}) bool {
+		pe := p.(entry)
+		for _, pd := range pe.pr.Digests {
+			if pd.Equal(d) {
+				ps = append(ps, pe.pr)
+			}
 		}
 		return true
 	})

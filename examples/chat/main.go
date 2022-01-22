@@ -149,7 +149,7 @@ func (c *chat) subscribe(
 		queryCtx := context.New(context.WithTimeout(time.Second * 5))
 		peers, err := c.resolver.Lookup(
 			queryCtx,
-			resolver.LookupByHash(conversationRootHash),
+			resolver.LookupByDigest(conversationRootHash),
 		)
 		if err != nil {
 			c.logger.Error("could not find any peers that have this hash",

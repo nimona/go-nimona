@@ -10,6 +10,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/tilde"
 )
 
 func TestAnnouncement_MarshalWithSignature(t *testing.T) {
@@ -21,14 +22,7 @@ func TestAnnouncement_MarshalWithSignature(t *testing.T) {
 			PublicKey: k.PublicKey(),
 			Addresses: []string{"foo", "foo"},
 		},
-		PeerVector: []uint64{
-			546078562,
-			884891506,
-			1158584717,
-			2540824933,
-			3828740739,
-			4138058784,
-		},
+		Digests: []tilde.Digest{"foo", "bar"},
 	}
 
 	p.Metadata.Signature, err = object.NewSignature(k, object.MustMarshal(p))
@@ -64,14 +58,7 @@ func TestResponse_MarshalWithSignature(t *testing.T) {
 				PublicKey: k.PublicKey(),
 				Addresses: []string{"foo", "foo"},
 			},
-			PeerVector: []uint64{
-				546078562,
-				884891506,
-				1158584717,
-				2540824933,
-				3828740739,
-				4138058784,
-			},
+			Digests: []tilde.Digest{"foo", "bar"},
 		}},
 	}
 
@@ -131,7 +118,7 @@ func TestAnnouncement_SignDeep(t *testing.T) {
 					Relays:        []*peer.ConnectionInfo{},
 				}},
 			},
-			PeerVector:       []uint64{0, 1, 2},
+			Digests:          []tilde.Digest{"foo", "bar"},
 			Version:          1,
 			PeerCapabilities: []string{"a", "b"},
 		}

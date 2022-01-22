@@ -14,6 +14,7 @@ import (
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/tilde"
 )
 
 func TestProvider_handleAnnouncement(t *testing.T) {
@@ -34,7 +35,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 			PublicKey: k1.PublicKey(),
 			Addresses: net1.Addresses(),
 		},
-		PeerVector: hyperspace.New("foo", "bar"),
+		Digests: []tilde.Digest{"foo", "bar"},
 	}
 
 	// construct provider
@@ -81,7 +82,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 			PublicKey: k2.PublicKey(),
 			Addresses: net2.Addresses(),
 		},
-		PeerVector:       hyperspace.New("foo", "bar"),
+		Digests:          []tilde.Digest{"foo", "bar"},
 		PeerCapabilities: []string{"foo", "bar"},
 	}
 
@@ -200,7 +201,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: pr2k.PublicKey(),
 		},
-		PeerVector: hyperspace.New("foo", "bar"),
+		Digests: []tilde.Digest{"foo", "bar"},
 	}
 	pr3k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
@@ -208,7 +209,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: pr3k.PublicKey(),
 		},
-		PeerVector: hyperspace.New("foo"),
+		Digests: []tilde.Digest{"not-foo"},
 	}
 	prv.Put(pr2)
 	prv.Put(pr3)
@@ -221,9 +222,9 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	err = c0.Write(
 		context.New(),
 		object.MustMarshal(
-			&hyperspace.LookupRequest{
-				Nonce:       "1",
-				QueryVector: hyperspace.New("foo", "bar"),
+			&hyperspace.LookupByDigestRequest{
+				Nonce:  "1",
+				Digest: tilde.Digest("foo"),
 			},
 		),
 	)

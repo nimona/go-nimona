@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -120,16 +121,19 @@ func New(
 		}, 0)
 	}
 
+	// announce when our key stream has a new controller
 	go func() {
-		// announce on startup
+		_, err := r.keyStreamManager.WaitForController(ctx)
+		if err != nil {
+			r.announceSelf()
+		}
+	}()
+
+	// announce on startup, timeout, and when we have new objects
+	go func() {
 		r.announceSelf()
 
-		// TODO(geoah): fix identity
-		// subscribe to local peer updates
-		// lpSub, lpCf := r.localpeer.ListenForUpdates()
-		// defer lpCf()
-
-		// subscribe to object updates
+		// announce on object updates
 		strSub := make(<-chan sqlobjectstore.Event)
 		strCf := func() {}
 		if str != nil {
@@ -143,9 +147,6 @@ func New(
 			select {
 			case <-announceTicker.C:
 				r.announceSelf()
-				// TODO(geoah): fix identity
-				// case <-lpSub:
-				// 	r.announceSelf()
 			case event := <-strSub:
 				switch event.Action {
 				case sqlobjectstore.ObjectInserted:
@@ -166,7 +167,7 @@ func (r *resolver) LookupPeer(
 	ctx context.Context,
 	id did.DID,
 ) ([]*peer.ConnectionInfo, error) {
-	return r.Lookup(ctx, LookupByOwner(id))
+	return r.Lookup(ctx, LookupByDID(id))
 }
 
 // Lookup finds and returns peer infos from a fingerprint
@@ -185,19 +186,37 @@ func (r *resolver) Lookup(
 	logger.Debug("looking up")
 
 	opt := ParseLookupOptions(opts...)
-	bl := hyperspace.New(opt.Lookups...)
 
 	// send content requests to recipients
-	req := &hyperspace.LookupRequest{
-		Metadata: object.Metadata{
-			Owner: r.peerKey.PublicKey().DID(),
-		},
-		Nonce:       rand.String(12),
-		QueryVector: bl,
-	}
-	reqObject, err := object.Marshal(req)
-	if err != nil {
-		return nil, err
+	var reqObject *object.Object
+	var err error
+	nonce := rand.String(12)
+	if !opt.DID.IsEmpty() {
+		req := &hyperspace.LookupByDIDRequest{
+			Metadata: object.Metadata{
+				Owner: r.peerKey.PublicKey().DID(),
+			},
+			Nonce: nonce,
+			Owner: opt.DID,
+		}
+		reqObject, err = object.Marshal(req)
+		if err != nil {
+			return nil, err
+		}
+	} else if !opt.Digest.IsEmpty() {
+		req := &hyperspace.LookupByDigestRequest{
+			Metadata: object.Metadata{
+				Owner: r.peerKey.PublicKey().DID(),
+			},
+			Nonce:  nonce,
+			Digest: opt.Digest,
+		}
+		reqObject, err = object.Marshal(req)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf("missing lookup options")
 	}
 
 	responses := make(chan *object.Object)
@@ -220,7 +239,7 @@ func (r *resolver) Lookup(
 					// find any responses
 					v := o.Data["nonce"]
 					rn, ok := v.(tilde.String)
-					if ok && string(rn) == req.Nonce {
+					if ok && string(rn) == nonce {
 						// and write them to the channel
 						responses <- o
 					}
@@ -254,6 +273,7 @@ func (r *resolver) Lookup(
 			}
 			// TODO verify peer?
 			for _, ann := range r.Announcements {
+				fmt.Println("*** got back peer", ann.ConnectionInfo.PublicKey.DID())
 				peers = append(peers, ann.ConnectionInfo)
 			}
 			close(done)
@@ -365,42 +385,34 @@ func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	lastAnnouncement := r.localPeerAnnouncementCache
 	r.localPeerAnnouncementCacheLock.RUnlock()
 
-	peerKey := r.peerKey.PublicKey()
-	hashes := r.hashes.List()
+	owner := r.peerKey.PublicKey().DID()
+	ctrl, err := r.keyStreamManager.GetController()
+	if err == nil && ctrl != nil {
+		owner = ctrl.GetKeyStream().GetDID()
+	}
+	digests := r.hashes.List()
 	addresses := r.network.Addresses()
+
 	// TODO support relays
 	// relays := r.network.GetRelays()
 
-	// gather up peer key, certificates, content ids and types
-	hs := []string{peerKey.String()}
-	for _, c := range hashes {
-		hs = append(hs, c.String())
-	}
-	// if we have an keystream then add that, if not, add the peer's
-	if ksc, err := r.keyStreamManager.GetController(); err == nil {
-		hs = append(hs, ksc.GetKeyStream().GetDID().String())
-	} else {
-		hs = append(hs, r.peerKey.PublicKey().DID().String())
-	}
-	vec := hyperspace.New(hs...)
-
 	if lastAnnouncement != nil &&
 		cmp.Equal(lastAnnouncement.ConnectionInfo.Addresses, addresses) &&
-		cmp.Equal(lastAnnouncement.PeerVector, vec) {
+		cmp.Equal(lastAnnouncement.Digests, digests) {
 		return lastAnnouncement
 	}
 
 	localPeerAnnouncementCache := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: peerKey.DID(),
+			Owner: owner,
 		},
 		Version: time.Now().Unix(),
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: peerKey,
+			PublicKey: r.peerKey.PublicKey(),
 			Addresses: addresses,
 			// Relays:    relays,
 		},
-		PeerVector: vec,
+		Digests: digests,
 		// TODO add capabilities
 	}
 

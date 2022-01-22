@@ -32,12 +32,12 @@ type DID struct {
 	Identity string
 }
 
-func (d *DID) Equals(d2 DID) bool {
-	return *d == d2
+func (d DID) Equals(d2 DID) bool {
+	return d == d2
 }
 
-func (d *DID) IsEmpty() bool {
-	return *d == Empty
+func (d DID) IsEmpty() bool {
+	return d == Empty
 }
 
 // MarshalString returns the string representation of the DID.

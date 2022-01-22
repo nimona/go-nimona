@@ -148,7 +148,7 @@ func (r *manager) Request(
 		)
 
 	// find peers
-	peers, err := r.resolver.Lookup(ctx, resolver.LookupByHash(hash))
+	peers, err := r.resolver.Lookup(ctx, resolver.LookupByDigest(hash))
 	if err != nil {
 		return nil, nil, err
 	}

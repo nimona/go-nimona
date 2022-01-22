@@ -279,7 +279,7 @@ func (p *Provider) RequestStream(
 ) error {
 	recipients, err := p.resolver.Lookup(
 		ctx,
-		resolver.LookupByHash(rootHash),
+		resolver.LookupByDigest(rootHash),
 	)
 	if err != nil {
 		return err

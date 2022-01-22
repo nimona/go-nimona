@@ -437,7 +437,7 @@ func main() {
 			drh := tilde.Digest(delegateRequestHash)
 			ps, err := h.daemon.Resolver().Lookup(
 				context.New(context.WithTimeout(5*time.Second)),
-				resolver.LookupByHash(drh),
+				resolver.LookupByDigest(drh),
 			)
 
 			if err != nil || len(ps) == 0 {

@@ -6,18 +6,22 @@ import nimona.io/peer peer
 signed object nimona.io/hyperspace.Announcement {
     version int
     optional connectionInfo object type=nimona.io/peer.ConnectionInfo
-    peerVector repeated uint
     peerCapabilities repeated string
+    digests repeated string type=nimona.io/tilde.Digest
 }
 
-signed object nimona.io/hyperspace.LookupRequest {
+signed object nimona.io/hyperspace.LookupByDIDRequest {
     nonce string
-    queryVector repeated uint
+    owner string type=nimona.io/did.DID
     requireCapabilities repeated string
+}
+
+signed object nimona.io/hyperspace.LookupByDigestRequest {
+    nonce string
+    digest string type=nimona.io/tilde.Digest
 }
 
 signed object nimona.io/hyperspace.LookupResponse {
     nonce string
-    queryVector repeated uint
     optional announcements repeated object type=nimona.io/hyperspace.Announcement
 }
