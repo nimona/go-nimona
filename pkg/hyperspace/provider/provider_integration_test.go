@@ -17,14 +17,14 @@ import (
 
 func TestProvider_handleAnnouncement(t *testing.T) {
 	// net0 is our provider
-	net0, k0 := newPeer(t)
+	net0, k0 := newPeer(t, context.New(context.WithCorrelationID("prv0")))
 	pr0 := &peer.ConnectionInfo{
 		PublicKey: k0.PublicKey(),
 		Addresses: net0.Addresses(),
 	}
 
 	// net1 is a normal peer
-	net1, k1 := newPeer(t)
+	net1, k1 := newPeer(t, context.New())
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k1.PublicKey().DID(),
@@ -57,21 +57,21 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 
 func TestProvider_distributeAnnouncement(t *testing.T) {
 	// net0 is our provider
-	net0, k0 := newPeer(t)
+	net0, k0 := newPeer(t, context.New(context.WithCorrelationID("net0")))
 	pr0 := &peer.ConnectionInfo{
 		PublicKey: k0.PublicKey(),
 		Addresses: net0.Addresses(),
 	}
 
 	// net1 is another provider
-	net1, k1 := newPeer(t)
+	net1, k1 := newPeer(t, context.New(context.WithCorrelationID("net1")))
 	pr1 := &peer.ConnectionInfo{
 		PublicKey: k1.PublicKey(),
 		Addresses: net1.Addresses(),
 	}
 
-	// net 2 is a normal peer
-	net2, k2 := newPeer(t)
+	// net2 is a normal peer
+	net2, k2 := newPeer(t, context.New(context.WithCorrelationID("net2")))
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k2.PublicKey().DID(),
@@ -85,16 +85,19 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	}
 
 	// construct providers
-	time.Sleep(time.Second)
 	prv0, err := New(
-		context.New(),
+		context.New(
+			context.WithCorrelationID("prv0"),
+		),
 		net0,
 		k0,
 		[]*peer.ConnectionInfo{pr1},
 	)
 	require.NoError(t, err)
 	prv1, err := New(
-		context.New(),
+		context.New(
+			context.WithCorrelationID("prv1"),
+		),
 		net1,
 		k1,
 		[]*peer.ConnectionInfo{pr0},
@@ -102,11 +105,18 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	require.NoError(t, err)
 
 	// net2 announces to provider 0
-	time.Sleep(time.Second)
-	c2, err := net2.Dial(context.New(), pr0)
+
+	c2, err := net2.Dial(
+		context.New(
+			context.WithCorrelationID("net2dial"),
+		),
+		pr0,
+	)
 	require.NoError(t, err)
 	err = c2.Write(
-		context.New(),
+		context.New(
+			context.WithCorrelationID("net2dial/write"),
+		),
 		object.MustMarshal(pr2),
 	)
 	require.NoError(t, err)
@@ -115,14 +125,13 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	time.Sleep(time.Second)
 	_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
 	assert.NoError(t, existsInPrv1)
-	time.Sleep(time.Second)
 	_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
 	assert.NoError(t, existsInPrv2)
 }
 
 func TestProvider_handlePeerLookup(t *testing.T) {
 	// net0 is our provider
-	net0, k0 := newPeer(t)
+	net0, k0 := newPeer(t, context.New(context.WithCorrelationID("prv0")))
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k0.PublicKey().DID(),
@@ -133,10 +142,8 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		},
 	}
 
-	time.Sleep(time.Second)
-
 	// net1 is a normal peer
-	net1, k1 := newPeer(t)
+	net1, k1 := newPeer(t, context.New())
 
 	// construct provider
 	prv, err := New(context.New(), net0, k1, nil)
@@ -162,8 +169,6 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		},
 	)
 
-	time.Sleep(time.Second)
-
 	// add a couple more random peers to the provider's cache
 	pr2k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
@@ -183,8 +188,6 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	}
 	prv.Put(pr2)
 	prv.Put(pr3)
-
-	time.Sleep(time.Second)
 
 	// lookup "foo" as net1
 	ctx := context.New(context.WithTimeout(time.Second))
@@ -213,13 +216,13 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	assert.ElementsMatch(t, []*hyperspace.Announcement{pr2}, res.Announcements)
 }
 
-func newPeer(t *testing.T) (net.Network, crypto.PrivateKey) {
+func newPeer(t *testing.T, ctx context.Context) (net.Network, crypto.PrivateKey) {
 	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	n := net.New(k)
 	lis, err := n.Listen(
-		context.New(),
+		ctx,
 		"127.0.0.1:0",
 		&net.ListenConfig{
 			BindLocal: true,

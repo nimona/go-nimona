@@ -132,7 +132,10 @@ func (p *Provider) handleObject(
 	logger := log.FromContext(ctx).With(
 		log.String("method", "Provider.handleObject"),
 		log.String("env.Sender", s.String()),
+		log.String("o.Type", o.Type),
 	)
+
+	logger.Debug("handling object")
 
 	switch o.Type {
 	case hyperspace.AnnouncementType:
@@ -282,7 +285,7 @@ func (p *Provider) distributeAnnouncement(
 		pc, err := p.network.Dial(ctx, ci.ConnectionInfo)
 		if err != nil {
 			logger.Debug("could not dial peer", log.Error(err))
-			return
+			continue
 		}
 		if err := pc.Write(
 			context.New(
