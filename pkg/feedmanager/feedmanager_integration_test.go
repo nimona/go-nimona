@@ -23,7 +23,7 @@ func Test_Manager_Integration(t *testing.T) {
 	// construct local bootstrap peer
 	bootstrapConnectionInfo := testutils.NewTestBootstrapPeer(t)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 
 	// construct new identity key
 	id, err := crypto.NewEd25519PrivateKey()
@@ -33,16 +33,13 @@ func Test_Manager_Integration(t *testing.T) {
 	p0 := newDaemon(t, "p0", id, bootstrapConnectionInfo)
 	_, err = p0.KeyStreamManager().NewController(nil)
 	require.NoError(t, err)
-
 	defer p0.Close()
-
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 
 	// construct peer 1
 	p1 := newDaemon(t, "p1", id, bootstrapConnectionInfo)
 	defer p1.Close()
-
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 
 	// create new delegation request
 	dr1, c1ch, err := p1.KeyStreamManager().NewDelegationRequest(
@@ -65,7 +62,7 @@ func Test_Manager_Integration(t *testing.T) {
 
 	// wait for resolver to pick up the new controller and publish a new
 	// connection info
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 2)
 
 	// put a new stream on p0
 	o0 := object.MustMarshal(
@@ -89,7 +86,7 @@ func Test_Manager_Integration(t *testing.T) {
 				context.WithCorrelationID("p1.resolver.lookup"),
 				context.WithTimeout(time.Second),
 			),
-			resolver.LookupByHash(o0.Hash()),
+			resolver.LookupByDigest(o0.Hash()),
 		)
 		if err != nil {
 			continue
@@ -104,7 +101,18 @@ func Test_Manager_Integration(t *testing.T) {
 
 	time.Sleep(time.Second * 5)
 
+	fmt.Println(">>> p0 pk", p0.Network().GetConnectionInfo().PublicKey.String())
+	fmt.Println(">>> p1 pk", p1.Network().GetConnectionInfo().PublicKey.String())
+
+	c0, err := p0.KeyStreamManager().GetController()
+	require.NoError(t, err)
+	fmt.Println(">>> p0 id", c0.GetKeyStream().GetDID())
+	c1, err = p1.KeyStreamManager().GetController()
+	require.NoError(t, err)
+	fmt.Println(">>> p1 id", c1.GetKeyStream().GetDID())
+
 	// wait a bit, and check stream on p1
+	fmt.Println("????", o0.Hash().String())
 	g0, err := p1.ObjectStore().Get(o0.Hash())
 	require.NoError(t, err)
 	require.NotNil(t, g0)
@@ -116,14 +124,14 @@ func newDaemon(
 	id crypto.PrivateKey,
 	bootstrapConnectionInfo *peer.ConnectionInfo,
 ) daemon.Daemon {
+	tempDir := t.TempDir()
+	fmt.Println("tempDir", tempDir)
 	d, err := daemon.New(
 		context.New(
 			context.WithCorrelationID(name),
 		),
 		daemon.WithConfigOptions(
-			config.WithDefaultPath(
-				t.TempDir(),
-			),
+			config.WithDefaultPath(tempDir),
 			config.WithDefaultListenOnLocalIPs(),
 			config.WithDefaultListenOnPrivateIPs(),
 			config.WithDefaultBootstraps([]peer.Shorthand{

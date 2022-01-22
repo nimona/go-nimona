@@ -1,9 +1,6 @@
 package resolver
 
 import (
-	"fmt"
-
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/tilde"
@@ -15,9 +12,9 @@ type (
 	LookupOption  func(*LookupOptions)
 	LookupOptions struct {
 		Local bool
-		// Lookups are strings we are looking for, will be used to create a
-		// bloom filter when forwarding the lookup request to providers
-		Lookups []string
+		// lookups
+		DID    did.DID
+		Digest tilde.Digest
 		// filters are the lookups equivalents for matching local peers
 		Filters []LookupFilter
 	}
@@ -47,38 +44,15 @@ func LookupOnlyLocal() LookupOption {
 	}
 }
 
-// LookupByHash matches content hashes
-func LookupByHash(hash tilde.Digest) LookupOption {
+// LookupByDigest matches content digest
+func LookupByDigest(digest tilde.Digest) LookupOption {
 	return func(opts *LookupOptions) {
-		opts.Lookups = append(opts.Lookups, hash.String())
+		opts.Digest = digest
 		opts.Filters = append(
 			opts.Filters,
 			func(p *hyperspace.Announcement) bool {
-				return hyperspace.Bloom(p.PeerVector).Test(
-					hyperspace.New(hash.String()),
-				)
-			},
-		)
-	}
-}
-
-// LookupByPeerKey matches the peer key
-func LookupByPeerKey(keys ...crypto.PublicKey) LookupOption {
-	return func(opts *LookupOptions) {
-		for _, key := range keys {
-			opts.Lookups = append(opts.Lookups, key.String())
-		}
-		opts.Filters = append(
-			opts.Filters,
-			func(p *hyperspace.Announcement) bool {
-				for _, key := range keys {
-					// TODO check announcement signature
-					owner := p.ConnectionInfo.PublicKey
-					if owner.Equals(key) {
-						return true
-					}
-					sig := p.Metadata.Signature
-					if sig.Key.Equals(key) {
+				for _, d := range p.Digests {
+					if d.Equal(digest) {
 						return true
 					}
 				}
@@ -88,28 +62,19 @@ func LookupByPeerKey(keys ...crypto.PublicKey) LookupOption {
 	}
 }
 
-// LookupByOwner matches the owner
-func LookupByOwner(owners ...did.DID) LookupOption {
+// LookupByDID matches the owner or connection public key
+func LookupByDID(id did.DID) LookupOption {
 	return func(opts *LookupOptions) {
-		for _, o := range owners {
-			opts.Lookups = append(opts.Lookups, o.String())
-		}
+		opts.DID = id
 		opts.Filters = append(
 			opts.Filters,
 			func(p *hyperspace.Announcement) bool {
-				fmt.Println("!!!")
-				fmt.Println("!!!")
-				fmt.Println("!!!")
-				fmt.Println("!!!")
-				for _, o := range owners {
-					owner := p.Metadata.Owner
-					fmt.Println(">>", owner, o)
-					if owner == did.Empty {
-						continue
-					}
-					if owner.Equals(o) {
-						return true
-					}
+				owner := p.Metadata.Owner
+				if owner == did.Empty {
+					return true
+				}
+				if owner.Equals(id) {
+					return true
 				}
 				return false
 			},

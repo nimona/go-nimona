@@ -179,7 +179,7 @@ func main() {
 		)
 		recipients, err := res.Lookup(
 			sctx,
-			resolver.LookupByPeerKey(peerKey),
+			resolver.LookupByDID(peerKey.DID()),
 		)
 		if err != nil {
 			return err

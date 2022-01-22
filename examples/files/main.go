@@ -160,7 +160,7 @@ func (ft *fileTransfer) findAndRequest(
 	*object.Object,
 	error,
 ) {
-	peers, err := ft.resolver.Lookup(ctx, resolver.LookupByHash(hash))
+	peers, err := ft.resolver.Lookup(ctx, resolver.LookupByDigest(hash))
 	if err != nil {
 		return nil, err
 	}

@@ -3,8 +3,10 @@
 package hyperspace
 
 import (
+	"nimona.io/pkg/did"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
+	tilde "nimona.io/pkg/tilde"
 )
 
 const AnnouncementType = "nimona.io/hyperspace.Announcement"
@@ -13,17 +15,25 @@ type Announcement struct {
 	Metadata         object.Metadata      `nimona:"@metadata:m,type=nimona.io/hyperspace.Announcement"`
 	Version          int64                `nimona:"version:i"`
 	ConnectionInfo   *peer.ConnectionInfo `nimona:"connectionInfo:m"`
-	PeerVector       []uint64             `nimona:"peerVector:au"`
 	PeerCapabilities []string             `nimona:"peerCapabilities:as"`
+	Digests          []tilde.Digest       `nimona:"digests:ar"`
 }
 
-const LookupRequestType = "nimona.io/hyperspace.LookupRequest"
+const LookupByDIDRequestType = "nimona.io/hyperspace.LookupByDIDRequest"
 
-type LookupRequest struct {
-	Metadata            object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupRequest"`
+type LookupByDIDRequest struct {
+	Metadata            object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupByDIDRequest"`
 	Nonce               string          `nimona:"nonce:s"`
-	QueryVector         []uint64        `nimona:"queryVector:au"`
+	Owner               did.DID         `nimona:"owner:s"`
 	RequireCapabilities []string        `nimona:"requireCapabilities:as"`
+}
+
+const LookupByDigestRequestType = "nimona.io/hyperspace.LookupByDigestRequest"
+
+type LookupByDigestRequest struct {
+	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupByDigestRequest"`
+	Nonce    string          `nimona:"nonce:s"`
+	Digest   tilde.Digest    `nimona:"digest:r"`
 }
 
 const LookupResponseType = "nimona.io/hyperspace.LookupResponse"
@@ -31,6 +41,5 @@ const LookupResponseType = "nimona.io/hyperspace.LookupResponse"
 type LookupResponse struct {
 	Metadata      object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupResponse"`
 	Nonce         string          `nimona:"nonce:s"`
-	QueryVector   []uint64        `nimona:"queryVector:au"`
 	Announcements []*Announcement `nimona:"announcements:am"`
 }

@@ -211,7 +211,7 @@ func (m *feedManager) createFeed(
 						context.WithTimeout(time.Second),
 					),
 					// TODO we should at least be caching possible peers
-					resolver.LookupByHash(objHash),
+					resolver.LookupByDigest(objHash),
 				)
 				if err != nil {
 					// TODO log
@@ -261,7 +261,7 @@ func (m *feedManager) createFeed(
 		),
 		// TODO same as earlier we are now looking up all peers with the same
 		// owner rather than the ones providing the same stream
-		resolver.LookupByOwner(id),
+		resolver.LookupByDID(id),
 	)
 	if err != nil {
 		return fmt.Errorf("error looking for other feed providers, %w", err)

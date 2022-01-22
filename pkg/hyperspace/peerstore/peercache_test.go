@@ -8,6 +8,7 @@ import (
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/tilde"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -26,7 +27,7 @@ func TestPeerCache_Lookup(t *testing.T) {
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk.PublicKey(),
 		},
-		PeerVector: hyperspace.New("foo", "bar"),
+		Digests: []tilde.Digest{"foo", "bar"},
 	}
 
 	p2 := &hyperspace.Announcement{
@@ -36,7 +37,7 @@ func TestPeerCache_Lookup(t *testing.T) {
 		ConnectionInfo: &peer.ConnectionInfo{
 			PublicKey: opk2.PublicKey(),
 		},
-		PeerVector: hyperspace.New("foo", "not-bar"),
+		Digests: []tilde.Digest{"foo", "not-bar"},
 	}
 
 	pc := NewPeerCache(200*time.Millisecond, "test0")
@@ -44,13 +45,13 @@ func TestPeerCache_Lookup(t *testing.T) {
 	pc.Put(p1, 200*time.Millisecond)
 	pc.Put(p2, 200*time.Millisecond)
 
-	ps := pc.Lookup(hyperspace.New("foo"))
+	ps := pc.LookupByDigest("foo")
 	assert.ElementsMatch(t, []*hyperspace.Announcement{p1, p2}, ps)
 
-	ps = pc.Lookup(hyperspace.New("foo", "bar"))
+	ps = pc.LookupByDigest("bar")
 	assert.ElementsMatch(t, []*hyperspace.Announcement{p1}, ps)
 
-	ps = pc.Lookup(hyperspace.New("foo", "not-bar"))
+	ps = pc.LookupByDigest("not-bar")
 	assert.ElementsMatch(t, []*hyperspace.Announcement{p2}, ps)
 }
 
