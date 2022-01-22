@@ -104,29 +104,36 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// net2 announces to provider 0
-
-	c2, err := net2.Dial(
-		context.New(
-			context.WithCorrelationID("net2dial"),
-		),
-		pr0,
-	)
-	require.NoError(t, err)
-	err = c2.Write(
-		context.New(
-			context.WithCorrelationID("net2dial/write"),
-		),
-		object.MustMarshal(pr2),
-	)
-	require.NoError(t, err)
-
-	// wait a bit and check if both providers have cached the peer
 	time.Sleep(time.Second)
-	_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
-	assert.NoError(t, existsInPrv1)
-	_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
-	assert.NoError(t, existsInPrv2)
+
+	t.Run("net2 announces to prv0, should propagate", func(t *testing.T) {
+		// net2 announces to provider 0
+		c2, err := net2.Dial(
+			context.New(
+				context.WithCorrelationID("net2dial"),
+			),
+			pr0,
+		)
+		require.NoError(t, err)
+		time.Sleep(time.Second)
+
+		err = c2.Write(
+			context.New(
+				context.WithCorrelationID("net2dial/write"),
+			),
+			object.MustMarshal(pr2),
+		)
+		require.NoError(t, err)
+		time.Sleep(time.Second)
+
+		// wait a bit and check if both providers have cached the peer
+
+		_, existsInPrv1 := prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+		assert.NoError(t, existsInPrv1)
+
+		_, existsInPrv2 := prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+		assert.NoError(t, existsInPrv2)
+	})
 }
 
 func TestProvider_handlePeerLookup(t *testing.T) {
