@@ -51,11 +51,21 @@ var migrations = []string{
 
 var defaultTTL = time.Hour * 24 * 7
 
+// Note(geoah): Sqlite is a bit iffy when trying to write while something is
+// reading, ie using rows.Next and results in db lock errors. For this reason
+// a mutex for each table has been added
+// https://github.com/mattn/go-sqlite3/issues/607#issuecomment-808739698
+
+// TODO: Remove completely LastAccessed or move them to a different table.
+
 type (
 	Store struct {
-		db            *sql.DB
-		listeners     map[string]chan Event
-		listenersLock sync.RWMutex
+		db               *sql.DB
+		listeners        map[string]chan Event
+		listenersLock    sync.RWMutex
+		tableLockObjects sync.Mutex
+		tableLockPins    sync.Mutex
+		tableLockKeys    sync.Mutex
 	}
 	EventAction string
 	Event       struct {
@@ -75,9 +85,12 @@ func New(
 	db *sql.DB,
 ) (*Store, error) {
 	ndb := &Store{
-		db:            db,
-		listeners:     map[string]chan Event{},
-		listenersLock: sync.RWMutex{},
+		db:               db,
+		listeners:        map[string]chan Event{},
+		listenersLock:    sync.RWMutex{},
+		tableLockObjects: sync.Mutex{},
+		tableLockPins:    sync.Mutex{},
+		tableLockKeys:    sync.Mutex{},
 	}
 
 	// run migrations
@@ -118,6 +131,9 @@ func (st *Store) Close() error {
 func (st *Store) Get(
 	hash tilde.Digest,
 ) (*object.Object, error) {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	// get the object
 	stmt, err := st.db.Prepare("SELECT Body FROM Objects WHERE Hash=?")
 	if err != nil {
@@ -136,21 +152,6 @@ func (st *Store) Get(
 
 	if err := json.Unmarshal(data, obj); err != nil {
 		return nil, fmt.Errorf("could not unmarshal data: %w", err)
-	}
-
-	// update the last accessed column
-	istmt, err := st.db.Prepare(
-		"UPDATE Objects SET LastAccessed=? WHERE Hash=?")
-	if err != nil {
-		return nil, fmt.Errorf("could not prepare query: %w", err)
-	}
-	defer istmt.Close() // nolint: errcheck
-
-	if _, err := istmt.Exec(
-		time.Now().Unix(),
-		hash.String(),
-	); err != nil {
-		return nil, fmt.Errorf("could not update last access: %w", err)
 	}
 
 	return obj, nil
@@ -182,6 +183,9 @@ func (st *Store) PutWithTTL(
 	obj *object.Object,
 	ttl time.Duration,
 ) error {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	// TODO(geoah) why replace?
 	stmt, err := st.db.Prepare(`
 	REPLACE INTO Objects (
@@ -314,6 +318,9 @@ func (st *Store) putRelation(
 func (st *Store) GetStreamLeaves(
 	streamRootHash tilde.Digest,
 ) ([]tilde.Digest, error) {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	stmt, err := st.db.Prepare(`
 		SELECT Parent
 		FROM Relations
@@ -354,6 +361,9 @@ func (st *Store) GetStreamLeaves(
 func (st *Store) GetRelations(
 	parent tilde.Digest,
 ) ([]tilde.Digest, error) {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	stmt, err := st.db.Prepare("SELECT Hash FROM Objects WHERE RootHash=?")
 	if err != nil {
 		return nil, fmt.Errorf("could not prepare query: %w", err)
@@ -395,6 +405,9 @@ func (st *Store) GetRelations(
 }
 
 func (st *Store) ListHashes() ([]tilde.Digest, error) {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	stmt, err := st.db.Prepare(
 		"SELECT Hash FROM Objects WHERE Hash == RootHash",
 	)
@@ -426,6 +439,9 @@ func (st *Store) UpdateTTL(
 	hash tilde.Digest,
 	minutes int,
 ) error {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	stmt, err := st.db.Prepare(`UPDATE Objects SET TTL=? WHERE RootHash=?`)
 	if err != nil {
 		return fmt.Errorf("could not prepare query: %w", err)
@@ -442,6 +458,9 @@ func (st *Store) UpdateTTL(
 func (st *Store) Remove(
 	hash tilde.Digest,
 ) error {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects
 	WHERE Hash=?`)
@@ -465,6 +484,9 @@ func (st *Store) Remove(
 }
 
 func (st *Store) gc() error {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	stmt, err := st.db.Prepare(`
 	DELETE FROM Objects WHERE
 		Hash NOT IN (
@@ -488,6 +510,9 @@ func (st *Store) gc() error {
 func (st *Store) Filter(
 	filterOptions ...FilterOption,
 ) (object.ReadCloser, error) {
+	st.tableLockObjects.Lock()
+	defer st.tableLockObjects.Unlock()
+
 	options := newFilterOptions(filterOptions...)
 
 	where := "WHERE 1 "
@@ -578,23 +603,6 @@ func (st *Store) Filter(
 		return nil, objectstore.ErrNotFound
 	}
 
-	// update the last accessed column
-	updateQs := strings.Repeat(",?", len(hashes))[1:]
-	istmt, err := st.db.Prepare(
-		"UPDATE Objects SET LastAccessed = ? " +
-			"WHERE Hash IN (" + updateQs + ")",
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer istmt.Close() // nolint: errcheck
-
-	if _, err := istmt.Exec(
-		append([]interface{}{time.Now().Unix()}, hashesForUpdate...)...,
-	); err != nil {
-		return nil, err
-	}
-
 	go func() {
 		defer close(objectsChan)
 		defer close(errorChan)
@@ -619,6 +627,9 @@ func (st *Store) Filter(
 func (st *Store) Pin(
 	hash tilde.Digest,
 ) error {
+	st.tableLockPins.Lock()
+	defer st.tableLockPins.Unlock()
+
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Pins (Hash) VALUES (?)
 	`)
@@ -638,6 +649,9 @@ func (st *Store) Pin(
 }
 
 func (st *Store) GetPinned() ([]tilde.Digest, error) {
+	st.tableLockPins.Lock()
+	defer st.tableLockPins.Unlock()
+
 	stmt, err := st.db.Prepare(`
 		SELECT Hash FROM Pins
 	`)
@@ -667,6 +681,9 @@ func (st *Store) GetPinned() ([]tilde.Digest, error) {
 }
 
 func (st *Store) IsPinned(hash tilde.Digest) (bool, error) {
+	st.tableLockPins.Lock()
+	defer st.tableLockPins.Unlock()
+
 	stmt, err := st.db.Prepare(`
 		SELECT Hash FROM Pins WHERE Hash = ?
 	`)
@@ -696,6 +713,9 @@ func (st *Store) IsPinned(hash tilde.Digest) (bool, error) {
 func (st *Store) RemovePin(
 	hash tilde.Digest,
 ) error {
+	st.tableLockPins.Lock()
+	defer st.tableLockPins.Unlock()
+
 	stmt, err := st.db.Prepare(`
 		DELETE FROM Pins
 		WHERE Hash=?
@@ -737,8 +757,9 @@ func (st *Store) ListenForUpdates() (
 }
 
 func (st *Store) publishUpdate(e Event) {
-	st.listenersLock.RLock()
-	defer st.listenersLock.RUnlock()
+	st.listenersLock.Lock()
+	defer st.listenersLock.Unlock()
+
 	for _, l := range st.listeners {
 		select {
 		case l <- e:
@@ -766,6 +787,9 @@ func ahtoai(ah []tilde.Digest) []interface{} {
 func (st *Store) PutKey(
 	privateKey crypto.PrivateKey,
 ) error {
+	st.tableLockKeys.Lock()
+	defer st.tableLockKeys.Unlock()
+
 	stmt, err := st.db.Prepare(`
 		INSERT OR IGNORE INTO Keys (PublicKeyDigest, PrivateKey) VALUES (?, ?)
 	`)
@@ -790,6 +814,9 @@ func (st *Store) PutKey(
 func (st *Store) GetKey(
 	publicKeyDigest tilde.Digest,
 ) (*crypto.PrivateKey, error) {
+	st.tableLockKeys.Lock()
+	defer st.tableLockKeys.Unlock()
+
 	stmt, err := st.db.Prepare(
 		"SELECT PrivateKey FROM Keys WHERE PublicKeyDigest=?",
 	)
