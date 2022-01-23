@@ -211,8 +211,11 @@ func TestNetwork_Relay(t *testing.T) {
 	require.NoError(t, err)
 
 	n0 := New(context.Background(), net.New(k0), k0)
+	time.Sleep(time.Millisecond * 500)
 	n1 := New(context.Background(), net.New(k1), k1)
+	time.Sleep(time.Millisecond * 500)
 	n2 := New(context.Background(), net.New(k2), k2)
+	time.Sleep(time.Millisecond * 500)
 
 	l0, err := n0.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(t, err)
@@ -274,6 +277,7 @@ func TestNetwork_Relay(t *testing.T) {
 		SendWithConnectionInfo(p0),
 	)
 	require.NoError(t, err)
+	time.Sleep(time.Millisecond * 500)
 
 	// send from p2 to p0
 	err = n2.Send(
@@ -283,8 +287,7 @@ func TestNetwork_Relay(t *testing.T) {
 		SendWithConnectionInfo(p0),
 	)
 	require.NoError(t, err)
-
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 500)
 
 	// now we should be able to send from p1 to p2
 	sub := n2.Subscribe(FilterByObjectType("foo"))
@@ -305,7 +308,7 @@ func TestNetwork_Relay(t *testing.T) {
 		env.Payload.Metadata.Signature,
 	)
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 500)
 
 	// send from p2 to p1
 	sub = n1.Subscribe(FilterByObjectType("foo"))
