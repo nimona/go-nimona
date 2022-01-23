@@ -532,6 +532,33 @@ func (w *network) Send(
 		return ErrCannotSendToSelf
 	}
 
+	if id.Method == did.MethodNimona {
+		cs, err := w.lookup(ctx, id)
+		if err != nil {
+			return fmt.Errorf("error looking up id: %w", err)
+		}
+		if len(cs) == 0 {
+			return fmt.Errorf("unable to find peers for id")
+		}
+		sent := 0
+		var errs error
+		for _, c := range cs {
+			err = w.Send(ctx, o, c.PublicKey.DID(), SendWithConnectionInfo(c))
+			if err != nil {
+				errs = multierror.Append(
+					errs,
+					fmt.Errorf("error sending to id: %w", err),
+				)
+				continue
+			}
+			sent++
+		}
+		if sent == 0 {
+			return errs
+		}
+		return nil
+	}
+
 	opt := &sendOptions{}
 	for _, r := range opts {
 		r(opt)
