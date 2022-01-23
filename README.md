@@ -110,10 +110,8 @@ The currently available `LookupOption` are the following, and can be used
 on their own or in groups.
 
 ```go
-func LookupByHash(hash object.CID) LookupOption { ... }
-func LookupByContentType(contentType string) LookupOption { ... }
-func LookupByIdentity(key crypto.PublicKey) LookupOption { ... }
-func LookupByCertificateSigner(key crypto.PublicKey) LookupOption { ... }
+func LookupByDigest(hash tilde.Digest) LookupOption { ... }
+func LookupByDID(id did.DID) LookupOption { ... }
 ```
 
 <!-- Links -->
