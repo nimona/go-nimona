@@ -100,7 +100,7 @@ func New(
 	subs := m.network.Subscribe()
 
 	go func() {
-		if err := m.handleObjects(subs); err != nil {
+		if err := m.handleObjects(ctx, subs); err != nil {
 			logger.Error("handling object requests failed", log.Error(err))
 		}
 	}()
@@ -221,10 +221,8 @@ func (m *manager) fetchFromLeaves(
 	go func() {
 		for objectHash := range objectHashes {
 			// check if we have object stored
-			dCtx := context.New(
-				context.WithTimeout(3 * time.Second),
-			)
-			if obj, err := m.objectstore.Get(objectHash); err == nil {
+			obj, err := m.objectstore.Get(objectHash)
+			if err == nil {
 				// TODO consider checking the whole stream for missing objects
 				// TODO consider refactoring, or moving into a goroutine
 				for _, group := range obj.Metadata.Parents {
@@ -236,9 +234,12 @@ func (m *manager) fetchFromLeaves(
 				wg.Done()
 				continue
 			}
-			// TODO consider exluding nexted objects
+			// TODO consider exluding nested objects
 			fullObj, err := m.Request(
-				dCtx,
+				context.New(
+					context.WithParent(ctx),
+					context.WithTimeout(time.Second),
+				),
 				objectHash,
 				recipient,
 			)
@@ -261,7 +262,8 @@ func (m *manager) fetchFromLeaves(
 			}
 
 			// so we should already have its parents.
-			if err := m.storeObject(dCtx, fullObj); err != nil {
+			err = m.storeObject(context.FromContext(ctx), fullObj)
+			if err != nil {
 				// TODO what do we do now?
 				wg.Done()
 				continue
@@ -295,7 +297,7 @@ func (m *manager) Request(
 	rID := m.newRequestID()
 
 	sub := m.network.Subscribe(
-		network.FilterByObjectType(object.ResponseType),
+		network.FilterByRequestID(rID),
 	)
 	defer sub.Cancel()
 
@@ -304,20 +306,18 @@ func (m *manager) Request(
 			e, err := sub.Next()
 			if err != nil {
 				errCh <- err
-				break
+				return
 			}
 			if e == nil {
-				break
+				return
 			}
 			res := &object.Response{}
 			if err := object.Unmarshal(e.Payload, res); err != nil {
-				errCh <- err
-				break
+				// errCh <- err // TODO not sure about this one
+				continue
 			}
-			if res.RequestID == rID && res.Object != nil {
-				objCh <- res.Object
-				break
-			}
+			objCh <- res.Object
+			return
 		}
 	}()
 
@@ -349,6 +349,7 @@ func (m *manager) Request(
 }
 
 func (m *manager) handleObjects(
+	ctx context.Context,
 	sub network.EnvelopeSubscription,
 ) error {
 	for {
@@ -357,7 +358,6 @@ func (m *manager) handleObjects(
 			return err
 		}
 
-		ctx := context.Background()
 		logger := log.
 			FromContext(ctx).
 			Named("objectmanager").
@@ -532,8 +532,6 @@ func (m *manager) announceStreamChildren(
 		ObjectHashes: children,
 	}
 	for _, subscriber := range subscribers {
-		// TODO(geoah): fix identity
-		// TODO figure out if subscribers are peers or identities? how?
 		// TODO verify that subscriber has access to this object/stream
 		ao, err := object.Marshal(announcement)
 		if err != nil {
@@ -544,30 +542,23 @@ func (m *manager) announceStreamChildren(
 			)
 			continue
 		}
-		subPeers, err := m.resolver.Lookup(ctx, resolver.LookupByOwner(subscriber))
-		for _, subPeer := range subPeers {
-			err = m.network.Send(
-				ctx,
-				ao,
-				subPeer.PublicKey.DID(),
-				network.SendWithConnectionInfo(subPeer),
-			)
-			if err != nil {
-				logger.Info(
-					"error sending announcement",
-					log.Error(err),
-					log.String("subscriber", subscriber.String()),
-					log.String("peer.PublicKey", subPeer.PublicKey.String()),
-					log.Strings("peer.Addresses", subPeer.Addresses),
-				)
-				continue
-			}
-			logger.Debug(
-				"sent announcement",
-				log.Any("sub", subscriber),
+		err = m.network.Send(
+			ctx,
+			ao,
+			subscriber,
+		)
+		if err != nil {
+			logger.Info(
+				"error sending announcement",
 				log.Error(err),
+				log.String("subscriber", subscriber.String()),
 			)
+			continue
 		}
+		logger.Debug(
+			"sent announcement",
+			log.String("subscriber", subscriber.String()),
+		)
 	}
 }
 
@@ -738,32 +729,34 @@ func (m *manager) handleStreamAnnouncement(
 		log.Any("sender", env.Sender),
 	)
 
-	logger.Info("got stream announcement ",
-		log.Any("hashes", ann.ObjectHashes),
-	)
-
 	// check if we already know about these objects
 	allKnown := true
 	for _, hash := range ann.ObjectHashes {
 		_, err := m.objectstore.Get(hash)
-		if err == objectstore.ErrNotFound {
+		if err != nil {
 			allKnown = false
 			break
 		}
 	}
 
-	// fetch announced objects and their parents
-	if err := m.fetchFromLeaves(
-		ctx,
-		ann.ObjectHashes,
-		env.Sender,
-	); err != nil {
-		return err
-	}
+	logger.Info("got stream announcement ",
+		log.Any("hashes", ann.ObjectHashes),
+		log.Bool("allKnown", allKnown),
+	)
 
 	// if we didn't know about all of them, announce to other subscribers
 	if allKnown {
 		return nil
+	}
+
+	// fetch announced objects and their parents
+	err := m.fetchFromLeaves(
+		ctx,
+		ann.ObjectHashes,
+		env.Sender,
+	)
+	if err != nil {
+		return err
 	}
 
 	// announce to subscribers

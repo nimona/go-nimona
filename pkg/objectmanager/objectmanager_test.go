@@ -1125,13 +1125,6 @@ func TestManager_Append(t *testing.T) {
 				m := resolvermock.NewMockResolver(
 					gomock.NewController(t),
 				)
-				m.EXPECT().Lookup(
-					gomock.Any(),
-					gomock.Any(),
-				).Return(
-					[]*peer.ConnectionInfo{},
-					nil,
-				)
 				return m
 			},
 			receivedSubscriptions: []*object.Object{
@@ -1230,13 +1223,6 @@ func TestManager_Append(t *testing.T) {
 			resolver: func(t *testing.T) resolver.Resolver {
 				m := resolvermock.NewMockResolver(
 					gomock.NewController(t),
-				)
-				m.EXPECT().Lookup(
-					gomock.Any(),
-					gomock.Any(),
-				).Return(
-					[]*peer.ConnectionInfo{},
-					nil,
 				)
 				return m
 			},
