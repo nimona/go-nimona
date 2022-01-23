@@ -1,8 +1,14 @@
 {
     "go.buildTags": "dev",
+    "go.testEnvVars": {
+        "GOMAXPROCS": "1",
+        "NIMONA_LOG_LEVEL": "DEBUG"
+    },
     "go.testFlags": [
         "-v",
         "--race",
+        "--failfast",
+        "--count=1",
     ],
     "go.useLanguageServer": true,
     "go.testTimeout": "60s",
