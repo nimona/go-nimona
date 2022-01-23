@@ -187,7 +187,12 @@ generate: codegen genny mockgen
 .PHONY: test
 test:
 	@LOG_LEVEL=debug NIMONA_UPNP_DISABLE=true \
-		go test $(V) -tags="integration" -count=1 --race ./...
+		go test $(V) \
+		-tags="integration" \
+		-timeout=180s \
+		-count=1 \
+		--race \
+		./...
 
 # Run go test -bench
 .PHONY: benchmark
