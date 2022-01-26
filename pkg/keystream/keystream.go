@@ -173,8 +173,9 @@ func (inc *Inception) apply(s *State) error {
 	if inc.DelegatorSeal != nil {
 		s.DelegatorRoot = inc.DelegatorSeal.Root
 		s.Delegator = did.DID{
-			Method:   did.MethodNimona,
-			Identity: string(s.DelegatorRoot),
+			Method:       did.MethodNimona,
+			IdentityType: did.IdentityTypeKeyStream,
+			Identity:     string(s.DelegatorRoot),
 		}
 	}
 	s.Version = inc.Version
@@ -224,8 +225,9 @@ func (del *DelegationInteraction) apply(s *State) error {
 
 	s.DelegateRoots = append(s.DelegateRoots, del.DelegateSeal.Root)
 	s.Delegates = append(s.Delegates, did.DID{
-		Method:   did.MethodNimona,
-		Identity: string(del.DelegateSeal.Root),
+		Method:       did.MethodNimona,
+		IdentityType: did.IdentityTypeKeyStream,
+		Identity:     string(del.DelegateSeal.Root),
 	})
 
 	s.Sequence = del.Metadata.Sequence
@@ -261,8 +263,9 @@ func (s State) GetDID() did.DID {
 		return s.Delegator
 	}
 	return did.DID{
-		Method:   did.MethodNimona,
-		Identity: string(s.Root),
+		Method:       did.MethodNimona,
+		IdentityType: did.IdentityTypeKeyStream,
+		Identity:     string(s.Root),
 	}
 }
 

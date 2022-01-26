@@ -532,7 +532,7 @@ func (w *network) Send(
 		return ErrCannotSendToSelf
 	}
 
-	if id.Method == did.MethodNimona {
+	if id.IdentityType == did.IdentityTypeKeyStream {
 		cs, err := w.lookup(ctx, id)
 		if err != nil {
 			return fmt.Errorf("error looking up id: %w", err)

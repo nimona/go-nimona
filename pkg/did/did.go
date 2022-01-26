@@ -7,20 +7,24 @@ import (
 )
 
 const (
-	ErrInvalidDID = errors.Error("invalid DID")
+	ErrInvalidNimonaDID = errors.Error("invalid nimona DID")
 )
 
 var Empty = DID{}
 
-type Method string
-
-const (
-	MethodPublicKey Method = "key"
-	MethodNimona    Method = "nimona"
+type (
+	Method       string
+	IdentityType string
 )
 
 const (
-	didPrefix = "did:"
+	MethodNimona          Method       = "nimona"
+	IdentityTypePeer      IdentityType = "peer"
+	IdentityTypeKeyStream IdentityType = "keystream"
+)
+
+const (
+	didPrefix = "did"
 )
 
 // DID is a distributed identity structure.
@@ -28,8 +32,9 @@ const (
 // be able to be fully compliant.
 // TODO: make compatible with the full DID spec
 type DID struct {
-	Method   Method
-	Identity string
+	Method       Method
+	IdentityType IdentityType
+	Identity     string
 }
 
 func (d DID) Equals(d2 DID) bool {
@@ -51,19 +56,35 @@ func (d DID) String() string {
 	if d == Empty {
 		return ""
 	}
-	return didPrefix + string(d.Method) + ":" + d.Identity
+	return strings.Join([]string{
+		didPrefix,
+		string(d.Method),
+		string(d.IdentityType),
+		d.Identity,
+	}, ":")
 }
 
 func (d *DID) UnmarshalString(s string) error {
-	if !strings.HasPrefix(s, didPrefix) {
-		return ErrInvalidDID
+	parts := strings.Split(s, ":")
+	if len(parts) != 4 {
+		return ErrInvalidNimonaDID
 	}
-	parts := strings.SplitN(s[len(didPrefix):], ":", 2)
-	if len(parts) != 2 {
-		return ErrInvalidDID
+	if parts[0] != didPrefix {
+		return ErrInvalidNimonaDID
 	}
-	d.Method = Method(parts[0])
-	d.Identity = parts[1]
+	if Method(parts[1]) != MethodNimona {
+		return ErrInvalidNimonaDID
+	}
+	switch IdentityType(parts[2]) {
+	case IdentityTypePeer:
+		d.IdentityType = IdentityTypePeer
+	case IdentityTypeKeyStream:
+		d.IdentityType = IdentityTypeKeyStream
+	default:
+		return ErrInvalidNimonaDID
+	}
+	d.Method = MethodNimona
+	d.Identity = parts[3]
 	return nil
 }
 

@@ -91,8 +91,9 @@ func Test_FromStream_InceptionRotation(t *testing.T) {
 			Root:          object.MustMarshal(t0Inception).Hash(),
 			DelegatorRoot: "delegator-root-hash",
 			Delegator: did.DID{
-				Method:   did.MethodNimona,
-				Identity: "delegator-root-hash",
+				Method:       did.MethodNimona,
+				IdentityType: did.IdentityTypeKeyStream,
+				Identity:     "delegator-root-hash",
 			},
 			ActiveKey:     k1.PublicKey(),
 			NextKeyDigest: k2.PublicKey().Hash(),
