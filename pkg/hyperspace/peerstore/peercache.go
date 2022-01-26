@@ -168,12 +168,12 @@ func (m *PeerCache) LookupByDID(o did.DID) []*hyperspace.Announcement {
 	ps := []*hyperspace.Announcement{}
 	m.m.Range(func(_, p interface{}) bool {
 		pe := p.(entry)
-		switch o.Method {
-		case did.MethodNimona:
+		switch o.IdentityType {
+		case did.IdentityTypeKeyStream:
 			if pe.pr.Metadata.Owner.Equals(o) {
 				ps = append(ps, pe.pr)
 			}
-		case did.MethodPublicKey:
+		case did.IdentityTypePeer:
 			if pe.pr.ConnectionInfo.PublicKey.DID().Equals(o) {
 				ps = append(ps, pe.pr)
 			}

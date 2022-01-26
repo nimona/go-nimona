@@ -12,7 +12,12 @@ func TestDID_MarshalString(t *testing.T) {
 		wantMarshalErr   bool
 		wantUnmarshalErr bool
 	}{{
-		did: "did:foo:bar",
+		did: "did:nimona:peer:foo",
+	}, {
+		did: "did:nimona:keystream:foo",
+	}, {
+		did:              "did:nimona:foo:foo",
+		wantUnmarshalErr: true,
 	}, {
 		did:              "foo:bar:baz",
 		wantUnmarshalErr: true,
@@ -33,15 +38,17 @@ func TestDID_MarshalString(t *testing.T) {
 					t.Errorf("error = %v, wantErr %v", err, tt.wantMarshalErr)
 					return
 				}
-				require.Equal(t, tt.did, got)
+				if !tt.wantMarshalErr && !tt.wantUnmarshalErr {
+					require.Equal(t, tt.did, got)
+				}
 			}
 		})
 	}
 }
 
 func TestDID_Equal(t *testing.T) {
-	d1 := MustParse("did:nimona:foo")
-	d2 := MustParse("did:nimona:foo")
+	d1 := MustParse("did:nimona:peer:foo")
+	d2 := MustParse("did:nimona:peer:foo")
 	require.True(t, d1.Equals(*d2))
 	require.True(t, *d1 == *d2)
 }
