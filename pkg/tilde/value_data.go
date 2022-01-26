@@ -2,7 +2,6 @@ package tilde
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 func (v Data) Hint() Hint {
@@ -20,7 +19,6 @@ func (v *Data) UnmarshalJSON(b []byte) error {
 	iv := []byte{}
 	err := json.Unmarshal(b, &iv)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	*v = Data(iv)
