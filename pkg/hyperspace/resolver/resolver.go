@@ -273,7 +273,6 @@ func (r *resolver) Lookup(
 			}
 			// TODO verify peer?
 			for _, ann := range r.Announcements {
-				fmt.Println("*** got back peer", ann.ConnectionInfo.PublicKey.DID())
 				peers = append(peers, ann.ConnectionInfo)
 			}
 			close(done)
