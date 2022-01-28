@@ -41,24 +41,26 @@ func (e *TestEventAddComment) Apply(s *TestState) error {
 }
 
 func Test_Controller_Example(t *testing.T) {
-	c, err := NewController[TestState](
+	m, err := NewManager[TestState](
+		nil,
+		nil,
 		&TestEventAddFoo{},
 		&TestEventAddBar{},
 		&TestEventAddComment{},
 	)
 	require.NoError(t, err)
-	require.NotNil(t, c)
+	require.NotNil(t, m)
 
-	s := c.NewStream()
-	err = s.ApplyEvent(&TestEventAddFoo{})
+	c := m.NewStreamController()
+	err = c.ApplyEvent(&TestEventAddFoo{})
 	require.NoError(t, err)
-	err = s.ApplyEvent(&TestEventAddFoo{})
+	err = c.ApplyEvent(&TestEventAddFoo{})
 	require.NoError(t, err)
-	err = s.ApplyEvent(&TestEventAddBar{})
+	err = c.ApplyEvent(&TestEventAddBar{})
 	require.NoError(t, err)
-	err = s.ApplyEvent(&TestEventAddComment{Comment: "hello"})
+	err = c.ApplyEvent(&TestEventAddComment{Comment: "hello"})
 	require.NoError(t, err)
-	err = s.ApplyEvent(&TestEventAddComment{Comment: "world"})
+	err = c.ApplyEvent(&TestEventAddComment{Comment: "world"})
 	require.NoError(t, err)
 
 	require.Equal(t, TestState{
@@ -68,5 +70,30 @@ func Test_Controller_Example(t *testing.T) {
 			"hello",
 			"world",
 		},
-	}, s.GetState())
+	}, c.GetState())
+}
+
+func Test_Controller_NilState(t *testing.T) {
+	m, err := NewManager[NilState](nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, m)
+
+	c := m.NewStreamController()
+	o := Object(*object.MustMarshal(&TestEventAddFoo{}))
+	err = c.ApplyEvent(&o)
+	require.NoError(t, err)
+	o = Object(*object.MustMarshal(&TestEventAddFoo{}))
+	err = c.ApplyEvent(&o)
+	require.NoError(t, err)
+	o = Object(*object.MustMarshal(&TestEventAddBar{}))
+	err = c.ApplyEvent(&o)
+	require.NoError(t, err)
+	o = Object(*object.MustMarshal(&TestEventAddComment{Comment: "hello"}))
+	err = c.ApplyEvent(&o)
+	require.NoError(t, err)
+	o = Object(*object.MustMarshal(&TestEventAddComment{Comment: "world"}))
+	err = c.ApplyEvent(&o)
+	require.NoError(t, err)
+
+	require.Equal(t, NilState{}, c.GetState())
 }
