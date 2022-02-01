@@ -20,7 +20,7 @@ require (
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mr-tron/base58 v1.2.0
-	github.com/muesli/termenv v0.9.0
+	github.com/muesli/termenv v0.11.0
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multicodec v0.3.0
 	github.com/multiformats/go-varint v0.0.6
@@ -60,7 +60,7 @@ require (
 	github.com/libp2p/go-netroute v0.1.2 // indirect
 	github.com/libp2p/go-sockaddr v0.0.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-isatty v0.0.13 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
