@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM golang:1.18beta2-buster
 
 WORKDIR /master
 RUN git clone --depth 1 https://github.com/golang/go.git
