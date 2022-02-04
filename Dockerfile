@@ -1,4 +1,4 @@
-FROM golang:1.18beta1 AS builder
+FROM golang:1.18beta2 AS builder
 
 RUN apt-get update && apt-get install -y ca-certificates openssl
 
