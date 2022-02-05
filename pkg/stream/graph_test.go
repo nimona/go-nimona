@@ -59,7 +59,7 @@ func Test_DAG_Traverse(t *testing.T) {
 	nodes, err := g.TopologicalSort()
 	require.NoError(t, err)
 
-	require.Equal(t, len(nodes), 6)
+	require.Equal(t, 6, len(nodes))
 	require.Equal(t, []string{
 		nA.Key,
 		nB.Key,
@@ -68,4 +68,11 @@ func Test_DAG_Traverse(t *testing.T) {
 		nF.Key,
 		nD.Key,
 	}, nodes)
+
+	leaves := g.GetLeaves()
+	require.Equal(t, 2, len(leaves))
+	require.Equal(t, []string{
+		nF.Key,
+		nD.Key,
+	}, leaves)
 }
