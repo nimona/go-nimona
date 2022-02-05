@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ghodss/yaml"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/sqlobjectstore"
@@ -73,8 +72,6 @@ func (s *controller) Apply(v interface{}) (tilde.Digest, error) {
 		// add the root to the graph
 		s.graph.Add(h, o.Metadata, nil)
 		// store the object
-		fmt.Println("------ " + o.Hash().String() + ":")
-		print(o)
 		err := s.objectStore.Put(o)
 		if err != nil {
 			return tilde.EmptyDigest, fmt.Errorf("failed to store object: %w", err)
@@ -99,39 +96,29 @@ func (s *controller) Apply(v interface{}) (tilde.Digest, error) {
 		}
 	}
 
-	// gather the object's parents
-	pm := map[tilde.Digest]struct{}{}
-	for _, ps := range o.Metadata.Parents {
+	// gather all nodes until the graph's root
+	pns := map[tilde.Digest]struct{}{}
+	for _, pn := range o.Metadata.Parents.All() {
+		pns[pn] = struct{}{}
+		ps := s.graph.nodesToRoot(pn)
 		for _, p := range ps {
-			pm[p] = struct{}{}
+			pns[p] = struct{}{}
 		}
-	}
-	ps := []tilde.Digest{}
-	for p := range pm {
-		ps = append(ps, p)
 	}
 
 	// verify or set the object's sequence
 	if o.Metadata.Sequence == 0 {
-		// calculate number of total parent nodes in all paths
-		tp := len(ps)
-		for _, p := range ps {
-			tp += s.graph.countToRoot(p)
-		}
-		o.Metadata.Sequence = uint64(tp)
+		o.Metadata.Sequence = uint64(len(pns))
 	}
 
 	// add it to the graph
-	s.graph.Add(o.Hash(), o.Metadata, ps)
+	s.graph.Add(o.Hash(), o.Metadata, o.Metadata.Parents.All())
 
 	// store the object
 	err := s.objectStore.Put(o)
 	if err != nil {
 		return tilde.EmptyDigest, fmt.Errorf("failed to store object: %w", err)
 	}
-
-	fmt.Println("\n------ " + o.Hash().String() + ":")
-	print(o)
 
 	// add the object to the metadata list
 	oi := GetObjectInfo(o)
@@ -152,16 +139,4 @@ func (s *controller) GetObjectDigests() ([]tilde.Digest, error) {
 
 func (s *controller) GetStreamRoot() tilde.Digest {
 	return tilde.EmptyDigest
-}
-
-func print(o *object.Object) {
-	m, err := o.MarshalMap()
-	if err != nil {
-		panic(err)
-	}
-	y, err := yaml.Marshal(m)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(y))
 }

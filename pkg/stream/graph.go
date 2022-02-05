@@ -74,9 +74,15 @@ func (g *Graph[Key, Value]) Verify() error {
 // TopologicalSort returns a slice of nodes in topological order.
 // If there are cycles in the graph, it will return an error.
 //
-// The algorithm is based on Kahn's algorithm, but has been modified to return
-// consistent order for nodes with the same number of adjacent nodes.
-// In case of ties, the order is determined by the following checks:
+// The algorithm is based on Kahn's algorithm, but has been modified to ensure
+// a consistent linear ordering given the same graph, and is not designed to
+// be used for conflict resolution or consensus as it can be abused.
+// The issue with the original algorithm is that it does not define which
+// node should be selected when there are multiple nodes with the same
+// dependency count.
+//
+// To get around this, in case of ties, the order is determined by the
+// following checks:
 // a. The number of nodes in the path from the node to the root of the graph.
 // b. The number of nodes in all paths from the node to all leaf nodes.
 // c. Alphanumeric ordering of the node key.
@@ -190,18 +196,35 @@ func (g *Graph[Key, Value]) GetLeaves() []Key {
 func (g *Graph[Key, Value]) countToRoot(key Key) int {
 	g.lock.RLock()
 	defer g.lock.RUnlock()
+	return len(g.nodesToRoot(key))
+}
+
+func (g *Graph[Key, Value]) nodesToRoot(key Key) []Key {
+	g.lock.RLock()
+	defer g.lock.RUnlock()
 	n, ok := g.nodes[key]
 	if !ok {
-		return 0
+		return nil
 	}
 	if n.Parents == nil {
-		return 0
+		return nil
 	}
-	count := 1
-	for _, parent := range n.Parents {
-		count += g.countToRoot(parent)
+	nodes := map[Key]struct{}{}
+	for _, p := range n.Parents {
+		nodes[p] = struct{}{}
+		pn := g.nodesToRoot(p)
+		for _, n := range pn {
+			nodes[n] = struct{}{}
+		}
 	}
-	return count
+	keys := []Key{}
+	for k := range nodes {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return i > j
+	})
+	return keys
 }
 
 type kv[Key keyable] struct {
