@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -58,14 +57,13 @@ func Test_DAG_Traverse(t *testing.T) {
 	g.AddNode(nA)
 
 	nodes, err := g.TopologicalSort()
-	fmt.Println(nodes)
 	require.NoError(t, err)
 
 	require.Equal(t, len(nodes), 6)
 	require.Equal(t, []string{
 		nA.Key,
-		nC.Key,
 		nB.Key,
+		nC.Key,
 		nE.Key,
 		nF.Key,
 		nD.Key,
