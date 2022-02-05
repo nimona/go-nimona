@@ -75,4 +75,11 @@ func Test_DAG_Traverse(t *testing.T) {
 		nF.Key,
 		nD.Key,
 	}, leaves)
+
+	require.Equal(t, 0, g.countToRoot(nA.Key))
+	require.Equal(t, 1, g.countToRoot(nB.Key))
+	require.Equal(t, 1, g.countToRoot(nC.Key))
+	require.Equal(t, 1, g.countToRoot(nD.Key))
+	require.Equal(t, 3, g.countToRoot(nE.Key))
+	require.Equal(t, 4, g.countToRoot(nF.Key))
 }
