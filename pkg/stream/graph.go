@@ -11,7 +11,7 @@ var errNodeNotFound = errors.New("node not found")
 
 type (
 	keyable interface {
-		string
+		~string
 	}
 	Node[Key keyable, Value any] struct {
 		Key     Key
@@ -155,6 +155,36 @@ func (g *Graph[Key, Value]) TopologicalSort() ([]Key, error) {
 	}
 
 	return linearOrder, nil
+}
+
+// GetLeafNodes returns a slice of the nodes which do not appear in any other
+// node's parents.
+func (g *Graph[Key, Value]) GetLeaves() []Key {
+	g.lock.RLock()
+	defer g.lock.RUnlock()
+
+	ps := map[Key]int{}
+	for _, n := range g.nodes {
+		ps[n.Key] = 0
+	}
+	for _, n := range g.nodes {
+		for _, v := range n.Parents {
+			ps[v]++
+		}
+	}
+
+	leaves := []Key{}
+	for k, v := range ps {
+		if v == 0 {
+			leaves = append(leaves, k)
+		}
+	}
+
+	sort.Slice(leaves, func(i, j int) bool {
+		return i > j
+	})
+
+	return leaves
 }
 
 func (g *Graph[Key, Value]) countToRoot(key Key) int {
