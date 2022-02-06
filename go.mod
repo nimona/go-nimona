@@ -23,14 +23,14 @@ require (
 	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mr-tron/base58 v1.2.0
-	github.com/muesli/termenv v0.9.0
+	github.com/muesli/termenv v0.11.0
 	github.com/multiformats/go-multibase v0.0.3
 	github.com/multiformats/go-multicodec v0.4.0
 	github.com/multiformats/go-varint v0.0.6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/prometheus/client_golang v1.12.0
-	github.com/pyroscope-io/pyroscope v0.7.2
+	github.com/prometheus/client_golang v1.12.1
+	github.com/pyroscope-io/pyroscope v0.8.0
 	github.com/rs/xid v1.3.0
 	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0
@@ -38,10 +38,10 @@ require (
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/vcaesar/murmur v0.21.0
 	github.com/xujiajun/nutsdb v0.6.0
-	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce
-	golang.org/x/tools v0.1.8
+	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
+	golang.org/x/tools v0.1.9
 	gopkg.in/yaml.v2 v2.4.0
-	modernc.org/sqlite v1.14.5
+	modernc.org/sqlite v1.14.6
 )
 
 require (
@@ -64,7 +64,7 @@ require (
 	github.com/libp2p/go-netroute v0.1.2 // indirect
 	github.com/libp2p/go-sockaddr v0.0.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-isatty v0.0.13 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
@@ -93,8 +93,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
 	modernc.org/cc/v3 v3.35.22 // indirect
-	modernc.org/ccgo/v3 v3.15.1 // indirect
-	modernc.org/libc v1.14.1 // indirect
+	modernc.org/ccgo/v3 v3.15.13 // indirect
+	modernc.org/libc v1.14.5 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
 	modernc.org/memory v1.0.5 // indirect
 	modernc.org/opt v0.1.1 // indirect
