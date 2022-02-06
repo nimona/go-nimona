@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1635635220943,
+  "lastUpdate": 1644147864702,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6696,6 +6696,60 @@ window.BENCHMARK_DATA = {
             "value": 54750,
             "unit": "ns/op",
             "extra": "20985 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "320fbd51c286ebafd1133ab469870c0514d0a315",
+          "message": "chore(makefile): bump gomock to v1.6.0",
+          "timestamp": "2022-02-06T11:43:03Z",
+          "tree_id": "d2df401c49f796f27d19656b471c42c88d4c9055",
+          "url": "https://github.com/nimona/go-nimona/commit/320fbd51c286ebafd1133ab469870c0514d0a315"
+        },
+        "date": 1644147863785,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 5371327,
+            "unit": "ns/op",
+            "extra": "201 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 304598576,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 2794688144,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1496806,
+            "unit": "ns/op",
+            "extra": "718 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 47882,
+            "unit": "ns/op",
+            "extra": "25966 times\n2 procs"
           }
         ]
       }
