@@ -2,15 +2,21 @@
     "name": "go-master",
     "dockerFile": "Dockerfile",
     "extensions": [
-		"golang.go"
-	],
+        "golang.go"
+    ],
     "settings": {
-        "go.useLanguageServer": true
+        "go.useLanguageServer": true,
+        // until golangci-lint fixes the issues with go1.18 we are switching
+        // back to golint
+        "go.lintTool": "golint",
+        "go.lintFlags": [
+            "--fast"
+        ],
     },
     "postCreateCommand": "go mod download",
     "runArgs": [
         "--cap-add=SYS_PTRACE",
         "--security-opt",
         "seccomp=unconfined",
-    ]
+    ],
 }
