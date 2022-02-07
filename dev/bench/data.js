@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1644269157956,
+  "lastUpdate": 1644275692892,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6804,6 +6804,60 @@ window.BENCHMARK_DATA = {
             "value": 50929,
             "unit": "ns/op",
             "extra": "23666 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "3dd6ba7a938a100cf8d4350ff211eb4fc1dcaf06",
+          "message": "chore(deps): bump actions/setup-go from 2.1.4 to 2.1.5\n\nBumps [actions/setup-go](https://github.com/actions/setup-go) from 2.1.4 to 2.1.5.\n- [Release notes](https://github.com/actions/setup-go/releases)\n- [Commits](https://github.com/actions/setup-go/compare/v2.1.4...v2.1.5)\n\n---\nupdated-dependencies:\n- dependency-name: actions/setup-go\n  dependency-type: direct:production\n  update-type: version-update:semver-patch\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2022-02-07T23:13:25Z",
+          "tree_id": "82b76465ff2bb6a9c287bddd0c46062991d78b06",
+          "url": "https://github.com/nimona/go-nimona/commit/3dd6ba7a938a100cf8d4350ff211eb4fc1dcaf06"
+        },
+        "date": 1644275691245,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 6277967,
+            "unit": "ns/op",
+            "extra": "187 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 313820318,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 2755282532,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1399055,
+            "unit": "ns/op",
+            "extra": "733 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 41413,
+            "unit": "ns/op",
+            "extra": "28726 times\n2 procs"
           }
         ]
       }
