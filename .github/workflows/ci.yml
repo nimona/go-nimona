@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install Go
-      uses: actions/setup-go@v2.1.4
+      uses: actions/setup-go@v2.1.5
       with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -76,7 +76,7 @@ jobs:
     if: github.ref != 'refs/heads/main'
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -127,7 +127,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -146,7 +146,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -171,7 +171,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -201,7 +201,7 @@ jobs:
       - build
     steps:
       - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -217,7 +217,7 @@ jobs:
       - build
     steps:
       - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -233,7 +233,7 @@ jobs:
       - build
     steps:
       - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -258,7 +258,7 @@ jobs:
         id: setup-ndk
         with:
           ndk-version: r21d
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -277,7 +277,7 @@ jobs:
       - build
     steps:
       - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -294,7 +294,7 @@ jobs:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/v')
     steps:
       - name: Set up Go
-        uses: actions/setup-go@v2.1.4
+        uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -340,7 +340,7 @@ jobs:
       - build
     steps:
       - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -368,7 +368,7 @@ jobs:
       - build
     steps:
       - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -396,7 +396,7 @@ jobs:
       - build
     steps:
       - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -433,7 +433,7 @@ jobs:
         id: setup-ndk
         with:
           ndk-version: r21d
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
@@ -464,7 +464,7 @@ jobs:
       - build
     steps:
       - uses: actions/checkout@v2.4.0
-      - uses: actions/setup-go@v2.1.4
+      - uses: actions/setup-go@v2.1.5
         with:
           stable: "false"
           go-version: "1.18.0-beta2"
