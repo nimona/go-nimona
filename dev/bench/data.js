@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1644276407697,
+  "lastUpdate": 1644277073357,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6912,6 +6912,60 @@ window.BENCHMARK_DATA = {
             "value": 52692,
             "unit": "ns/op",
             "extra": "22934 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "b9350b7491f11ffdbebe5fc687b40c2e7b045aae",
+          "message": "chore(deps): bump paambaati/codeclimate-action from 2.7.5 to 3.0.0\n\nBumps [paambaati/codeclimate-action](https://github.com/paambaati/codeclimate-action) from 2.7.5 to 3.0.0.\n- [Release notes](https://github.com/paambaati/codeclimate-action/releases)\n- [Changelog](https://github.com/paambaati/codeclimate-action/blob/master/CHANGELOG.md)\n- [Commits](https://github.com/paambaati/codeclimate-action/compare/v2.7.5...v3.0.0)\n\n---\nupdated-dependencies:\n- dependency-name: paambaati/codeclimate-action\n  dependency-type: direct:production\n  update-type: version-update:semver-major\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2022-02-07T23:36:08Z",
+          "tree_id": "16c0a4a086f92bf61656cc8fba19b07412ad7475",
+          "url": "https://github.com/nimona/go-nimona/commit/b9350b7491f11ffdbebe5fc687b40c2e7b045aae"
+        },
+        "date": 1644277072288,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 7136225,
+            "unit": "ns/op",
+            "extra": "151 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 396461652,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3681236116,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 2006638,
+            "unit": "ns/op",
+            "extra": "614 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 59402,
+            "unit": "ns/op",
+            "extra": "20298 times\n2 procs"
           }
         ]
       }
