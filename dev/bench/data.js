@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1644147864702,
+  "lastUpdate": 1644269157956,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6750,6 +6750,60 @@ window.BENCHMARK_DATA = {
             "value": 47882,
             "unit": "ns/op",
             "extra": "25966 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "b258e5a898f6f2f02abffbbac21664653b3d83a1",
+          "message": "chore(deps): bump actions/checkout from 2.3.4 to 2.4.0\n\nBumps [actions/checkout](https://github.com/actions/checkout) from 2.3.4 to 2.4.0.\n- [Release notes](https://github.com/actions/checkout/releases)\n- [Changelog](https://github.com/actions/checkout/blob/main/CHANGELOG.md)\n- [Commits](https://github.com/actions/checkout/compare/v2.3.4...v2.4.0)\n\n---\nupdated-dependencies:\n- dependency-name: actions/checkout\n  dependency-type: direct:production\n  update-type: version-update:semver-minor\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2022-02-07T21:24:23Z",
+          "tree_id": "0922f9d2269ae53ab66c26cd87f6ac1c927c9d33",
+          "url": "https://github.com/nimona/go-nimona/commit/b258e5a898f6f2f02abffbbac21664653b3d83a1"
+        },
+        "date": 1644269156907,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 7829447,
+            "unit": "ns/op",
+            "extra": "150 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 372917177,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3446933020,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1598138,
+            "unit": "ns/op",
+            "extra": "651 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 50929,
+            "unit": "ns/op",
+            "extra": "23666 times\n2 procs"
           }
         ]
       }
