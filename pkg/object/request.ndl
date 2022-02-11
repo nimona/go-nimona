@@ -8,4 +8,5 @@ signed object nimona.io/object.Request {
 signed object nimona.io/object.Response {
     requestID string
     optional object object type=nimona.io/object.Object
+    found bool
 }
