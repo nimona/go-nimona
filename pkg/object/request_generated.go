@@ -20,4 +20,5 @@ type Response struct {
 	Metadata  Metadata `nimona:"@metadata:m,type=nimona.io/Response"`
 	RequestID string   `nimona:"requestID:s"`
 	Object    *Object  `nimona:"object:m"`
+	Found     bool     `nimona:"found:b"`
 }
