@@ -13,6 +13,11 @@ func Unmarshal(o *Object, out interface{}) error {
 	if out == nil || o == nil {
 		return nil
 	}
+	// TODO: is there a better way to do this? Do we need to copy the values?
+	if v, ok := out.(*Object); ok {
+		*v = *o
+		return nil
+	}
 	v := reflect.ValueOf(out)
 	err := unmarshalSpecials(o, v)
 	if err != nil {
