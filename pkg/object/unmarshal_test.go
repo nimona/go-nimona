@@ -143,3 +143,20 @@ func TestUnmarshal(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, e, g)
 }
+
+func TestUnmarshal_IntoObject(t *testing.T) {
+	from := &Object{
+		Type: "some-type",
+		Metadata: Metadata{
+			Timestamp: "foo",
+		},
+		Data: tilde.Map{
+			"string": tilde.String("string"),
+			"bool":   tilde.Bool(true),
+		},
+	}
+	to := &Object{}
+	err := Unmarshal(from, to)
+	assert.NoError(t, err)
+	assert.Equal(t, from, to)
+}
