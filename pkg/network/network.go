@@ -27,6 +27,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
@@ -131,6 +132,7 @@ type (
 		relays     []*peer.ConnectionInfo
 		closeFns   []closeFn
 		closeMutex sync.Mutex
+		store      objectstore.Store
 	}
 	// closeFn are functions that will be called during the network's Close
 	closeFn func() error
@@ -141,6 +143,7 @@ func New(
 	ctx context.Context,
 	nnet net.Network,
 	peerKey crypto.PrivateKey,
+	stores ...objectstore.Store,
 ) Network {
 	w := &network{
 		inboxes:    NewEnvelopePubSub(),
@@ -162,12 +165,20 @@ func New(
 		w.peerKey = k
 	}
 
+	subFilters := []string{
+		DataForwardRequestType,
+		DataForwardEnvelopeType,
+	}
+
+	// TODO(geoah): move to functional options
+	if len(stores) == 1 {
+		w.store = stores[0]
+		subFilters = append(subFilters, object.RequestType)
+	}
+
 	// subscribe to data forward type
 	subs := w.inboxes.Subscribe(
-		FilterByObjectType(
-			DataForwardRequestType,
-			DataForwardEnvelopeType,
-		),
+		FilterByObjectType(subFilters...),
 	)
 
 	go w.handleObjects(subs)
@@ -394,8 +405,31 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 
 		// TODO verify signature
 		logger.Debug("handling object")
-		// nolint: gocritic // don't care about singleCaseSwitch here
 		switch e.Payload.Type {
+		case object.RequestType:
+			req := &object.Request{}
+			err := object.Unmarshal(e.Payload, req)
+			if err != nil {
+				logger.Warn(
+					"unable to unmarshal request",
+					log.Error(err),
+				)
+				continue
+			}
+			obj, _ := w.store.Get(req.ObjectHash)
+			res := &object.Response{
+				Metadata:  object.Metadata{},
+				RequestID: req.RequestID,
+				Object:    obj,
+				Found:     obj != nil,
+			}
+			go w.Send(
+				context.New(
+					context.WithTimeout(time.Second),
+				),
+				object.MustMarshal(res),
+				e.Sender,
+			)
 		case DataForwardRequestType:
 			// forward requests are just decoded to get the recipient and their
 			// payload is sent to them

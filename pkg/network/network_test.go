@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +16,7 @@ import (
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
@@ -476,6 +478,53 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 		err = n2.Close()
 		require.NoError(b, err)
 	}
+}
+
+func TestNetwork_RequestRespond(t *testing.T) {
+	k1, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
+	k2, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
+	s1 := objectstoremock.NewMockStore(gomock.NewController(t))
+	s2 := objectstoremock.NewMockStore(gomock.NewController(t))
+
+	n1 := New(context.Background(), net.New(k1), k1, s1)
+	n2 := New(context.Background(), net.New(k2), k2, s2)
+
+	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
+	require.NoError(t, err)
+	defer l1.Close()
+
+	l2, err := n2.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
+	require.NoError(t, err)
+	defer l2.Close()
+
+	testObj := &object.Object{
+		Type: "foo",
+		Data: tilde.Map{
+			"foo": tilde.String("bar"),
+		},
+	}
+
+	s1.EXPECT().Get(testObj.Hash()).Return(testObj, nil)
+
+	res := &object.Response{}
+	err = n2.Send(
+		context.New(),
+		object.MustMarshal(&object.Request{
+			Metadata:   object.Metadata{},
+			RequestID:  "foo",
+			ObjectHash: testObj.Hash(),
+		}),
+		n1.GetConnectionInfo().PublicKey.DID(),
+		SendWithConnectionInfo(n1.GetConnectionInfo()),
+		SendWithResponse(res, time.Second),
+	)
+	require.NoError(t, err)
+	require.Equal(t, testObj, res.Object)
+	require.Equal(t, true, res.Found)
 }
 
 type testResolver struct {
