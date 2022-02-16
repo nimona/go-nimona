@@ -40,19 +40,19 @@ func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 	return m.recorder
 }
 
-// LookupPeer mocks base method.
-func (m *MockResolver) LookupPeer(ctx context.Context, id did.DID) ([]*peer.ConnectionInfo, error) {
+// LookupByDID mocks base method.
+func (m *MockResolver) LookupByDID(ctx context.Context, id did.DID) ([]*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LookupPeer", ctx, id)
+	ret := m.ctrl.Call(m, "LookupByDID", ctx, id)
 	ret0, _ := ret[0].([]*peer.ConnectionInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// LookupPeer indicates an expected call of LookupPeer.
-func (mr *MockResolverMockRecorder) LookupPeer(ctx, id interface{}) *gomock.Call {
+// LookupByDID indicates an expected call of LookupByDID.
+func (mr *MockResolverMockRecorder) LookupByDID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupPeer", reflect.TypeOf((*MockResolver)(nil).LookupPeer), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupByDID", reflect.TypeOf((*MockResolver)(nil).LookupByDID), ctx, id)
 }
 
 // MockNetwork is a mock of Network interface.

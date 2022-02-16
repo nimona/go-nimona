@@ -116,12 +116,12 @@ func TestResolver_Integration(t *testing.T) {
 	)
 
 	// lookup by content
-	pr, err := res.Lookup(context.New(), LookupByDigest("bar"))
+	pr, err := res.LookupByContent(context.New(), "bar")
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
 
 	// lookup by owner
-	pr, err = res.Lookup(context.New(), LookupByDID(p2.PublicKey().DID()))
+	pr, err = res.LookupByDID(context.New(), p2.PublicKey().DID())
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{
 		pr2.ConnectionInfo,
@@ -141,7 +141,7 @@ func TestResolver_Integration(t *testing.T) {
 		time.Sleep(250 * time.Millisecond)
 
 		// lookup by hash
-		pr, err := res.Lookup(context.New(), LookupByDigest(obj1hash))
+		pr, err := res.LookupByContent(context.New(), obj1hash)
 		require.NoError(t, err)
 		assert.Len(t, pr, 1)
 		assert.Equal(t,

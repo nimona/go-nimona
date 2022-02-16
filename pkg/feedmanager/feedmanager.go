@@ -205,13 +205,13 @@ func (m *feedManager) createFeed(
 				if _, err := m.objectstore.Get(objHash); err == nil {
 					continue
 				}
-				peers, err := m.resolver.Lookup(
+				peers, err := m.resolver.LookupByContent(
 					context.New(
 						context.WithParent(ctx),
 						context.WithTimeout(time.Second),
 					),
 					// TODO we should at least be caching possible peers
-					resolver.LookupByDigest(objHash),
+					objHash,
 				)
 				if err != nil {
 					// TODO log
@@ -254,14 +254,14 @@ func (m *feedManager) createFeed(
 	}()
 
 	// find other providers
-	peers, err := m.resolver.Lookup(
+	peers, err := m.resolver.LookupByDID(
 		context.New(
 			context.WithParent(ctx),
 			context.WithTimeout(time.Second*5),
 		),
 		// TODO same as earlier we are now looking up all peers with the same
 		// owner rather than the ones providing the same stream
-		resolver.LookupByDID(id),
+		id,
 	)
 	if err != nil {
 		return fmt.Errorf("error looking for other feed providers, %w", err)

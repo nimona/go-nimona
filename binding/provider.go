@@ -277,9 +277,9 @@ func (p *Provider) RequestStream(
 	ctx context.Context,
 	rootHash tilde.Digest,
 ) error {
-	recipients, err := p.resolver.Lookup(
+	recipients, err := p.resolver.LookupByContent(
 		ctx,
-		resolver.LookupByDigest(rootHash),
+		rootHash,
 	)
 	if err != nil {
 		return err

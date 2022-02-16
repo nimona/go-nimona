@@ -1,7 +1,6 @@
 package resolver
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -35,13 +34,13 @@ const (
 
 type (
 	Resolver interface {
-		Lookup(
-			ctx context.Context,
-			opts ...LookupOption,
-		) ([]*peer.ConnectionInfo, error)
-		LookupPeer(
+		LookupByDID(
 			ctx context.Context,
 			id did.DID,
+		) ([]*peer.ConnectionInfo, error)
+		LookupByContent(
+			ctx context.Context,
+			cid tilde.Digest,
 		) ([]*peer.ConnectionInfo, error)
 	}
 	resolver struct {
@@ -163,69 +162,73 @@ func New(
 	return r
 }
 
-func (r *resolver) LookupPeer(
+func (r *resolver) LookupByDID(
 	ctx context.Context,
 	id did.DID,
-) ([]*peer.ConnectionInfo, error) {
-	return r.Lookup(ctx, LookupByDID(id))
-}
-
-// Lookup finds and returns peer infos from a fingerprint
-// TODO consider returning peers synchronously
-func (r *resolver) Lookup(
-	ctx context.Context,
-	opts ...LookupOption,
 ) ([]*peer.ConnectionInfo, error) {
 	if len(r.bootstrapPeers) == 0 {
 		return nil, errors.Error("no peers to ask")
 	}
 
 	logger := log.FromContext(ctx).With(
-		log.String("method", "resolver.Lookup"),
+		log.String("method", "resolver.LookupByDID"),
 	)
 	logger.Debug("looking up")
 
-	opt := ParseLookupOptions(opts...)
-
-	// send content requests to recipients
-	var reqObject *object.Object
-	var err error
 	nonce := rand.String(12)
-	if !opt.DID.IsEmpty() {
-		req := &hyperspace.LookupByDIDRequest{
-			Metadata: object.Metadata{
-				Owner: r.peerKey.PublicKey().DID(),
-			},
-			Nonce: nonce,
-			Owner: opt.DID,
-		}
-		reqObject, err = object.Marshal(req)
-		if err != nil {
-			return nil, err
-		}
-	} else if !opt.Digest.IsEmpty() {
-		req := &hyperspace.LookupByDigestRequest{
-			Metadata: object.Metadata{
-				Owner: r.peerKey.PublicKey().DID(),
-			},
-			Nonce:  nonce,
-			Digest: opt.Digest,
-		}
-		reqObject, err = object.Marshal(req)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, fmt.Errorf("missing lookup options")
+	req := &hyperspace.LookupByDIDRequest{
+		Metadata: object.Metadata{
+			Owner: r.peerKey.PublicKey().DID(),
+		},
+		Nonce: nonce,
+		Owner: id,
+	}
+	reqObject, err := object.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	return r.lookup(ctx, reqObject)
+}
+
+func (r *resolver) LookupByContent(
+	ctx context.Context,
+	cid tilde.Digest,
+) ([]*peer.ConnectionInfo, error) {
+	if len(r.bootstrapPeers) == 0 {
+		return nil, errors.Error("no peers to ask")
 	}
 
-	responses := make(chan *object.Object)
+	logger := log.FromContext(ctx).With(
+		log.String("method", "resolver.LookupByContent"),
+	)
+	logger.Debug("looking up")
 
+	nonce := rand.String(12)
+	req := &hyperspace.LookupByDigestRequest{
+		Metadata: object.Metadata{
+			Owner: r.peerKey.PublicKey().DID(),
+		},
+		Nonce:  nonce,
+		Digest: cid,
+	}
+	reqObject, err := object.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	return r.lookup(ctx, reqObject)
+}
+
+func (r *resolver) lookup(
+	ctx context.Context,
+	reqObject *object.Object,
+) ([]*peer.ConnectionInfo, error) {
+	responses := make(chan *object.Object)
+	nonce := reqObject.Data["nonce"].(tilde.String)
 	go func() {
 		for _, bp := range r.bootstrapPeers {
 			conn, err := r.network.Dial(ctx, bp)
 			if err != nil {
-				logger.Debug("failed to dial peer", log.Error(err))
+				// logger.Debug("failed to dial peer", log.Error(err))
 				continue
 			}
 			// read all objects from the connection
@@ -239,7 +242,7 @@ func (r *resolver) Lookup(
 					// find any responses
 					v := o.Data["nonce"]
 					rn, ok := v.(tilde.String)
-					if ok && string(rn) == nonce {
+					if ok && rn == nonce {
 						// and write them to the channel
 						responses <- o
 					}
@@ -250,13 +253,13 @@ func (r *resolver) Lookup(
 				reqObject,
 			)
 			if err != nil {
-				logger.Debug("could send request to peer", log.Error(err))
+				// logger.Debug("could send request to peer", log.Error(err))
 				continue
 			}
-			logger.Debug(
-				"asked peer",
-				log.String("peer", bp.PublicKey.String()),
-			)
+			// logger.Debug(
+			// 	"asked peer",
+			// 	log.String("peer", bp.PublicKey.String()),
+			// )
 		}
 	}()
 
