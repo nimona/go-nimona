@@ -531,7 +531,7 @@ type testResolver struct {
 	peers map[string][]*peer.ConnectionInfo
 }
 
-func (r *testResolver) LookupPeer(
+func (r *testResolver) LookupByDID(
 	ctx context.Context,
 	id did.DID,
 ) ([]*peer.ConnectionInfo, error) {

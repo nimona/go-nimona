@@ -10,8 +10,8 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	context "nimona.io/pkg/context"
 	did "nimona.io/pkg/did"
-	resolver "nimona.io/pkg/hyperspace/resolver"
 	peer "nimona.io/pkg/peer"
+	tilde "nimona.io/pkg/tilde"
 )
 
 // MockResolver is a mock of Resolver interface.
@@ -37,37 +37,32 @@ func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 	return m.recorder
 }
 
-// Lookup mocks base method.
-func (m *MockResolver) Lookup(ctx context.Context, opts ...resolver.LookupOption) ([]*peer.ConnectionInfo, error) {
+// LookupByContent mocks base method.
+func (m *MockResolver) LookupByContent(ctx context.Context, cid tilde.Digest) ([]*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Lookup", varargs...)
+	ret := m.ctrl.Call(m, "LookupByContent", ctx, cid)
 	ret0, _ := ret[0].([]*peer.ConnectionInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Lookup indicates an expected call of Lookup.
-func (mr *MockResolverMockRecorder) Lookup(ctx interface{}, opts ...interface{}) *gomock.Call {
+// LookupByContent indicates an expected call of LookupByContent.
+func (mr *MockResolverMockRecorder) LookupByContent(ctx, cid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Lookup", reflect.TypeOf((*MockResolver)(nil).Lookup), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupByContent", reflect.TypeOf((*MockResolver)(nil).LookupByContent), ctx, cid)
 }
 
-// LookupPeer mocks base method.
-func (m *MockResolver) LookupPeer(ctx context.Context, id did.DID) ([]*peer.ConnectionInfo, error) {
+// LookupByDID mocks base method.
+func (m *MockResolver) LookupByDID(ctx context.Context, id did.DID) ([]*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LookupPeer", ctx, id)
+	ret := m.ctrl.Call(m, "LookupByDID", ctx, id)
 	ret0, _ := ret[0].([]*peer.ConnectionInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// LookupPeer indicates an expected call of LookupPeer.
-func (mr *MockResolverMockRecorder) LookupPeer(ctx, id interface{}) *gomock.Call {
+// LookupByDID indicates an expected call of LookupByDID.
+func (mr *MockResolverMockRecorder) LookupByDID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupPeer", reflect.TypeOf((*MockResolver)(nil).LookupPeer), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LookupByDID", reflect.TypeOf((*MockResolver)(nil).LookupByDID), ctx, id)
 }

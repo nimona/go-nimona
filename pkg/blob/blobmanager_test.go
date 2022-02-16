@@ -63,7 +63,7 @@ func Test_requester_Request(t *testing.T) {
 				ctrl := gomock.NewController(t)
 				mr := resolvermock.NewMockResolver(ctrl)
 				mr.EXPECT().
-					Lookup(gomock.Any(), gomock.Any()).
+					LookupByContent(gomock.Any(), gomock.Any()).
 					Return([]*peer.ConnectionInfo{pr}, nil)
 				return mr
 			},

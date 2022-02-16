@@ -12,7 +12,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
-	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -81,12 +80,12 @@ func Test_Manager_Integration(t *testing.T) {
 	// wait until resolver sees provider
 	found := false
 	for i := 0; i < 10; i++ {
-		r, err := p1.Resolver().Lookup(
+		r, err := p1.Resolver().LookupByContent(
 			context.New(
 				context.WithCorrelationID("p1.resolver.lookup"),
 				context.WithTimeout(time.Second),
 			),
-			resolver.LookupByDigest(o0.Hash()),
+			o0.Hash(),
 		)
 		if err != nil {
 			continue

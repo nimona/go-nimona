@@ -177,9 +177,9 @@ func main() {
 			context.WithParent(ctx),
 			context.WithTimeout(time.Second*5),
 		)
-		recipients, err := res.Lookup(
+		recipients, err := res.LookupByDID(
 			sctx,
-			resolver.LookupByDID(peerKey.DID()),
+			peerKey.DID(),
 		)
 		if err != nil {
 			return err

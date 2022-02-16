@@ -435,9 +435,9 @@ func main() {
 
 		if delegateRequestHash != "" {
 			drh := tilde.Digest(delegateRequestHash)
-			ps, err := h.daemon.Resolver().Lookup(
+			ps, err := h.daemon.Resolver().LookupByContent(
 				context.New(context.WithTimeout(5*time.Second)),
-				resolver.LookupByDigest(drh),
+				drh,
 			)
 
 			if err != nil || len(ps) == 0 {
@@ -449,7 +449,7 @@ func main() {
 				dro, err := h.daemon.ObjectManager().Request(
 					context.New(context.WithTimeout(time.Second)),
 					drh,
-					ps[0],
+					ps[0].Metadata.Owner,
 				)
 				if err != nil {
 					values.DelegationRequestError = "Could not fetch request"

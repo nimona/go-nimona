@@ -80,7 +80,7 @@ var (
 
 type (
 	Resolver interface {
-		LookupPeer(
+		LookupByDID(
 			ctx context.Context,
 			id did.DID,
 		) ([]*peer.ConnectionInfo, error)
@@ -232,7 +232,7 @@ func (w *network) lookup(
 	}
 	var errs error
 	for _, r := range resolvers {
-		cs, err := r.LookupPeer(ctx, id)
+		cs, err := r.LookupByDID(ctx, id)
 		if err != nil {
 			errs = multierror.Append(errs, err)
 			continue
