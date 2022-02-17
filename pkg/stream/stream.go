@@ -16,7 +16,8 @@ type (
 		GetStreamController(tilde.Digest) Controller
 	}
 	Controller interface {
-		Apply(interface{}) (tilde.Digest, error)
+		Apply(interface{}) error
+		Insert(interface{}) (tilde.Digest, error)
 		GetStreamInfo() StreamInfo
 		GetStreamRoot() tilde.Digest
 	}
