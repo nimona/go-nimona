@@ -12,14 +12,17 @@ import (
 
 type (
 	Manager interface {
-		NewStreamController() Controller
-		GetStreamController(tilde.Digest) Controller
+		NewController() Controller
+		GetController(tilde.Digest) (Controller, error)
+		// Sync(context.Context, tilde.Digest) error
 	}
 	Controller interface {
 		Apply(interface{}) error
 		Insert(interface{}) (tilde.Digest, error)
 		GetStreamInfo() StreamInfo
 		GetStreamRoot() tilde.Digest
+		// Sync(context.Context) error
+		// Subscribe(context.Context) (object.ReadCloser, error)
 	}
 )
 
@@ -28,8 +31,8 @@ type (
 		Apply(*State) error
 	}
 	StatefulManager[State any] interface {
-		NewStreamController() StatefulController[State]
-		GetStreamController(tilde.Digest) StatefulController[State]
+		NewController() StatefulController[State]
+		GetController(tilde.Digest) StatefulController[State]
 	}
 	StatefulController[State any] interface {
 		Apply(Applicable[State]) error

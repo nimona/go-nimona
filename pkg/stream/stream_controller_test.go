@@ -186,4 +186,26 @@ func Test_Controller(t *testing.T) {
 			nDh,
 		}, gotOrder)
 	})
+
+	fmt.Println("-------------")
+
+	t.Run("controller from manager", func(t *testing.T) {
+		m, err := NewManager(nil, sqlStore)
+		require.NoError(t, err)
+
+		c, err := m.GetController(nAh)
+		require.NotNil(t, c)
+
+		gotOrder, err := c.(*controller).GetObjectDigests()
+		require.NoError(t, err)
+		require.Equal(t, []tilde.Digest{
+			nAh,
+			// C comes before B because due to the alphabetical sorting of their
+			// digests.
+			nCh, nBh,
+			nEh,
+			nFh,
+			nDh,
+		}, gotOrder)
+	})
 }
