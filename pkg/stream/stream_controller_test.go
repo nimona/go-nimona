@@ -43,7 +43,7 @@ func Test_Controller(t *testing.T) {
 	}
 
 	fmt.Println(">>> applying nA")
-	nAh, err := c.Apply(nA)
+	nAh, err := c.Insert(nA)
 	require.NoError(t, err)
 	require.Equal(t, nA.Hash(), nAh)
 
@@ -55,7 +55,7 @@ func Test_Controller(t *testing.T) {
 	}
 
 	fmt.Println(">>> applying nB")
-	nBh, err := c.Apply(nB)
+	nBh, err := c.Insert(nB)
 	require.NoError(t, err)
 	require.NotEqual(t, tilde.EmptyDigest, nBh)
 
@@ -74,7 +74,7 @@ func Test_Controller(t *testing.T) {
 	}
 
 	fmt.Println(">>> applying nC")
-	nCh, err := c.Apply(nC)
+	nCh, err := c.Insert(nC)
 	require.NoError(t, err)
 	require.NotEqual(t, tilde.EmptyDigest, nCh)
 
@@ -86,7 +86,7 @@ func Test_Controller(t *testing.T) {
 	}
 
 	fmt.Println(">>> applying nE")
-	nEh, err := c.Apply(nE)
+	nEh, err := c.Insert(nE)
 	require.NoError(t, err)
 	require.NotEqual(t, tilde.EmptyDigest, nEh)
 
@@ -98,7 +98,7 @@ func Test_Controller(t *testing.T) {
 	}
 
 	fmt.Println(">>> applying nF")
-	nFh, err := c.Apply(nF)
+	nFh, err := c.Insert(nF)
 	require.NoError(t, err)
 	require.NotEqual(t, tilde.EmptyDigest, nFh)
 
@@ -117,7 +117,7 @@ func Test_Controller(t *testing.T) {
 	}
 
 	fmt.Println(">>> applying nD")
-	nDh, err := c.Apply(nD)
+	nDh, err := c.Insert(nD)
 	require.NoError(t, err)
 	require.NotEqual(t, tilde.EmptyDigest, nDh)
 
@@ -132,4 +132,58 @@ func Test_Controller(t *testing.T) {
 		nFh,
 		nDh,
 	}, gotOrder)
+
+	// nX := &object.Object{
+	// 	Type: "test/event",
+	// 	Metadata: object.Metadata{
+	// 		Parents: object.Parents{
+	// 			"*": []tilde.Digest{
+	// 				"doesn't exist",
+	// 			},
+	// 		},
+	// 	},
+	// 	Data: tilde.Map{
+	// 		"name": tilde.String("nX"),
+	// 	},
+	// }
+
+	// fmt.Println(">>> applying nX")
+	// nXh, err := c.Insert(nX)
+	// require.NoError(t, err)
+	// require.NotEqual(t, tilde.EmptyDigest, nXh)
+
+	fmt.Println("-------------")
+
+	t.Run("apply all events", func(t *testing.T) {
+		r, err := sqlStore.GetByStream(nAh)
+		require.NoError(t, err)
+
+		c := NewController(nil, sqlStore)
+		require.NotNil(t, c)
+
+		i := 0
+		for {
+			obj, err := r.Read()
+			if err != nil {
+				break
+			}
+			fmt.Printf(">>> applying %d %s\n", i, obj.Hash())
+			print(obj)
+			err = c.Apply(obj)
+			require.NoError(t, err)
+			i++
+		}
+
+		gotOrder, err := c.(*controller).GetObjectDigests()
+		require.NoError(t, err)
+		require.Equal(t, []tilde.Digest{
+			nAh,
+			// C comes before B because due to the alphabetical sorting of their
+			// digests.
+			nCh, nBh,
+			nEh,
+			nFh,
+			nDh,
+		}, gotOrder)
+	})
 }
