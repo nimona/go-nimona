@@ -30,15 +30,14 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.12.1
-	github.com/pyroscope-io/pyroscope v0.8.0
+	github.com/pyroscope-io/pyroscope v0.10.2
 	github.com/rs/xid v1.3.0
 	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8
 	github.com/tyler-smith/go-bip39 v1.1.0
-	github.com/vcaesar/murmur v0.21.0
 	github.com/xujiajun/nutsdb v0.6.0
-	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/tools v0.1.9
 	gopkg.in/yaml.v2 v2.4.0
 	modernc.org/sqlite v1.14.6
