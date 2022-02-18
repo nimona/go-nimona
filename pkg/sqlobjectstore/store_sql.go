@@ -47,6 +47,7 @@ var migrations = []string{
 	`CREATE TABLE IF NOT EXISTS Pins (Hash TEXT NOT NULL PRIMARY KEY);`,
 	`CREATE TABLE IF NOT EXISTS Keys (PublicKeyDigest TEXT NOT NULL PRIMARY KEY);`,
 	`ALTER TABLE Keys ADD PrivateKey TEXT;`,
+	`ALTER TABLE Objects ADD Sequence INT;`,
 }
 
 var defaultTTL = time.Hour * 24 * 7
@@ -162,6 +163,8 @@ func (st *Store) GetByStream(
 ) (object.ReadCloser, error) {
 	return st.Filter(
 		FilterByStreamHash(streamRootHash),
+		FilterOrderBy("sequence"),
+		FilterOrderDir("ASC"),
 	)
 }
 
@@ -192,6 +195,7 @@ func (st *Store) PutWithTTL(
 		Hash,
 		Type,
 		RootHash,
+		Sequence,
 		OwnerPublicKey,
 		Body,
 		Created,
@@ -199,7 +203,7 @@ func (st *Store) PutWithTTL(
 		TTL,
 		MetadataDatetime
 	) VALUES (
-		?, ?, ?, ?, ?, ?, ?, ?, ?
+		?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 	) ON CONFLICT (Hash) DO UPDATE SET
 		LastAccessed=?
 	`)
@@ -245,6 +249,7 @@ func (st *Store) PutWithTTL(
 		objectHash,
 		objectType,
 		streamHash,
+		obj.Metadata.Sequence,
 		ownerPublicKey,
 		body,
 		time.Now().Unix(),
