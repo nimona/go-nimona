@@ -31,7 +31,7 @@ func NewTestProvider(
 	// start listening
 	lis, err := nnet.Listen(
 		ctx,
-		"127.0.0.1:0",
+		"0.0.0.0:0",
 		network.ListenOnLocalIPs,
 		network.ListenOnPrivateIPs,
 	)
