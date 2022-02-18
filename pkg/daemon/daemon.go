@@ -64,12 +64,36 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
 
+	// construct configstore db
+	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "config.sqlite"))
+	if err != nil {
+		return nil, fmt.Errorf("opening sql file for configstore: %w", err)
+	}
+
+	// construct configstore
+	prf, err := configstore.NewSQLProvider(pdb)
+	if err != nil {
+		return nil, fmt.Errorf("constructing configstore provider: %w", err)
+	}
+
+	// construct object store
+	db, err := sql.Open("sqlite", filepath.Join(cfg.Path, "object.sqlite"))
+	if err != nil {
+		return nil, fmt.Errorf("opening sql file: %w", err)
+	}
+
+	str, err := sqlobjectstore.New(db)
+	if err != nil {
+		return nil, fmt.Errorf("starting sql store: %w", err)
+	}
+
 	// construct new network
 	inet := net.New(cfg.Peer.PrivateKey)
 	nnet := network.New(
 		ctx,
 		inet,
 		cfg.Peer.PrivateKey,
+		str,
 	)
 
 	if cfg.Peer.BindAddress != "" {
@@ -98,29 +122,6 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 	// add bootstrap peers as relays
 	nnet.RegisterRelays(bootstrapPeers...)
-
-	// construct configstore db
-	pdb, err := sql.Open("sqlite", filepath.Join(cfg.Path, "config.sqlite"))
-	if err != nil {
-		return nil, fmt.Errorf("opening sql file for configstore: %w", err)
-	}
-
-	// construct configstore
-	prf, err := configstore.NewSQLProvider(pdb)
-	if err != nil {
-		return nil, fmt.Errorf("constructing configstore provider: %w", err)
-	}
-
-	// construct object store
-	db, err := sql.Open("sqlite", filepath.Join(cfg.Path, "object.sqlite"))
-	if err != nil {
-		return nil, fmt.Errorf("opening sql file: %w", err)
-	}
-
-	str, err := sqlobjectstore.New(db)
-	if err != nil {
-		return nil, fmt.Errorf("starting sql store: %w", err)
-	}
 
 	// construct key stream manager
 	ksm, err := keystream.NewKeyManager(
