@@ -15,10 +15,18 @@ signed object nimona.io/stream.Request {
     rootHash string type=nimona.io/tilde.Digest
 }
 
+signed object nimona.io/stream.RequestLinear {
+    requestID string
+    rootHash string type=nimona.io/tilde.Digest
+    limit int
+    skip int
+}
+
 signed object nimona.io/stream.Response {
     requestID string
     rootHash string type=nimona.io/tilde.Digest
     leaves repeated string type=nimona.io/tilde.Digest
+    total int
 }
 
 signed object nimona.io/stream.Announcement {

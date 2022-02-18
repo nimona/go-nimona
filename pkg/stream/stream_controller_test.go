@@ -7,6 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
+
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
@@ -190,7 +193,7 @@ func Test_Controller(t *testing.T) {
 	fmt.Println("-------------")
 
 	t.Run("controller from manager", func(t *testing.T) {
-		m, err := NewManager(nil, sqlStore)
+		m, err := NewManager(context.New(), nil, nil, sqlStore)
 		require.NoError(t, err)
 
 		c, err := m.GetController(nAh)
@@ -208,4 +211,16 @@ func Test_Controller(t *testing.T) {
 			nDh,
 		}, gotOrder)
 	})
+}
+
+func print(o *object.Object) {
+	m, err := o.MarshalMap()
+	if err != nil {
+		panic(err)
+	}
+	y, err := yaml.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(y))
 }
