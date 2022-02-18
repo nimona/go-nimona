@@ -34,6 +34,11 @@ func NewManager(
 	m := &manager{
 		Network:     network,
 		ObjectStore: objectStore,
+		strategy: NewTopographicalSyncStrategy(
+			network,
+			resolver,
+			objectStore,
+		),
 	}
 	return m, nil
 }
