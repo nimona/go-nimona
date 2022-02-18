@@ -35,7 +35,6 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/did"
-	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
