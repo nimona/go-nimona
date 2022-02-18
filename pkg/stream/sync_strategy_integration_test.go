@@ -42,6 +42,8 @@ func TestSyncStrategy_Integration(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	time.Sleep(time.Second)
+
 	d2, err := daemon.New(
 		context.New(),
 		daemon.WithConfigOptions(
@@ -62,6 +64,8 @@ func TestSyncStrategy_Integration(t *testing.T) {
 		d2.ObjectStore().(*sqlobjectstore.Store),
 	)
 	require.NoError(t, err)
+
+	time.Sleep(time.Second)
 
 	o1 := &object.Object{
 		Type:     "test",
