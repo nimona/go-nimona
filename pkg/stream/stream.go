@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"sync"
 
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/sqlobjectstore"
@@ -14,13 +15,19 @@ type (
 	Manager interface {
 		NewController() Controller
 		GetController(tilde.Digest) (Controller, error)
+		Fetch(context.Context, Controller, tilde.Digest) (int, error)
 		// Sync(context.Context, tilde.Digest) error
+	}
+	SyncStrategy interface {
+		Fetch(context.Context, Controller, tilde.Digest) (int, error)
+		Serve(context.Context, Manager)
 	}
 	Controller interface {
 		Apply(interface{}) error
 		Insert(interface{}) (tilde.Digest, error)
 		GetStreamInfo() StreamInfo
 		GetStreamRoot() tilde.Digest
+		GetDigests() ([]tilde.Digest, error)
 		// Sync(context.Context) error
 		// Subscribe(context.Context) (object.ReadCloser, error)
 	}

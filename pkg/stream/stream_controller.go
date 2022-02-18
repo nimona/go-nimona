@@ -8,8 +8,6 @@ import (
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
-
-	"github.com/ghodss/yaml"
 )
 
 type (
@@ -129,9 +127,6 @@ func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
 		return tilde.EmptyDigest, fmt.Errorf("failed to store object: %w", err)
 	}
 
-	fmt.Println("\n------ " + o.Hash().String() + ":")
-	print(o)
-
 	// add the object to the metadata list
 	oi := GetObjectInfo(o)
 	s.streamInfo.Objects[oi.Digest] = oi
@@ -234,14 +229,6 @@ func (s *controller) GetStreamRoot() tilde.Digest {
 	return tilde.EmptyDigest
 }
 
-func print(o *object.Object) {
-	m, err := o.MarshalMap()
-	if err != nil {
-		panic(err)
-	}
-	y, err := yaml.Marshal(m)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(y))
+func (s *controller) GetDigests() ([]tilde.Digest, error) {
+	return s.graph.TopologicalSort()
 }

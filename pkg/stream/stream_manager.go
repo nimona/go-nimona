@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sync"
 
+	"nimona.io/pkg/context"
+	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
-	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
 )
@@ -19,11 +20,15 @@ type (
 		// controller cache
 		controllers     []Controller
 		controllersLock sync.RWMutex
+		// sync strategy
+		strategy SyncStrategy
 	}
 )
 
 func NewManager(
+	ctx context.Context,
 	network network.Network,
+	resolver resolver.Resolver,
 	objectStore *sqlobjectstore.Store,
 ) (Manager, error) {
 	m := &manager{
@@ -61,9 +66,6 @@ func (m *manager) GetController(h tilde.Digest) (Controller, error) {
 	// apply the stream to the controller
 	r, err := m.ObjectStore.GetByStream(h)
 	if err != nil {
-		if errors.Is(err, objectstore.ErrNotFound) {
-			return c, nil
-		}
 		return nil, fmt.Errorf("error getting stream: %v", err)
 	}
 
@@ -81,5 +83,17 @@ func (m *manager) GetController(h tilde.Digest) (Controller, error) {
 		}
 	}
 
+	m.controllersLock.Lock()
+	m.controllers = append(m.controllers, c)
+	m.controllersLock.Unlock()
+
 	return c, nil
+}
+
+func (m *manager) Fetch(
+	ctx context.Context,
+	ctrl Controller,
+	cid tilde.Digest,
+) (int, error) {
+	return m.strategy.Fetch(ctx, ctrl, cid)
 }

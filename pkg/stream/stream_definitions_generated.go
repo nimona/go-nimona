@@ -25,6 +25,16 @@ type Request struct {
 	RootHash  tilde.Digest    `nimona:"rootHash:r"`
 }
 
+const RequestLinearType = "nimona.io/stream.RequestLinear"
+
+type RequestLinear struct {
+	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/stream.RequestLinear"`
+	RequestID string          `nimona:"requestID:s"`
+	RootHash  tilde.Digest    `nimona:"rootHash:r"`
+	Limit     int64           `nimona:"limit:i"`
+	Skip      int64           `nimona:"skip:i"`
+}
+
 const ResponseType = "nimona.io/stream.Response"
 
 type Response struct {
@@ -32,6 +42,7 @@ type Response struct {
 	RequestID string          `nimona:"requestID:s"`
 	RootHash  tilde.Digest    `nimona:"rootHash:r"`
 	Leaves    []tilde.Digest  `nimona:"leaves:ar"`
+	Total     int64           `nimona:"total:i"`
 }
 
 const AnnouncementType = "nimona.io/stream.Announcement"
