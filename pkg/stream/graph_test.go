@@ -72,8 +72,8 @@ func Test_DAG_Traverse(t *testing.T) {
 	leaves := g.GetLeaves()
 	require.Equal(t, 2, len(leaves))
 	require.Equal(t, []string{
-		nF.Key,
 		nD.Key,
+		nF.Key,
 	}, leaves)
 
 	require.Equal(t, 0, g.countToRoot(nA.Key))
