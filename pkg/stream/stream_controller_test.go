@@ -35,9 +35,6 @@ func Test_Controller(t *testing.T) {
 	sqlStore, err := sqlobjectstore.New(sqlStoreDB)
 	require.NoError(t, err)
 
-	c := NewController(nil, sqlStore)
-	require.NotNil(t, c)
-
 	nA := &object.Object{
 		Type: "test/root",
 		Data: tilde.Map{
@@ -45,7 +42,11 @@ func Test_Controller(t *testing.T) {
 		},
 	}
 
-	fmt.Println(">>> applying nA")
+	hA := nA.Hash()
+
+	c := NewController(hA, nil, sqlStore)
+	require.NotNil(t, c)
+
 	nAh, err := c.Insert(nA)
 	require.NoError(t, err)
 	require.Equal(t, nA.Hash(), nAh)
@@ -161,7 +162,7 @@ func Test_Controller(t *testing.T) {
 		r, err := sqlStore.GetByStream(nAh)
 		require.NoError(t, err)
 
-		c := NewController(nil, sqlStore)
+		c := NewController(nAh, nil, sqlStore)
 		require.NotNil(t, c)
 
 		i := 0

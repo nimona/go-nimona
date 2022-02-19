@@ -97,6 +97,7 @@ func TestSyncStrategy_Integration(t *testing.T) {
 
 	start := time.Now()
 	s2 := stream.NewController(
+		h1,
 		d2.Network(),
 		d2.ObjectStore().(*sqlobjectstore.Store),
 	)
