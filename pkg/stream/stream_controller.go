@@ -48,9 +48,6 @@ func NewController(
 // - Will set the object's sequence if it's not set
 // Returns the updated object's hash.
 func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
 	var o *object.Object
 	switch vv := v.(type) {
 	case *object.Object:
@@ -68,26 +65,13 @@ func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
 		return tilde.EmptyDigest, fmt.Errorf("object type is required")
 	}
 
-	// TODO: verify that the object is not already in the graph
-
 	// if the object has no root, set it to the stream root
 	if o.Metadata.Root.IsEmpty() && s.streamInfo.RootObject == nil {
-		h := o.Hash()
-		// check the object's hash against the stream root
-		if !h.Equal(s.streamInfo.RootDigest) {
-			return tilde.EmptyDigest, ErrInvalidRoot
-		}
-		// set the initial stream info
-		s.streamInfo.RootType = o.Type
-		s.streamInfo.RootObject = o
-		// add the root to the graph
-		s.graph.Add(h, o.Metadata, nil)
-		// store the object
-		err := s.objectStore.Put(o)
+		err := s.Apply(o)
 		if err != nil {
-			return tilde.EmptyDigest, fmt.Errorf("failed to store object: %w", err)
+			return tilde.EmptyDigest, fmt.Errorf("failed to apply object: %w", err)
 		}
-		return h, nil
+		return o.Hash(), nil
 	}
 
 	// verify or set the object's root
@@ -122,18 +106,11 @@ func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
 		o.Metadata.Sequence = uint64(len(pns))
 	}
 
-	// add it to the graph
-	s.graph.Add(o.Hash(), o.Metadata, o.Metadata.Parents.All())
-
-	// store the object
-	err := s.objectStore.Put(o)
+	// apply the event
+	err := s.Apply(o)
 	if err != nil {
-		return tilde.EmptyDigest, fmt.Errorf("failed to store object: %w", err)
+		return tilde.EmptyDigest, fmt.Errorf("failed to apply object: %w", err)
 	}
-
-	// add the object to the metadata list
-	oi := GetObjectInfo(o)
-	s.streamInfo.Objects[oi.Digest] = oi
 
 	return o.Hash(), nil
 }
@@ -182,7 +159,6 @@ func (s *controller) Apply(v interface{}) error {
 		}
 		// update stream info
 		s.streamInfo.RootType = o.Type
-		s.streamInfo.RootDigest = digest
 		s.streamInfo.RootObject = o
 		// add the root to the graph
 		s.graph.Add(digest, o.Metadata, nil)
