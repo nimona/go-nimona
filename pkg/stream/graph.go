@@ -187,7 +187,7 @@ func (g *Graph[Key, Value]) GetLeaves() []Key {
 	}
 
 	sort.Slice(leaves, func(i, j int) bool {
-		return i > j
+		return leaves[i] < leaves[j]
 	})
 
 	return leaves
@@ -222,7 +222,7 @@ func (g *Graph[Key, Value]) nodesToRoot(key Key) []Key {
 		keys = append(keys, k)
 	}
 	sort.Slice(keys, func(i, j int) bool {
-		return i > j
+		return keys[i] < keys[j]
 	})
 	return keys
 }
