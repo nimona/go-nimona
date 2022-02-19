@@ -13,7 +13,7 @@ import (
 
 type (
 	Manager interface {
-		NewController() Controller
+		NewController(tilde.Digest) Controller
 		GetController(tilde.Digest) (Controller, error)
 		Fetch(context.Context, Controller, tilde.Digest) (int, error)
 		// Sync(context.Context, tilde.Digest) error

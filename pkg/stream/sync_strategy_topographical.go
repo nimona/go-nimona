@@ -117,12 +117,10 @@ func (f *syncStrategyTopographical) Fetch(
 	controller.graph.lock.RLock()
 
 	// check that the controller matches the given root
-	if !controller.streamInfo.RootDigest.IsEmpty() {
-		if controller.streamInfo.RootDigest.Equal(streamRoot) {
-			// remove the lock and return
-			controller.graph.lock.RUnlock()
-			return 0, fmt.Errorf("controller's root does not match")
-		}
+	if !controller.streamInfo.RootDigest.Equal(streamRoot) {
+		// remove the lock and return
+		controller.graph.lock.RUnlock()
+		return 0, fmt.Errorf("controller's root does not match")
 	}
 
 	// keep a copy of the existing digests in the graph

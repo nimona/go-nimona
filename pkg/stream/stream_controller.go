@@ -10,6 +10,8 @@ import (
 	"nimona.io/pkg/tilde"
 )
 
+var ErrInvalidRoot = fmt.Errorf("root object doesn't match stream's hash")
+
 type (
 	controller struct {
 		lock sync.RWMutex
@@ -24,6 +26,7 @@ type (
 )
 
 func NewController(
+	cid tilde.Digest,
 	network network.Network,
 	objectStore *sqlobjectstore.Store,
 ) Controller {
@@ -33,6 +36,7 @@ func NewController(
 		objectStore: objectStore,
 		streamInfo:  NewStreamInfo(),
 	}
+	c.streamInfo.RootDigest = cid
 	return c
 }
 
@@ -66,19 +70,19 @@ func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
 
 	// TODO: verify that the object is not already in the graph
 
-	// if this is the first object we're applying and it doesn't have parents,
-	// set it as the root
-	if s.streamInfo.RootObject == nil && o.Metadata.Root.IsEmpty() {
+	// if the object has no root, set it to the stream root
+	if o.Metadata.Root.IsEmpty() && s.streamInfo.RootObject == nil {
 		h := o.Hash()
+		// check the object's hash against the stream root
+		if !h.Equal(s.streamInfo.RootDigest) {
+			return tilde.EmptyDigest, ErrInvalidRoot
+		}
 		// set the initial stream info
 		s.streamInfo.RootType = o.Type
 		s.streamInfo.RootObject = o
-		s.streamInfo.RootDigest = h
 		// add the root to the graph
 		s.graph.Add(h, o.Metadata, nil)
 		// store the object
-		fmt.Println("------ " + o.Hash().String() + ":")
-		print(o)
 		err := s.objectStore.Put(o)
 		if err != nil {
 			return tilde.EmptyDigest, fmt.Errorf("failed to store object: %w", err)
@@ -164,8 +168,13 @@ func (s *controller) Apply(v interface{}) error {
 		return nil
 	}
 
-	// check if this is the first object we're applying
-	if s.streamInfo.RootDigest.IsEmpty() && o.Metadata.Root.IsEmpty() {
+	// check if we're applying the root object
+	if o.Metadata.Root.IsEmpty() && s.streamInfo.RootObject == nil {
+		h := o.Hash()
+		// check the object's hash against the stream root
+		if !h.Equal(s.streamInfo.RootDigest) {
+			return ErrInvalidRoot
+		}
 		// store the object
 		err := s.objectStore.Put(o)
 		if err != nil {

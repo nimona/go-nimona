@@ -3,7 +3,8 @@ package stream
 import (
 	"errors"
 	"fmt"
-	"sync"
+
+	"github.com/zyedidia/generic/cache"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -18,8 +19,7 @@ type (
 		Network     network.Network
 		ObjectStore *sqlobjectstore.Store
 		// controller cache
-		controllers     []Controller
-		controllersLock sync.RWMutex
+		controllers *cache.Cache[tilde.Digest, Controller]
 		// sync strategy
 		strategy SyncStrategy
 	}
@@ -34,6 +34,7 @@ func NewManager(
 	m := &manager{
 		Network:     network,
 		ObjectStore: objectStore,
+		controllers: cache.New[tilde.Digest, Controller](10),
 		strategy: NewTopographicalSyncStrategy(
 			network,
 			resolver,
@@ -43,30 +44,25 @@ func NewManager(
 	return m, nil
 }
 
-func (m *manager) NewController() Controller {
+func (m *manager) NewController(cid tilde.Digest) Controller {
 	c := NewController(
+		cid,
 		m.Network,
 		m.ObjectStore,
 	)
-	m.controllersLock.Lock()
-	m.controllers = append(m.controllers, c)
-	m.controllersLock.Unlock()
+	m.controllers.Put(cid, c)
 	return c
 }
 
 func (m *manager) GetController(h tilde.Digest) (Controller, error) {
 	// check if controller is already cached and return it
-	m.controllersLock.RLock()
-	for _, controller := range m.controllers {
-		if controller.GetStreamRoot() == h {
-			m.controllersLock.RUnlock()
-			return controller, nil
-		}
+	c, found := m.controllers.Get(h)
+	if found {
+		return c, nil
 	}
-	m.controllersLock.RUnlock()
 
 	// create a new controller
-	c := m.NewController()
+	c = m.NewController(h)
 
 	// apply the stream to the controller
 	r, err := m.ObjectStore.GetByStream(h)
@@ -88,9 +84,7 @@ func (m *manager) GetController(h tilde.Digest) (Controller, error) {
 		}
 	}
 
-	m.controllersLock.Lock()
-	m.controllers = append(m.controllers, c)
-	m.controllersLock.Unlock()
+	m.controllers.Put(h, c)
 
 	return c, nil
 }

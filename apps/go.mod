@@ -80,6 +80,7 @@ require (
 	github.com/tdewolff/parse/v2 v2.5.15 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
+	github.com/zyedidia/generic v0.0.0-20211222002821-df59a340226d // indirect
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
