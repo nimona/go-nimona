@@ -16,9 +16,10 @@ require (
 )
 
 require (
+	github.com/Code-Hex/go-generics-cache v0.0.8 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/Tv0ridobro/data-structure v0.0.0-20211109171617-a6f942be577d // indirect
+	github.com/Tv0ridobro/data-structure v0.0.0-20220220124854-9485d1236cd2 // indirect
 	github.com/atotto/clipboard v0.1.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
@@ -80,9 +81,8 @@ require (
 	github.com/tdewolff/parse/v2 v2.5.15 // indirect
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8 // indirect
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
-	github.com/zyedidia/generic v0.0.0-20211222002821-df59a340226d // indirect
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
-	golang.org/x/mod v0.5.1 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20211013180041-c96bc1413d57 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/term v0.0.0-20210422114643-f5beecf764ed // indirect
@@ -100,7 +100,7 @@ require (
 	modernc.org/mathutil v1.4.1 // indirect
 	modernc.org/memory v1.0.5 // indirect
 	modernc.org/opt v0.1.1 // indirect
-	modernc.org/sqlite v1.14.6 // indirect
+	modernc.org/sqlite v1.14.7 // indirect
 	modernc.org/strutil v1.1.1 // indirect
 	modernc.org/token v1.0.0 // indirect
 )
