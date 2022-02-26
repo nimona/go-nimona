@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1644277073357,
+  "lastUpdate": 1645889145236,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -6966,6 +6966,60 @@ window.BENCHMARK_DATA = {
             "value": 59402,
             "unit": "ns/op",
             "extra": "20298 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "d7458feab6ad5f078a8dc0a3c17ccb63ca0ed849",
+          "message": "refactor(stream): update controller to always need a root hash",
+          "timestamp": "2022-02-26T15:24:21Z",
+          "tree_id": "7b348ee7ae8a7b85cb23945ed19ca90794709f32",
+          "url": "https://github.com/nimona/go-nimona/commit/d7458feab6ad5f078a8dc0a3c17ccb63ca0ed849"
+        },
+        "date": 1645889143817,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 6542284,
+            "unit": "ns/op",
+            "extra": "183 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 323439884,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3050579283,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1532795,
+            "unit": "ns/op",
+            "extra": "759 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 44858,
+            "unit": "ns/op",
+            "extra": "26632 times\n2 procs"
           }
         ]
       }
