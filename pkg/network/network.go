@@ -934,6 +934,9 @@ func (w *network) RegisterAddresses(addresses ...string) {
 
 func (w *network) GetConnectionInfo() *peer.ConnectionInfo {
 	return &peer.ConnectionInfo{
+		Metadata: object.Metadata{
+			Owner: w.peerKey.PublicKey().DID(),
+		},
 		PublicKey: w.peerKey.PublicKey(),
 		Addresses: w.GetAddresses(),
 		Relays:    w.GetRelays(),
