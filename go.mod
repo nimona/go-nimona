@@ -41,7 +41,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	golang.org/x/tools v0.1.9
 	gopkg.in/yaml.v2 v2.4.0
-	modernc.org/sqlite v1.14.6
+	modernc.org/sqlite v1.14.7
 )
 
 require (
