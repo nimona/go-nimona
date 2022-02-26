@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zyedidia/generic/cache"
+	"github.com/Code-Hex/go-generics-cache/policy/simple"
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/hyperspace/resolver"
@@ -19,7 +19,7 @@ type (
 		Network     network.Network
 		ObjectStore *sqlobjectstore.Store
 		// controller cache
-		controllers *cache.Cache[tilde.Digest, Controller]
+		controllers *simple.Cache[tilde.Digest, Controller]
 		// sync strategy
 		strategy SyncStrategy
 	}
@@ -34,7 +34,7 @@ func NewManager(
 	m := &manager{
 		Network:     network,
 		ObjectStore: objectStore,
-		controllers: cache.New[tilde.Digest, Controller](10),
+		controllers: simple.NewCache[tilde.Digest, Controller](),
 		strategy: NewTopographicalSyncStrategy(
 			network,
 			resolver,
@@ -44,30 +44,34 @@ func NewManager(
 	return m, nil
 }
 
-func (m *manager) NewController(cid tilde.Digest) Controller {
-	c := NewController(
-		cid,
-		m.Network,
-		m.ObjectStore,
-	)
-	m.controllers.Put(cid, c)
-	return c
+func (m *manager) GetOrCreateController(cid tilde.Digest) (Controller, error) {
+	c, err := m.GetController(cid)
+	if err != nil && !errors.Is(err, ErrNotFound) {
+		return nil, err
+	}
+	return c, nil
 }
 
-func (m *manager) GetController(h tilde.Digest) (Controller, error) {
+func (m *manager) GetController(cid tilde.Digest) (Controller, error) {
 	// check if controller is already cached and return it
-	c, found := m.controllers.Get(h)
+	c, found := m.controllers.Get(cid)
 	if found {
 		return c, nil
 	}
 
 	// create a new controller
-	c = m.NewController(h)
+	c = NewController(
+		cid,
+		m.Network,
+		m.ObjectStore,
+	)
+
+	m.controllers.Set(cid, c)
 
 	// apply the stream to the controller
-	r, err := m.ObjectStore.GetByStream(h)
+	r, err := m.ObjectStore.GetByStream(cid)
 	if err != nil {
-		return nil, fmt.Errorf("error getting stream: %v", err)
+		return c, ErrNotFound
 	}
 
 	for {
@@ -83,8 +87,6 @@ func (m *manager) GetController(h tilde.Digest) (Controller, error) {
 			return nil, fmt.Errorf("error applying object to stream: %v", err)
 		}
 	}
-
-	m.controllers.Put(h, c)
 
 	return c, nil
 }

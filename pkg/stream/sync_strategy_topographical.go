@@ -42,6 +42,14 @@ func (f *syncStrategyTopographical) Serve(
 	ctx context.Context,
 	manager Manager,
 ) {
+	go f.handleRequests(ctx, manager)
+	go f.handleAnnouncements(ctx, manager)
+}
+
+func (f *syncStrategyTopographical) handleRequests(
+	ctx context.Context,
+	manager Manager,
+) {
 	sub := f.network.Subscribe(
 		network.FilterByObjectType(RequestLinearType),
 	)
@@ -103,9 +111,90 @@ func (f *syncStrategyTopographical) Serve(
 	}
 }
 
+// TODO: move to manager?
+func (f *syncStrategyTopographical) handleAnnouncements(
+	ctx context.Context,
+	manager Manager,
+) {
+	sub := f.network.Subscribe(
+		network.FilterByObjectType(AnnouncementType),
+	)
+	for {
+		env, err := sub.Next()
+		if err != nil {
+			return
+		}
+
+		announcement := &Announcement{}
+		err = object.Unmarshal(env.Payload, announcement)
+		if err != nil {
+			continue
+		}
+
+		ctrl, err := manager.GetOrCreateController(announcement.StreamHash)
+		if err != nil {
+			continue
+		}
+
+		missing := []tilde.Digest{}
+		for _, d := range announcement.ObjectHashes {
+			if ctrl.ContainsDigest(d) {
+				continue
+			}
+			missing = append(missing, d)
+		}
+
+		if len(missing) == 0 {
+			continue
+		}
+
+		// TODO: improve always having to sync
+		sync := true
+
+		// sync := false
+		// for _, d := range missing {
+		// 	req := &object.Request{
+		// 		RequestID:  f.newRequestID(),
+		// 		ObjectHash: d,
+		// 	}
+		// 	res := &object.Response{}
+		// 	err := f.network.Send(
+		// 		context.New(
+		// 			context.WithTimeout(time.Second*2),
+		// 		),
+		// 		object.MustMarshal(req),
+		// 		env.Sender,
+		// 		network.SendWithResponse(res, time.Second*2),
+		// 	)
+		// 	if err != nil {
+		// 		continue
+		// 	}
+		// 	if !res.Found {
+		// 		continue
+		// 	}
+		// 	err = ctrl.Apply(res.Object)
+		// 	if err != nil {
+		// 		sync = true
+		// 		break
+		// 	}
+		// }
+		fmt.Println("???? sync", sync, len(missing))
+		if sync {
+			n, err := f.Fetch(ctx, ctrl, announcement.StreamHash)
+			if err != nil {
+				fmt.Println("??? error syncing", err)
+				continue
+			}
+			fmt.Println("???  synced", n)
+		}
+		fmt.Println("???  SSSS???", len(missing))
+	}
+}
+
 func (f *syncStrategyTopographical) Fetch(
 	ctx context.Context,
 	ctrl Controller,
+	// TODO: remove streamroot, all controllers now have one
 	streamRoot tilde.Digest,
 ) (int, error) {
 	// HACK: strategies need rework to not need the private controller.

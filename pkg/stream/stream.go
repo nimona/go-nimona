@@ -5,15 +5,21 @@ import (
 	"sync"
 
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/did"
+	"nimona.io/pkg/errors"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
 )
 
+const (
+	ErrNotFound = errors.Error("not found")
+)
+
 type (
 	Manager interface {
-		NewController(tilde.Digest) Controller
+		GetOrCreateController(tilde.Digest) (Controller, error)
 		GetController(tilde.Digest) (Controller, error)
 		Fetch(context.Context, Controller, tilde.Digest) (int, error)
 		// Sync(context.Context, tilde.Digest) error
@@ -28,6 +34,8 @@ type (
 		GetStreamInfo() StreamInfo
 		GetStreamRoot() tilde.Digest
 		GetDigests() ([]tilde.Digest, error)
+		GetSubscribers() ([]did.DID, error)
+		ContainsDigest(cid tilde.Digest) bool
 		// Sync(context.Context) error
 		// Subscribe(context.Context) (object.ReadCloser, error)
 	}

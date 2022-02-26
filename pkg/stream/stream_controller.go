@@ -3,7 +3,12 @@ package stream
 import (
 	"fmt"
 	"sync"
+	"time"
 
+	"github.com/Code-Hex/go-generics-cache/policy/simple"
+
+	"nimona.io/pkg/context"
+	"nimona.io/pkg/did"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/sqlobjectstore"
@@ -22,6 +27,8 @@ type (
 		graph *Graph[tilde.Digest, object.Metadata]
 		// state, not thread safe
 		streamInfo *StreamInfo
+		// subscriptions
+		subscriptions *simple.Cache[did.DID, bool]
 	}
 )
 
@@ -31,10 +38,11 @@ func NewController(
 	objectStore *sqlobjectstore.Store,
 ) Controller {
 	c := &controller{
-		graph:       NewGraph[tilde.Digest, object.Metadata](),
-		network:     network,
-		objectStore: objectStore,
-		streamInfo:  NewStreamInfo(),
+		graph:         NewGraph[tilde.Digest, object.Metadata](),
+		network:       network,
+		objectStore:   objectStore,
+		streamInfo:    NewStreamInfo(),
+		subscriptions: simple.NewCache[did.DID, bool](),
 	}
 	c.streamInfo.RootDigest = cid
 	return c
@@ -106,13 +114,51 @@ func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
 		o.Metadata.Sequence = uint64(len(pns))
 	}
 
+	// get the object's hash
+	h := o.Hash()
+
 	// apply the event
 	err := s.Apply(o)
 	if err != nil {
 		return tilde.EmptyDigest, fmt.Errorf("failed to apply object: %w", err)
 	}
 
-	return o.Hash(), nil
+	// TODO: figure out how to move announcements to first-time applies
+
+	// announce the event to subscribers
+	subscribers := s.subscriptions.Keys()
+	if len(subscribers) == 0 {
+		return h, nil
+	}
+
+	announcement := &Announcement{
+		Metadata: object.Metadata{
+			Owner: s.network.GetPeerKey().PublicKey().DID(),
+		},
+		StreamHash:   s.streamInfo.RootDigest,
+		ObjectHashes: []tilde.Digest{h},
+	}
+
+	announcementObject, err := object.Marshal(announcement)
+	if err != nil {
+		return tilde.EmptyDigest, fmt.Errorf("failed to marshal announcement: %w", err)
+	}
+
+	for _, sub := range subscribers {
+		err := s.network.Send(
+			context.New(
+				context.WithTimeout(time.Second*2),
+			),
+			announcementObject,
+			sub,
+		)
+		if err != nil {
+			// TODO: log error
+			continue
+		}
+	}
+
+	return h, nil
 }
 
 // Apply an event to the stream.
@@ -197,6 +243,22 @@ func (s *controller) Apply(v interface{}) error {
 	oi := GetObjectInfo(o)
 	s.streamInfo.Objects[oi.Digest] = oi
 
+	// handle special objects
+	switch o.Type {
+	case SubscriptionType:
+		// add the subscription to the subscriptions list
+		sub := &Subscription{}
+		err := object.Unmarshal(o, sub)
+		// in case of error, just move on
+		if err != nil {
+			break
+		}
+		if sub.Metadata.Owner.IsEmpty() {
+			break
+		}
+		s.subscriptions.Set(sub.Metadata.Owner, true)
+	}
+
 	return nil
 }
 
@@ -216,4 +278,16 @@ func (s *controller) GetStreamRoot() tilde.Digest {
 
 func (s *controller) GetDigests() ([]tilde.Digest, error) {
 	return s.graph.TopologicalSort()
+}
+
+func (s *controller) GetSubscribers() ([]did.DID, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.subscriptions.Keys(), nil
+}
+
+func (s *controller) ContainsDigest(cid tilde.Digest) bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.graph.Contains(cid)
 }
