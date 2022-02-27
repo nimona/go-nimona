@@ -16,6 +16,7 @@ import (
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/stream"
 )
 
 type (
@@ -27,6 +28,7 @@ type (
 		ObjectStore() objectstore.Store
 		ObjectManager() objectmanager.ObjectManager
 		KeyStreamManager() keystream.Manager
+		StreamManager() stream.Manager
 		// daemon specific methods
 		Close()
 	}
@@ -38,6 +40,7 @@ type (
 		resolver        resolver.Resolver
 		objectstore     objectstore.Store
 		objectmanager   objectmanager.ObjectManager
+		streammanager   stream.Manager
 		keystreamanager keystream.Manager
 		// internal
 		listener net.Listener
@@ -151,6 +154,18 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 		str,
 	)
 	if err != nil {
+		return nil, fmt.Errorf("constructing object manager, %w", err)
+	}
+
+	// construct new stream manager
+	sm, err := stream.NewManager(
+		ctx,
+		nnet,
+		res,
+		str,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("constructing stream manager, %w", err)
 	}
 
 	d.config = *cfg
@@ -160,6 +175,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	d.objectstore = str
 	d.objectmanager = man
 	d.keystreamanager = ksm
+	d.streammanager = sm
 
 	return d, nil
 }
@@ -190,6 +206,10 @@ func (d *daemon) ObjectManager() objectmanager.ObjectManager {
 
 func (d *daemon) KeyStreamManager() keystream.Manager {
 	return d.keystreamanager
+}
+
+func (d *daemon) StreamManager() stream.Manager {
+	return d.streammanager
 }
 
 func (d *daemon) Close() {
