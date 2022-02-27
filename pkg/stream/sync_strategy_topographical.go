@@ -178,16 +178,12 @@ func (f *syncStrategyTopographical) handleAnnouncements(
 		// 		break
 		// 	}
 		// }
-		fmt.Println("???? sync", sync, len(missing))
 		if sync {
-			n, err := f.Fetch(ctx, ctrl, announcement.StreamHash)
+			_, err := f.Fetch(ctx, ctrl, announcement.StreamHash)
 			if err != nil {
-				fmt.Println("??? error syncing", err)
 				continue
 			}
-			fmt.Println("???  synced", n)
 		}
-		fmt.Println("???  SSSS???", len(missing))
 	}
 }
 
