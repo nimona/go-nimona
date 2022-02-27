@@ -13,7 +13,6 @@ import (
 	"nimona.io/pkg/hyperspace/provider"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
-	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 	"nimona.io/pkg/tilde"
 )
@@ -34,14 +33,6 @@ func TestSyncStrategy_Integration(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	m1, err := stream.NewManager(
-		context.New(),
-		d1.Network(),
-		d1.Resolver(),
-		d1.ObjectStore().(*sqlobjectstore.Store),
-	)
-	require.NoError(t, err)
-
 	time.Sleep(time.Second)
 
 	d2, err := daemon.New(
@@ -57,16 +48,12 @@ func TestSyncStrategy_Integration(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	m2, err := stream.NewManager(
-		context.New(),
-		d2.Network(),
-		d2.Resolver(),
-		d2.ObjectStore().(*sqlobjectstore.Store),
-	)
-	require.NoError(t, err)
+	m2 := d2.StreamManager()
 
 	time.Sleep(time.Second)
 
+	// directly add the objects to p1's store, without going through the stream
+	// manager.
 	o1 := &object.Object{
 		Type:     "test",
 		Metadata: object.Metadata{},
@@ -88,31 +75,18 @@ func TestSyncStrategy_Integration(t *testing.T) {
 	require.Len(t, o1gs, 1)
 	require.Equal(t, o1, o1gs[0])
 
-	f1 := stream.NewTopographicalSyncStrategy(
-		d1.Network(),
-		d1.Resolver(),
-		d1.ObjectStore(),
-	)
-	go f1.Serve(context.New(), m1)
-
 	start := time.Now()
-	c2 := stream.NewController(
-		h1,
-		d2.Network(),
-		d2.ObjectStore().(*sqlobjectstore.Store),
-	)
-	// f2 := stream.NewTopographicalSyncStrategy(
-	// 	d2.Network(),
-	// 	d2.Resolver(),
-	// 	d2.ObjectStore(),
-	// )
+	c2, err := m2.GetOrCreateController(h1)
+	require.NoError(t, err)
+
+	// attempt to fetch the stream using the stream manager on p2.
 	n, err := m2.Fetch(context.New(), c2, h1)
 	require.NoError(t, err)
 	require.Equal(t, 1, n)
 	fmt.Println("---", time.Since(start))
 }
 
-func TestSyncStrategy_AnnouncementsIntegration(t *testing.T) {
+func TestSyncStrategy_Announcements_Integration(t *testing.T) {
 	_, c0 := provider.NewTestProvider(t, context.Background())
 
 	d1, err := daemon.New(
@@ -128,16 +102,6 @@ func TestSyncStrategy_AnnouncementsIntegration(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	m1, err := stream.NewManager(
-		context.New(),
-		d1.Network(),
-		d1.Resolver(),
-		d1.ObjectStore().(*sqlobjectstore.Store),
-	)
-	require.NoError(t, err)
-
-	time.Sleep(time.Second)
-
 	d2, err := daemon.New(
 		context.New(),
 		daemon.WithConfigOptions(
@@ -151,27 +115,8 @@ func TestSyncStrategy_AnnouncementsIntegration(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	m2, err := stream.NewManager(
-		context.New(),
-		d2.Network(),
-		d2.Resolver(),
-		d2.ObjectStore().(*sqlobjectstore.Store),
-	)
-	require.NoError(t, err)
-
-	f1 := stream.NewTopographicalSyncStrategy(
-		d1.Network(),
-		d1.Resolver(),
-		d1.ObjectStore(),
-	)
-	go f1.Serve(context.New(), m1)
-
-	f2 := stream.NewTopographicalSyncStrategy(
-		d2.Network(),
-		d2.Resolver(),
-		d2.ObjectStore(),
-	)
-	go f2.Serve(context.New(), m2)
+	m1 := d1.StreamManager()
+	m2 := d2.StreamManager()
 
 	time.Sleep(time.Second)
 
