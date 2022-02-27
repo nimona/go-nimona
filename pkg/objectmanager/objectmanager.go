@@ -2,8 +2,6 @@ package objectmanager
 
 import (
 	"fmt"
-	"sync"
-	"time"
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
@@ -26,7 +24,6 @@ const (
 
 //go:generate mockgen -destination=../objectmanagermock/objectmanagermock_generated.go -package=objectmanagermock -source=objectmanager.go
 //go:generate mockgen -destination=../objectmanagerpubsubmock/objectmanagerpubsubmock_generated.go -package=objectmanagerpubsubmock -source=pubsub.go
-//go:generate genny -in=$GENERATORS/syncmap_named/syncmap.go -out=subscriptions_generated.go -imp=nimona.io/pkg/crypto -pkg=objectmanager gen "KeyType=tilde.Digest ValueType=stream.Subscription SyncmapName=subscriptions"
 
 type (
 	ObjectManager interface {
@@ -34,25 +31,11 @@ type (
 			ctx context.Context,
 			o *object.Object,
 		) error
-		Append(
-			ctx context.Context,
-			o *object.Object,
-		) (*object.Object, error)
 		Request(
 			ctx context.Context,
 			hash tilde.Digest,
 			id did.DID,
 		) (*object.Object, error)
-		RequestStream(
-			ctx context.Context,
-			rootHash tilde.Digest,
-			id did.DID,
-		) (object.ReadCloser, error)
-		AddStreamSubscription(
-			ctx context.Context,
-			rootHash tilde.Digest,
-			subscriber did.DID,
-		) error
 		Subscribe(
 			lookupOptions ...LookupOption,
 		) ObjectSubscription
@@ -112,178 +95,15 @@ func (m *manager) isWellKnownEphemeral(
 	contentType string,
 ) bool {
 	switch contentType {
-	case "nimona.io/stream.Announcement",
-		"nimona.io/stream.Request",
-		"nimona.io/stream.Response",
-		"nimona.io/Request",
-		"nimona.io/Response":
+	case
+		stream.AnnouncementType,
+		stream.RequestType,
+		stream.ResponseType,
+		object.RequestType,
+		object.ResponseType:
 		return true
 	}
 	return false
-}
-
-// TODO add support for multiple recipients
-// TODO this currently needs to be storing objects for it to work.
-func (m *manager) RequestStream(
-	ctx context.Context,
-	rootHash tilde.Digest,
-	recipient did.DID,
-) (object.ReadCloser, error) {
-	if recipient == did.Empty {
-		return m.objectstore.GetByStream(rootHash)
-	}
-
-	rID := m.newRequestID()
-	responses := make(chan stream.Response)
-
-	sub := m.network.Subscribe(
-		network.FilterByObjectType(stream.ResponseType),
-	)
-
-	go func() {
-		defer sub.Cancel()
-		for {
-			env, err := sub.Next()
-			if err != nil || env == nil {
-				return
-			}
-			streamResp := &stream.Response{}
-			if err := object.Unmarshal(env.Payload, streamResp); err != nil {
-				continue
-			}
-			if streamResp.RequestID != rID {
-				continue
-			}
-			responses <- *streamResp
-			return
-		}
-	}()
-
-	// TODO we should first request and store stream root I guess
-
-	req := &stream.Request{
-		RequestID: rID,
-		RootHash:  rootHash,
-	}
-	ro, err := object.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-	if err := m.network.Send(
-		ctx,
-		ro,
-		recipient,
-	); err != nil {
-		return nil, err
-	}
-
-	var leaves []tilde.Digest
-
-	select {
-	case res := <-responses:
-		leaves = res.Leaves
-	case <-ctx.Done():
-		return nil, ErrTimeout
-	}
-
-	if err := m.fetchFromLeaves(ctx, leaves, recipient); err != nil {
-		return nil, err
-	}
-
-	return m.objectstore.GetByStream(rootHash)
-}
-
-func (m *manager) fetchFromLeaves(
-	ctx context.Context,
-	leaves []tilde.Digest,
-	recipient did.DID,
-) error {
-	// TODO refactor to remove buffer
-	objectHashes := make(chan tilde.Digest, 1000)
-
-	go func() {
-		for _, l := range leaves {
-			objectHashes <- l
-		}
-	}()
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(leaves))
-
-	errorChan := make(chan error)
-	doneChan := make(chan struct{})
-
-	go func() {
-		wg.Wait()
-		close(objectHashes)
-	}()
-
-	go func() {
-		for objectHash := range objectHashes {
-			// check if we have object stored
-			obj, err := m.objectstore.Get(objectHash)
-			if err == nil {
-				// TODO consider checking the whole stream for missing objects
-				// TODO consider refactoring, or moving into a goroutine
-				for _, group := range obj.Metadata.Parents {
-					for _, parent := range group {
-						wg.Add(1)
-						objectHashes <- parent
-					}
-				}
-				wg.Done()
-				continue
-			}
-			// TODO consider exluding nested objects
-			fullObj, err := m.Request(
-				context.New(
-					context.WithParent(ctx),
-					context.WithTimeout(time.Second),
-				),
-				objectHash,
-				recipient,
-			)
-			if err != nil {
-				wg.Done()
-				continue
-			}
-
-			// TODO check the validity of the object
-			// * it should have objects
-			// * it should have a stream root hash
-			// * should it be signed?
-			// * is its policy valid?
-			// TODO consider refactoring, or moving into a goroutine
-			for _, group := range fullObj.Metadata.Parents {
-				for _, parent := range group {
-					objectHashes <- parent
-					wg.Add(1)
-				}
-			}
-
-			// so we should already have its parents.
-			err = m.storeObject(context.FromContext(ctx), fullObj)
-			if err != nil {
-				// TODO what do we do now?
-				wg.Done()
-				continue
-			}
-
-			m.pubsub.Publish(fullObj)
-
-			wg.Done()
-		}
-		close(doneChan)
-	}()
-
-	select {
-	case <-doneChan:
-		return nil
-	case err := <-errorChan:
-		return err
-	case <-ctx.Done():
-		return ErrTimeout
-	}
 }
 
 func (m *manager) Request(
@@ -386,54 +206,6 @@ func (m *manager) handleObjects(
 				}
 			}()
 			continue
-		case stream.RequestType:
-			go func() {
-				hCtx := context.New(
-					context.WithParent(ctx),
-				)
-				if err := m.handleStreamRequest(
-					hCtx,
-					env,
-				); err != nil {
-					logger.Warn(
-						"could not handle stream request",
-						log.Error(err),
-					)
-				}
-			}()
-			continue
-		case stream.SubscriptionType:
-			go func() {
-				hCtx := context.New(
-					context.WithParent(ctx),
-				)
-				if err := m.handleStreamSubscription(
-					hCtx,
-					env,
-				); err != nil {
-					logger.Warn(
-						"could not handle stream request",
-						log.Error(err),
-					)
-				}
-			}()
-			continue
-		case stream.AnnouncementType:
-			go func() {
-				hCtx := context.New(
-					context.WithParent(ctx),
-				)
-				if err := m.handleStreamAnnouncement(
-					hCtx,
-					env,
-				); err != nil {
-					logger.Warn(
-						"could not handle stream announcement",
-						log.Error(err),
-					)
-				}
-			}()
-			continue
 		}
 
 		// publish to pubsub
@@ -466,100 +238,6 @@ func (m *manager) storeObject(
 	}
 
 	return nil
-}
-
-func (m *manager) announceStreamChildren(
-	ctx context.Context,
-	streamHash tilde.Digest,
-	children []tilde.Digest,
-) {
-	logger := log.FromContext(ctx)
-
-	// find ephemeral subscriptions for this stream
-	// TODO do we really need ephemeral subscriptions?
-	subscribersMap := map[did.DID]struct{}{}
-	m.subscriptions.Range(func(_ tilde.Digest, sub *stream.Subscription) bool {
-		// TODO check expiry
-		subscribersMap[sub.Metadata.Owner] = struct{}{}
-		return true
-	})
-
-	// find subscriptions that are attached in the stream
-	r, err := m.objectstore.GetByStream(streamHash)
-	if err != nil {
-		return
-	}
-
-	for {
-		obj, err := r.Read()
-		// TODO do we want to return if error is not EOF?
-		if err != nil {
-			break
-		}
-		if obj.Type != stream.SubscriptionType {
-			continue
-		}
-		if obj.Metadata.Owner.IsEmpty() {
-			continue
-		}
-		subscribersMap[obj.Metadata.Owner] = struct{}{}
-	}
-
-	// remove self
-	// TODO(geoah): fix identity
-	// delete(subscribersMap, m.network.GetPeerKey().PublicKey())
-
-	subscribers := []did.DID{}
-	for subscriber := range subscribersMap {
-		subscribers = append(subscribers, subscriber)
-	}
-
-	logger.Info("trying to announce",
-		log.String("streamHash", streamHash.String()),
-		log.Any("subscribers", subscribers),
-	)
-
-	if len(subscribers) == 0 {
-		return
-	}
-
-	// notify subscribers
-	announcement := &stream.Announcement{
-		Metadata: object.Metadata{
-			Owner: m.network.GetPeerKey().PublicKey().DID(),
-		},
-		StreamHash:   streamHash,
-		ObjectHashes: children,
-	}
-	for _, subscriber := range subscribers {
-		// TODO verify that subscriber has access to this object/stream
-		ao, err := object.Marshal(announcement)
-		if err != nil {
-			logger.Info(
-				"error marshaling announcement",
-				log.Error(err),
-				log.String("subscriber", subscriber.String()),
-			)
-			continue
-		}
-		err = m.network.Send(
-			ctx,
-			ao,
-			subscriber,
-		)
-		if err != nil {
-			logger.Info(
-				"error sending announcement",
-				log.Error(err),
-				log.String("subscriber", subscriber.String()),
-			)
-			continue
-		}
-		logger.Debug(
-			"sent announcement",
-			log.String("subscriber", subscriber.String()),
-		)
-	}
 }
 
 func (m *manager) handleObjectRequest(
@@ -647,131 +325,6 @@ func (m *manager) handleObjectRequest(
 	return nil
 }
 
-func (m *manager) handleStreamRequest(
-	ctx context.Context,
-	env *network.Envelope,
-) error {
-	// TODO check if policy allows requested to retrieve the object
-	logger := log.FromContext(ctx).With(
-		log.String("method", "objectmanager.handleStreamRequest"),
-	)
-
-	req := &stream.Request{}
-	if err := object.Unmarshal(env.Payload, req); err != nil {
-		return err
-	}
-
-	// start response
-	res := &stream.Response{
-		Metadata: object.Metadata{
-			Owner: m.network.GetPeerKey().PublicKey().DID(),
-		},
-		RequestID: req.RequestID,
-		RootHash:  req.RootHash,
-	}
-
-	leaves, err := m.objectstore.GetStreamLeaves(res.RootHash)
-	if err != nil && !errors.Is(err, objectstore.ErrNotFound) {
-		return err
-	}
-
-	res.Leaves = leaves
-
-	ro, err := object.Marshal(res)
-	if err != nil {
-		return err
-	}
-	if err := m.network.Send(
-		ctx,
-		ro,
-		env.Sender,
-	); err != nil {
-		logger.Warn(
-			"could not send response",
-			log.Error(err),
-		)
-		return err
-	}
-
-	return nil
-}
-
-func (m *manager) handleStreamSubscription(
-	ctx context.Context,
-	env *network.Envelope,
-) error {
-	sub := &stream.Subscription{}
-	if err := object.Unmarshal(env.Payload, sub); err != nil {
-		return err
-	}
-
-	for _, rootHash := range sub.RootHashes {
-		// TODO introduce time-to-live for subscriptions
-		m.subscriptions.Put(rootHash, sub)
-	}
-
-	return nil
-}
-
-func (m *manager) handleStreamAnnouncement(
-	ctx context.Context,
-	env *network.Envelope,
-) error {
-	ann := &stream.Announcement{}
-	if err := object.Unmarshal(env.Payload, ann); err != nil {
-		return err
-	}
-
-	// TODO check if this a stream we care about using ann.StreamHash
-
-	logger := log.FromContext(ctx).With(
-		log.String("method", "objectmanager.handleStreamAnnouncement"),
-		log.Any("sender", env.Sender),
-	)
-
-	// check if we already know about these objects
-	allKnown := true
-	for _, hash := range ann.ObjectHashes {
-		_, err := m.objectstore.Get(hash)
-		if err != nil {
-			allKnown = false
-			break
-		}
-	}
-
-	logger.Info("got stream announcement ",
-		log.Any("hashes", ann.ObjectHashes),
-		log.Bool("allKnown", allKnown),
-	)
-
-	// if we didn't know about all of them, announce to other subscribers
-	if allKnown {
-		return nil
-	}
-
-	// fetch announced objects and their parents
-	err := m.fetchFromLeaves(
-		ctx,
-		ann.ObjectHashes,
-		env.Sender,
-	)
-	if err != nil {
-		return err
-	}
-
-	// announce to subscribers
-	go m.announceStreamChildren(
-		context.New(
-			context.WithCorrelationID(ctx.CorrelationID()),
-			// context.WithTimeout(5*time.Second),
-		),
-		ann.StreamHash,
-		ann.ObjectHashes,
-	)
-
-	return nil
-}
-
 // Put stores a given object as-is, and announces it to any subscribers.
 func (m *manager) Put(
 	ctx context.Context,
@@ -783,138 +336,6 @@ func (m *manager) Put(
 	}
 	// publish to pubsub
 	m.pubsub.Publish(o)
-	return nil
-}
-
-// Append stores a given object that is part of a stream.
-// If the object's parents and sequence are missing they will be added.
-// TODO should we check if the given parents and sequence are valid?
-// TODO should we check if the stream is valid?
-func (m *manager) Append(
-	ctx context.Context,
-	o *object.Object,
-) (*object.Object, error) {
-	root := o.Metadata.Root
-
-	// check and add parents
-	if o.Metadata.Root.IsEmpty() {
-		return nil, ErrMissingRoot
-	}
-	if len(o.Metadata.Parents) == 0 {
-		leaves, err := m.objectstore.GetStreamLeaves(root)
-		if err != nil {
-			return nil, err
-		}
-		if len(leaves) == 0 {
-			leaves = []tilde.Digest{
-				root,
-			}
-		}
-		tilde.SortDigests(leaves)
-		o.Metadata.Parents = object.Parents{
-			"*": leaves,
-		}
-	}
-
-	// check and add sequence
-	// if a sequence has not been set, we find the highest sequence of the
-	// direct parents and add one to it
-	if o.Metadata.Sequence == 0 {
-		for _, ph := range o.Metadata.Parents["*"] {
-			p, err := m.objectstore.Get(ph)
-			if err != nil {
-				return nil, fmt.Errorf("missing parent, %w", err)
-			}
-			if p.Metadata.Sequence > o.Metadata.Sequence {
-				o.Metadata.Sequence = p.Metadata.Sequence
-			}
-		}
-		o.Metadata.Sequence++
-	}
-
-	// add to store
-	if err := m.storeObject(ctx, o); err != nil {
-		return nil, err
-	}
-
-	// announce to subscribers
-	m.announceStreamChildren(
-		context.New(
-			context.WithCorrelationID(
-				ctx.CorrelationID(),
-			),
-			// TODO timeout?
-		),
-		root,
-		[]tilde.Digest{
-			o.Hash(),
-		},
-	)
-
-	// publish to pubsub
-	m.pubsub.Publish(o)
-	return o, nil
-}
-
-func (m *manager) AddStreamSubscription(
-	ctx context.Context,
-	rootHash tilde.Digest,
-	subscriber did.DID,
-) error {
-	r, err := m.objectstore.GetByStream(rootHash)
-	if err != nil {
-		return fmt.Errorf("error trying to get stream objects, %w", err)
-	}
-
-	for {
-		o, err := r.Read()
-		if errors.Is(err, object.ErrReaderDone) {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("error reading stream objects, %w", err)
-		}
-
-		if o.Type != stream.SubscriptionType {
-			continue
-		}
-
-		s := &stream.Subscription{}
-		if err := object.Unmarshal(o, s); err != nil {
-			continue
-		}
-
-		if !s.Metadata.Owner.Equals(subscriber) {
-			continue
-		}
-
-		// TODO check if the subscription has expired
-
-		// already subscribed
-
-		return nil
-	}
-
-	s := &stream.Subscription{
-		Metadata: object.Metadata{
-			Owner: subscriber,
-			Root:  rootHash,
-		},
-		RootHashes: []tilde.Digest{
-			rootHash,
-		},
-		// TODO add expiry
-	}
-
-	so, err := object.Marshal(s)
-	if err != nil {
-		return err
-	}
-
-	if err := m.Put(ctx, so); err != nil {
-		return fmt.Errorf("error storing subscription, %w", err)
-	}
-
 	return nil
 }
 
