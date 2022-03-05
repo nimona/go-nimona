@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"strings"
-	"time"
 
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
@@ -277,62 +276,64 @@ func (p *Provider) RequestStream(
 	ctx context.Context,
 	rootHash tilde.Digest,
 ) error {
-	recipients, err := p.resolver.LookupByContent(
-		ctx,
-		rootHash,
-	)
-	if err != nil {
-		return err
-	}
-	for _, recipient := range recipients {
-		go func(recipient *peer.ConnectionInfo) {
-			ctx := context.New(
-				context.WithTimeout(10 * time.Second),
-			)
-			_, err := p.objectmanager.Request(
-				ctx,
-				rootHash,
-				recipient.PublicKey.DID(),
-			)
-			if err != nil {
-				return
-			}
-			r, err := p.objectmanager.RequestStream(
-				ctx,
-				rootHash,
-				recipient.PublicKey.DID(),
-			)
-			if err != nil {
-				return
-			}
-			object.ReadAll(r) // nolint: errcheck
-			r.Close()
-		}(recipient)
-	}
-	return nil
+	// recipients, err := p.resolver.LookupByContent(
+	// 	ctx,
+	// 	rootHash,
+	// )
+	// if err != nil {
+	// 	return err
+	// }
+	// for _, recipient := range recipients {
+	// 	go func(recipient *peer.ConnectionInfo) {
+	// 		ctx := context.New(
+	// 			context.WithTimeout(10 * time.Second),
+	// 		)
+	// 		_, err := p.objectmanager.Request(
+	// 			ctx,
+	// 			rootHash,
+	// 			recipient.PublicKey.DID(),
+	// 		)
+	// 		if err != nil {
+	// 			return
+	// 		}
+	// 		r, err := p.objectmanager.RequestStream(
+	// 			ctx,
+	// 			rootHash,
+	// 			recipient.PublicKey.DID(),
+	// 		)
+	// 		if err != nil {
+	// 			return
+	// 		}
+	// 		object.ReadAll(r) // nolint: errcheck
+	// 		r.Close()
+	// 	}(recipient)
+	// }
+	// return nil
+	panic("not implemented")
 }
 
 func (p *Provider) Put(
 	ctx context.Context,
 	obj *object.Object,
 ) (*object.Object, error) {
-	obj = object.Copy(obj)
-	if setOwnerS, ok := obj.Data["_setOwner:s"]; ok {
-		if setOwner, ok := setOwnerS.(tilde.String); ok {
-			switch setOwner {
-			case "@peer":
-				obj.Metadata.Owner = p.network.GetPeerKey().PublicKey().DID()
-			case "@identity":
-				// TODO(geoah): fix identity
-				// obj.Metadata.Owner = p.local.GetIdentityPublicKey()
-			}
-		}
-		delete(obj.Data, "_setOwner:s")
-	}
-	if obj.Metadata.Root.IsEmpty() {
-		return obj, p.objectmanager.Put(ctx, obj)
-	}
-	return p.objectmanager.Append(ctx, obj)
+	// obj = object.Copy(obj)
+	// if setOwnerS, ok := obj.Data["_setOwner:s"]; ok {
+	// 	if setOwner, ok := setOwnerS.(tilde.String); ok {
+	// 		switch setOwner {
+	// 		case "@peer":
+	// 			obj.Metadata.Owner = p.network.GetPeerKey().PublicKey().DID()
+	// 		case "@identity":
+	// 			// TODO(geoah): fix identity
+	// 			// obj.Metadata.Owner = p.local.GetIdentityPublicKey()
+	// 		}
+	// 	}
+	// 	delete(obj.Data, "_setOwner:s")
+	// }
+	// if obj.Metadata.Root.IsEmpty() {
+	// 	return obj, p.objectmanager.Put(ctx, obj)
+	// }
+	// return p.objectmanager.Append(ctx, obj)
+	panic("not implemented")
 }
 
 func (p *Provider) GetFeedRootHash(
