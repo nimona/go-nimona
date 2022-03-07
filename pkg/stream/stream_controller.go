@@ -273,7 +273,7 @@ func (s *controller) GetObjectDigests() ([]tilde.Digest, error) {
 }
 
 func (s *controller) GetStreamRoot() tilde.Digest {
-	return tilde.EmptyDigest
+	return s.streamInfo.RootDigest
 }
 
 func (s *controller) GetDigests() ([]tilde.Digest, error) {
