@@ -14,14 +14,14 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/did"
-	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/hyperspace/resolvermock"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/objectstoremock"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/resolver"
+	"nimona.io/pkg/resolvermock"
 	"nimona.io/pkg/tilde"
 )
 

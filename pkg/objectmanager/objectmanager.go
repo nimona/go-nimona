@@ -7,11 +7,11 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/stream"
 	"nimona.io/pkg/tilde"
 )

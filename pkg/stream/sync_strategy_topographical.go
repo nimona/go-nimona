@@ -7,10 +7,10 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/tilde"
 )
 
