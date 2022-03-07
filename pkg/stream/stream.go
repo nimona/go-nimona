@@ -36,6 +36,7 @@ type (
 		GetDigests() ([]tilde.Digest, error)
 		GetSubscribers() ([]did.DID, error)
 		ContainsDigest(cid tilde.Digest) bool
+		GetReader(context.Context) (object.ReadCloser, error)
 		// Sync(context.Context) error
 		// Subscribe(context.Context) (object.ReadCloser, error)
 	}
