@@ -8,11 +8,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/configstore"
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/stream"
 )
 
 func TestKeyManager(t *testing.T) {
@@ -45,9 +47,16 @@ func TestKeyManager(t *testing.T) {
 	}
 
 	// construct a new manager
+	sm1, err := stream.NewManager(
+		context.New(),
+		nil,
+		nil,
+		sqlStore,
+	)
 	m1, err := NewKeyManager(
 		net,
 		sqlStore,
+		sm1,
 		configStore,
 	)
 	require.NoError(t, err)
@@ -62,9 +71,16 @@ func TestKeyManager(t *testing.T) {
 	require.NoError(t, err)
 
 	// construct a new manager that should restore the previous controller
+	sm2, err := stream.NewManager(
+		context.New(),
+		nil,
+		nil,
+		sqlStore,
+	)
 	m2, err := NewKeyManager(
 		net,
 		sqlStore,
+		sm2,
 		configStore,
 	)
 	require.NoError(t, err)

@@ -10,8 +10,8 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/network"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/stream"
 	"nimona.io/pkg/tilde"
 )
 
@@ -38,57 +38,53 @@ type (
 		// WaitForDelegationRequests(context.Context) (chan *DelegationRequest, error)
 	}
 	manager struct {
-		mutex       sync.RWMutex
-		network     network.Network
-		objectStore *sqlobjectstore.Store
-		configStore configstore.Store
-		controller  Controller
-		topic       *pubsub.Topic[Controller]
+		mutex         sync.RWMutex
+		network       network.Network
+		objectStore   *sqlobjectstore.Store
+		streamManager stream.Manager
+		configStore   configstore.Store
+		controller    Controller
+		topic         *pubsub.Topic[Controller]
 	}
 )
 
 func NewKeyManager(
 	net network.Network,
 	objectStore *sqlobjectstore.Store,
+	streamManager stream.Manager,
 	configStore configstore.Store,
 ) (Manager, error) {
 	m := &manager{
-		network:     net,
-		objectStore: objectStore,
-		configStore: configStore,
-		topic:       pubsub.NewTopic[Controller](),
+		network:       net,
+		objectStore:   objectStore,
+		streamManager: streamManager,
+		configStore:   configStore,
+		topic:         pubsub.NewTopic[Controller](),
 	}
 
 	// find controller from config
-	controllerHash, err := configStore.Get(configstore.ConfigKeyManagerController)
-	if err == nil && controllerHash != "" {
+	streamRoot, err := configStore.Get(configstore.ConfigKeyManagerController)
+	if err == nil && streamRoot != "" {
 		// load the controller
-		reader, err := objectStore.GetByStream(
-			tilde.Digest(controllerHash),
+		streamController, err := streamManager.GetController(
+			tilde.Digest(streamRoot),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("could not load stream: %w", err)
 		}
-
-		for {
-			streamRoot, err := reader.Read()
-			if err != nil {
-				if errors.Is(err, object.ErrReaderDone) {
-					break
-				}
-				return nil, err
-			}
-			c, err := RestoreController(
-				streamRoot.Hash(),
-				objectStore,
-				objectStore,
-			)
-			if err != nil {
-				return nil, err
-			}
-			m.controller = c
-			m.topic.Publish(c)
+		streamRoot := streamController.GetStreamRoot()
+		if streamRoot.IsEmpty() {
+			return nil, fmt.Errorf("stream root is empty")
 		}
+		c, err := RestoreController(
+			streamController,
+			objectStore,
+		)
+		if err != nil {
+			return nil, err
+		}
+		m.controller = c
+		m.topic.Publish(c)
 	}
 
 	return m, nil
@@ -102,7 +98,7 @@ func (m *manager) NewController(
 	c, err := NewController(
 		m.network.GetConnectionInfo().Metadata.Owner,
 		m.objectStore,
-		m.objectStore,
+		m.streamManager,
 		delegatorSeal,
 	)
 	if err != nil {
