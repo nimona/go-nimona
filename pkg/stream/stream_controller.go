@@ -280,6 +280,37 @@ func (s *controller) GetDigests() ([]tilde.Digest, error) {
 	return s.graph.TopologicalSort()
 }
 
+func (s *controller) GetReader(ctx context.Context) (object.ReadCloser, error) {
+	os := make(chan *object.Object)
+	er := make(chan error)
+	cl := make(chan struct{})
+	or := object.NewReadCloser(ctx, os, er, cl)
+	ds, err := s.graph.TopologicalSort()
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		defer close(os)
+		defer close(er)
+		defer close(cl)
+		for _, d := range ds {
+			o, err := s.objectStore.Get(d)
+			if err != nil {
+				er <- err
+				return
+			}
+			select {
+			case os <- o:
+			case <-ctx.Done():
+				return
+			case <-cl:
+				return
+			}
+		}
+	}()
+	return or, nil
+}
+
 func (s *controller) GetSubscribers() ([]did.DID, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
