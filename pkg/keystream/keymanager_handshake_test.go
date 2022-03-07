@@ -13,6 +13,7 @@ import (
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/stream"
 )
 
 func TestKeyStreamManager_Handshake(t *testing.T) {
@@ -37,7 +38,9 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	)
 	require.NoError(t, err)
 	defer l0.Close()
-	m0, err := NewKeyManager(n0, sqlStore0, configStore0)
+	sm0, err := stream.NewManager(context.New(), nil, nil, sqlStore0)
+	require.NoError(t, err)
+	m0, err := NewKeyManager(n0, sqlStore0, sm0, configStore0)
 	require.NoError(t, err)
 	c0, err := m0.NewController(nil)
 	require.NoError(t, err)
@@ -64,7 +67,9 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	)
 	require.NoError(t, err)
 	defer l1.Close()
-	m1, err := NewKeyManager(n1, sqlStore1, configStore1)
+	sm1, err := stream.NewManager(context.New(), nil, nil, sqlStore1)
+	require.NoError(t, err)
+	m1, err := NewKeyManager(n1, sqlStore1, sm1, configStore1)
 	require.NoError(t, err)
 
 	// create new delegation request

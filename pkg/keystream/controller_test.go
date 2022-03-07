@@ -7,8 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/sqlobjectstore"
+	"nimona.io/pkg/stream"
 )
 
 func TestController_New(t *testing.T) {
@@ -24,7 +26,9 @@ func TestController_New(t *testing.T) {
 	require.NoError(t, err)
 
 	// create a controller with empty stores
-	ctrl, err := NewController(k.PublicKey().DID(), sqlStore, sqlStore, nil)
+	sMgr, err := stream.NewManager(context.New(), nil, nil, sqlStore)
+	require.NoError(t, err)
+	ctrl, err := NewController(k.PublicKey().DID(), sqlStore, sMgr, nil)
 	require.NoError(t, err)
 	require.NotNil(t, ctrl)
 
@@ -33,7 +37,11 @@ func TestController_New(t *testing.T) {
 	wantNextKeyDigest := ctrl.state.NextKeyDigest
 
 	// restore controller from same stores
-	ctrl2, err := RestoreController(ctrl.state.Root, sqlStore, sqlStore)
+	sMgr2, err := stream.NewManager(context.New(), nil, nil, sqlStore)
+	require.NoError(t, err)
+	sCtrl2, err := sMgr2.GetController(ctrl.state.Root.Hash())
+	require.NoError(t, err)
+	ctrl2, err := RestoreController(sCtrl2, sqlStore)
 	require.NoError(t, err)
 	require.NotNil(t, ctrl2)
 

@@ -9,12 +9,13 @@ import (
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/hyperspace/resolver"
+	hresolver "nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
@@ -123,10 +124,25 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// add bootstrap peers as relays
 	nnet.RegisterRelays(bootstrapPeers...)
 
+	// construct new composite resolver
+	res := resolver.New()
+
+	// construct new stream manager
+	sm, err := stream.NewManager(
+		ctx,
+		nnet,
+		res,
+		str,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("constructing stream manager, %w", err)
+	}
+
 	// construct key stream manager
 	ksm, err := keystream.NewKeyManager(
 		nnet,
 		str,
+		sm,
 		prf,
 	)
 	if err != nil {
@@ -134,14 +150,17 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// construct new resolver
-	res := resolver.New(
+	hres := hresolver.New(
 		ctx,
 		inet,
 		cfg.Peer.PrivateKey,
 		str,
 		ksm,
-		resolver.WithBoostrapPeers(bootstrapPeers...),
+		hresolver.WithBoostrapPeers(bootstrapPeers...),
 	)
+
+	// register resolver
+	res.RegisterResolver(hres)
 
 	// register resolver
 	nnet.RegisterResolver(res)
@@ -155,17 +174,6 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf("constructing object manager, %w", err)
-	}
-
-	// construct new stream manager
-	sm, err := stream.NewManager(
-		ctx,
-		nnet,
-		res,
-		str,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("constructing stream manager, %w", err)
 	}
 
 	d.config = *cfg
