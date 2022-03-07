@@ -10,10 +10,10 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/errors"
-	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/tilde"
 )
 

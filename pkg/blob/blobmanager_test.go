@@ -9,12 +9,12 @@ import (
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/hyperspace/resolver"
-	"nimona.io/pkg/hyperspace/resolvermock"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectmanagermock"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/resolver"
+	"nimona.io/pkg/resolvermock"
 	"nimona.io/pkg/tilde"
 )
 

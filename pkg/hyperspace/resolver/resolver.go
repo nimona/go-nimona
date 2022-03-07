@@ -19,6 +19,7 @@ import (
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
 )
@@ -29,21 +30,10 @@ const (
 	peerCacheTTL = 1 * time.Minute
 )
 
-//go:generate mockgen -destination=../resolvermock/resolvermock_generated.go -package=resolvermock -source=resolver.go
 //go:generate genny -in=$GENERATORS/synclist/synclist.go -out=hashes_generated.go -imp=nimona.io/pkg/object -pkg=resolver gen "KeyType=tilde.Digest"
 
 type (
-	Resolver interface {
-		LookupByDID(
-			ctx context.Context,
-			id did.DID,
-		) ([]*peer.ConnectionInfo, error)
-		LookupByContent(
-			ctx context.Context,
-			cid tilde.Digest,
-		) ([]*peer.ConnectionInfo, error)
-	}
-	resolver struct {
+	Resolver struct {
 		peerKey                        crypto.PrivateKey
 		context                        context.Context
 		network                        net.Network
@@ -56,7 +46,7 @@ type (
 		keyStreamManager               keystream.Manager
 	}
 	// Option for customizing a new resolver
-	Option func(*resolver)
+	Option func(*Resolver)
 )
 
 // New returns a new resolver.
@@ -68,8 +58,8 @@ func New(
 	str *sqlobjectstore.Store,
 	ksm keystream.Manager,
 	opts ...Option,
-) Resolver {
-	r := &resolver{
+) resolver.Resolver {
+	r := &Resolver{
 		context: ctx,
 		peerKey: peerKey,
 		network: network,
@@ -162,7 +152,7 @@ func New(
 	return r
 }
 
-func (r *resolver) LookupByDID(
+func (r *Resolver) LookupByDID(
 	ctx context.Context,
 	id did.DID,
 ) ([]*peer.ConnectionInfo, error) {
@@ -190,7 +180,7 @@ func (r *resolver) LookupByDID(
 	return r.lookup(ctx, reqObject)
 }
 
-func (r *resolver) LookupByContent(
+func (r *Resolver) LookupByContent(
 	ctx context.Context,
 	cid tilde.Digest,
 ) ([]*peer.ConnectionInfo, error) {
@@ -218,7 +208,7 @@ func (r *resolver) LookupByContent(
 	return r.lookup(ctx, reqObject)
 }
 
-func (r *resolver) lookup(
+func (r *Resolver) lookup(
 	ctx context.Context,
 	reqObject *object.Object,
 ) ([]*peer.ConnectionInfo, error) {
@@ -291,7 +281,7 @@ func (r *resolver) lookup(
 	}
 }
 
-func (r *resolver) handleObject(
+func (r *Resolver) handleObject(
 	sender crypto.PublicKey,
 	o *object.Object,
 ) {
@@ -318,7 +308,7 @@ func (r *resolver) handleObject(
 	}
 }
 
-func (r *resolver) handleAnnouncement(
+func (r *Resolver) handleAnnouncement(
 	ctx context.Context,
 	p *hyperspace.Announcement,
 ) {
@@ -331,7 +321,7 @@ func (r *resolver) handleAnnouncement(
 	r.peerCache.Put(p, peerCacheTTL)
 }
 
-func (r *resolver) announceSelf() {
+func (r *Resolver) announceSelf() {
 	ctx := context.New(
 		context.WithParent(r.context),
 	)
@@ -382,7 +372,7 @@ func (r *resolver) announceSelf() {
 	)
 }
 
-func (r *resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
+func (r *Resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	r.localPeerAnnouncementCacheLock.RLock()
 	lastAnnouncement := r.localPeerAnnouncementCache
 	r.localPeerAnnouncementCacheLock.RUnlock()

@@ -8,9 +8,9 @@ import (
 	"github.com/Code-Hex/go-generics-cache/policy/simple"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/hyperspace/resolver"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
 )
