@@ -1,8 +1,6 @@
 package objectmanager
 
 import (
-	"database/sql"
-	"path"
 	"sync"
 	"testing"
 	"time"
@@ -525,11 +523,4 @@ func Test_manager_Subscribe(t *testing.T) {
 			assert.ElementsMatch(t, tt.want, os)
 		})
 	}
-}
-
-func tempSqlite3(t *testing.T) *sql.DB {
-	t.Helper()
-	db, err := sql.Open("sqlite", path.Join(t.TempDir(), "sqlite3.db"))
-	require.NoError(t, err)
-	return db
 }

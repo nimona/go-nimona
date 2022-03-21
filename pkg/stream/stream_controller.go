@@ -26,7 +26,7 @@ type (
 		// dag graph
 		graph *Graph[tilde.Digest, object.Metadata]
 		// state, not thread safe
-		streamInfo *StreamInfo
+		streamInfo *Info
 		// subscriptions
 		subscriptions *simple.Cache[did.DID, bool]
 	}
@@ -41,7 +41,7 @@ func NewController(
 		graph:         NewGraph[tilde.Digest, object.Metadata](),
 		network:       network,
 		objectStore:   objectStore,
-		streamInfo:    NewStreamInfo(),
+		streamInfo:    NewInfo(),
 		subscriptions: simple.NewCache[did.DID, bool](),
 	}
 	c.streamInfo.RootDigest = cid
@@ -49,7 +49,7 @@ func NewController(
 }
 
 // Insert an event to the stream.
-// Can either accept an Object, or anything that can be marshalled into one.
+// Can either accept an Object, or anything that can be marshaled into one.
 // This method will make any necessary changes to the object to make it valid.
 // - Will set the object's root if it's not set
 // - Will set the object's parents if they are not set
@@ -141,7 +141,8 @@ func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
 
 	announcementObject, err := object.Marshal(announcement)
 	if err != nil {
-		return tilde.EmptyDigest, fmt.Errorf("failed to marshal announcement: %w", err)
+		return tilde.EmptyDigest,
+			fmt.Errorf("failed to marshal announcement: %w", err)
 	}
 
 	for _, sub := range subscribers {
@@ -162,7 +163,7 @@ func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
 }
 
 // Apply an event to the stream.
-// Can either accept an Object, or anything that can be marshalled into one.
+// Can either accept an Object, or anything that can be marshaled into one.
 func (s *controller) Apply(v interface{}) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -262,7 +263,7 @@ func (s *controller) Apply(v interface{}) error {
 	return nil
 }
 
-func (s *controller) GetStreamInfo() StreamInfo {
+func (s *controller) GetStreamInfo() Info {
 	// TODO lock and copy
 	return *s.streamInfo
 }

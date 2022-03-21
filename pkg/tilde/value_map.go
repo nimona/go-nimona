@@ -95,7 +95,7 @@ func jsonUnmarshalValue(
 		}
 		return iv, nil
 	case MapHint:
-		var iv Map = Map{}
+		iv := Map{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
@@ -111,31 +111,31 @@ func jsonUnmarshalValue(
 	case DigestHint:
 		return Digest(value), nil
 	case BoolArrayHint:
-		var iv BoolArray = BoolArray{}
+		iv := BoolArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
 	case DataArrayHint:
-		var iv DataArray = DataArray{}
+		iv := DataArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
 	case FloatArrayHint:
-		var iv FloatArray = FloatArray{}
+		iv := FloatArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
 	case IntArrayHint:
-		var iv IntArray = IntArray{}
+		iv := IntArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
 	case MapArrayHint:
-		var iv MapArray = MapArray{}
+		iv := MapArray{}
 		if _, err := jsonparser.ArrayEach(value, func(
 			value []byte,
 			dataType jsonparser.ValueType,
@@ -151,19 +151,19 @@ func jsonUnmarshalValue(
 		}
 		return iv, nil
 	case StringArrayHint:
-		var iv StringArray = StringArray{}
+		iv := StringArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
 	case UintArrayHint:
-		var iv UintArray = UintArray{}
+		iv := UintArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}
 		return iv, nil
 	case DigestArrayHint:
-		var iv DigestArray = DigestArray{}
+		iv := DigestArray{}
 		if err := json.Unmarshal(value, &iv); err != nil {
 			return nil, err
 		}

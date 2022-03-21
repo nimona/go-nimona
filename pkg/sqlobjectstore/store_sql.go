@@ -109,7 +109,7 @@ func New(
 	// and verify they were set
 	actualPragmaBusyTimeout := 0
 	row := db.QueryRow("PRAGMA busy_timeout")
-	row.Scan(&actualPragmaBusyTimeout)
+	row.Scan(&actualPragmaBusyTimeout) // nolint: errcheck
 	if actualPragmaBusyTimeout != 5000 {
 		return nil, fmt.Errorf("unable to set busy_timeout pragma")
 	}

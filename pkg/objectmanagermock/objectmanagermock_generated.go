@@ -38,35 +38,6 @@ func (m *MockObjectManager) EXPECT() *MockObjectManagerMockRecorder {
 	return m.recorder
 }
 
-// AddStreamSubscription mocks base method.
-func (m *MockObjectManager) AddStreamSubscription(ctx context.Context, rootHash tilde.Digest, subscriber did.DID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddStreamSubscription", ctx, rootHash, subscriber)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddStreamSubscription indicates an expected call of AddStreamSubscription.
-func (mr *MockObjectManagerMockRecorder) AddStreamSubscription(ctx, rootHash, subscriber interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStreamSubscription", reflect.TypeOf((*MockObjectManager)(nil).AddStreamSubscription), ctx, rootHash, subscriber)
-}
-
-// Append mocks base method.
-func (m *MockObjectManager) Append(ctx context.Context, o *object.Object) (*object.Object, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Append", ctx, o)
-	ret0, _ := ret[0].(*object.Object)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Append indicates an expected call of Append.
-func (mr *MockObjectManagerMockRecorder) Append(ctx, o interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Append", reflect.TypeOf((*MockObjectManager)(nil).Append), ctx, o)
-}
-
 // Put mocks base method.
 func (m *MockObjectManager) Put(ctx context.Context, o *object.Object) error {
 	m.ctrl.T.Helper()
@@ -94,21 +65,6 @@ func (m *MockObjectManager) Request(ctx context.Context, hash tilde.Digest, id d
 func (mr *MockObjectManagerMockRecorder) Request(ctx, hash, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Request", reflect.TypeOf((*MockObjectManager)(nil).Request), ctx, hash, id)
-}
-
-// RequestStream mocks base method.
-func (m *MockObjectManager) RequestStream(ctx context.Context, rootHash tilde.Digest, id did.DID) (object.ReadCloser, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RequestStream", ctx, rootHash, id)
-	ret0, _ := ret[0].(object.ReadCloser)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RequestStream indicates an expected call of RequestStream.
-func (mr *MockObjectManagerMockRecorder) RequestStream(ctx, rootHash, id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestStream", reflect.TypeOf((*MockObjectManager)(nil).RequestStream), ctx, rootHash, id)
 }
 
 // Subscribe mocks base method.

@@ -57,7 +57,7 @@ linters:
     - depguard
     - errcheck
     - gochecknoinits
-    - gocritic
+    # - gocritic # fails with go1.18
     - goimports
     - revive
     - goprintffuncname
@@ -70,7 +70,7 @@ linters:
     - nakedret
     - exportloopref
     - staticcheck
-    - structcheck
+    # - structcheck # https://github.com/golangci/golangci-lint/issues/2649
     - typecheck
     - unconvert
     - unused
@@ -119,6 +119,7 @@ issues:
       text: "hugeParam:"
 
 run:
+  go: 1.18
   timeout: 2m
   allow-parallel-runners: true
   modules-download-mode: readonly

@@ -11,7 +11,7 @@ type (
 		Digest   tilde.Digest
 		Metadata object.Metadata
 	}
-	StreamInfo struct {
+	Info struct {
 		RootType   string
 		RootDigest tilde.Digest
 		RootObject *object.Object
@@ -27,8 +27,8 @@ func GetObjectInfo(o *object.Object) *ObjectInfo {
 	}
 }
 
-func NewStreamInfo() *StreamInfo {
-	return &StreamInfo{
+func NewInfo() *Info {
+	return &Info{
 		Objects: map[tilde.Digest]*ObjectInfo{},
 	}
 }

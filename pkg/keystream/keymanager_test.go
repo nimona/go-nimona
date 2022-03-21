@@ -53,6 +53,7 @@ func TestKeyManager(t *testing.T) {
 		nil,
 		sqlStore,
 	)
+	require.NoError(t, err)
 	m1, err := NewKeyManager(
 		net,
 		sqlStore,
@@ -77,6 +78,7 @@ func TestKeyManager(t *testing.T) {
 		nil,
 		sqlStore,
 	)
+	require.NoError(t, err)
 	m2, err := NewKeyManager(
 		net,
 		sqlStore,

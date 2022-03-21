@@ -13,8 +13,8 @@ import (
 )
 
 func NewTestProvider(
-	t *testing.T,
 	ctx context.Context,
+	t *testing.T,
 ) (*Provider, *peer.ConnectionInfo) {
 	// construct new key
 	key, err := crypto.NewEd25519PrivateKey()

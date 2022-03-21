@@ -152,6 +152,7 @@ func (c *controller) CurrentKey() crypto.PrivateKey {
 func (c *controller) GetKeyStream() *State {
 	c.mutex.RLock()
 	state := &State{}
+	// nolint: errcheck
 	copier.Copy(&state, c.state)
 	c.mutex.RUnlock()
 	return state

@@ -18,7 +18,7 @@ import (
 )
 
 func TestSyncStrategy_Integration(t *testing.T) {
-	_, c0 := provider.NewTestProvider(t, context.Background())
+	_, c0 := provider.NewTestProvider(context.Background(), t)
 
 	d1, err := daemon.New(
 		context.New(),
@@ -72,6 +72,7 @@ func TestSyncStrategy_Integration(t *testing.T) {
 	o1r, err := d1.ObjectStore().GetByStream(h1)
 	require.NoError(t, err)
 	o1gs, err := object.ReadAll(o1r)
+	require.NoError(t, err)
 	require.Len(t, o1gs, 1)
 	require.Equal(t, o1, o1gs[0])
 
@@ -87,7 +88,7 @@ func TestSyncStrategy_Integration(t *testing.T) {
 }
 
 func TestSyncStrategy_Announcements_Integration(t *testing.T) {
-	_, c0 := provider.NewTestProvider(t, context.Background())
+	_, c0 := provider.NewTestProvider(context.Background(), t)
 
 	d1, err := daemon.New(
 		context.New(),

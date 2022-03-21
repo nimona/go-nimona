@@ -199,6 +199,7 @@ func Test_Controller(t *testing.T) {
 
 		c, err := m.GetController(nAh)
 		require.NotNil(t, c)
+		require.NoError(t, err)
 
 		gotOrder, err := c.(*controller).GetObjectDigests()
 		require.NoError(t, err)
