@@ -1,13 +1,10 @@
 package stream
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"sync"
 )
-
-var errNodeNotFound = errors.New("node not found")
 
 type (
 	keyable interface {

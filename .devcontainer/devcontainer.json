@@ -6,9 +6,7 @@
     ],
     "settings": {
         "go.useLanguageServer": true,
-        // until golangci-lint fixes the issues with go1.18 we are switching
-        // back to golint
-        "go.lintTool": "golint",
+        "go.lintTool": "golangci-lint",
         "go.lintFlags": [
             "--fast"
         ],

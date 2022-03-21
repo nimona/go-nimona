@@ -19,14 +19,14 @@ import (
 
 func TestProvider_handleAnnouncement(t *testing.T) {
 	// net0 is our provider
-	net0, k0 := newPeer(t, context.New(context.WithCorrelationID("prv0")))
+	net0, k0 := newPeer(context.New(context.WithCorrelationID("prv0")), t)
 	pr0 := &peer.ConnectionInfo{
 		PublicKey: k0.PublicKey(),
 		Addresses: net0.Addresses(),
 	}
 
 	// net1 is a normal peer
-	net1, k1 := newPeer(t, context.New())
+	net1, k1 := newPeer(context.New(), t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k1.PublicKey().DID(),
@@ -59,21 +59,21 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 
 func TestProvider_distributeAnnouncement(t *testing.T) {
 	// net0 is our provider
-	net0, k0 := newPeer(t, context.New(context.WithCorrelationID("net0")))
+	net0, k0 := newPeer(context.New(context.WithCorrelationID("net0")), t)
 	pr0 := &peer.ConnectionInfo{
 		PublicKey: k0.PublicKey(),
 		Addresses: net0.Addresses(),
 	}
 
 	// net1 is another provider
-	net1, k1 := newPeer(t, context.New(context.WithCorrelationID("net1")))
+	net1, k1 := newPeer(context.New(context.WithCorrelationID("net1")), t)
 	pr1 := &peer.ConnectionInfo{
 		PublicKey: k1.PublicKey(),
 		Addresses: net1.Addresses(),
 	}
 
 	// net2 is a normal peer
-	net2, k2 := newPeer(t, context.New(context.WithCorrelationID("net2")))
+	net2, k2 := newPeer(context.New(context.WithCorrelationID("net2")), t)
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k2.PublicKey().DID(),
@@ -156,7 +156,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 
 func TestProvider_handlePeerLookup(t *testing.T) {
 	// net0 is our provider
-	net0, k0 := newPeer(t, context.New(context.WithCorrelationID("prv0")))
+	net0, k0 := newPeer(context.New(context.WithCorrelationID("prv0")), t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k0.PublicKey().DID(),
@@ -168,7 +168,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	}
 
 	// net1 is a normal peer
-	net1, k1 := newPeer(t, context.New())
+	net1, k1 := newPeer(context.New(), t)
 
 	// construct provider
 	prv, err := New(context.New(), net0, k1, nil)
@@ -241,7 +241,10 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	assert.ElementsMatch(t, []*hyperspace.Announcement{pr2}, res.Announcements)
 }
 
-func newPeer(t *testing.T, ctx context.Context) (net.Network, crypto.PrivateKey) {
+func newPeer(ctx context.Context, t *testing.T) (
+	net.Network,
+	crypto.PrivateKey,
+) {
 	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 

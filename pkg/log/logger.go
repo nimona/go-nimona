@@ -41,9 +41,9 @@ type (
 )
 
 var (
-	DefaultLogLevel Level     = ErrorLevel
-	defaultOutput   io.Writer = os.Stdout
-	defaultWriter   Writer    = JSONWriter()
+	DefaultLogLevel = ErrorLevel
+	defaultOutput   = os.Stdout
+	defaultWriter   = JSONWriter()
 	DefaultLogger   Logger
 )
 

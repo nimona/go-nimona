@@ -216,6 +216,7 @@ func ListenOnExternalPort(c *listenConfig) {
 	c.upnp = true
 }
 
+// TODO: replace with composite resolver
 func (w *network) RegisterResolver(
 	resolver Resolver,
 ) {
@@ -423,6 +424,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 				Object:    obj,
 				Found:     obj != nil,
 			}
+			// nolint: errcheck // TODO: probably fix
 			go w.Send(
 				context.New(
 					context.WithTimeout(time.Second),

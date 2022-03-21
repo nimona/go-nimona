@@ -24,7 +24,9 @@ func (m *dummyManager) GetController() (Controller, error) {
 	return nil, ErrControllerNotFound
 }
 
-func (m *dummyManager) WaitForController(ctx context.Context) (Controller, error) {
+func (m *dummyManager) WaitForController(
+	ctx context.Context,
+) (Controller, error) {
 	return nil, errors.Error("not implemented")
 }
 

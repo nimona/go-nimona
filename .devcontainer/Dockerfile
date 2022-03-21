@@ -1,4 +1,4 @@
-FROM golang:1.18-rc
+FROM golang:1.18
 
 WORKDIR /master
 RUN git clone --depth 1 https://github.com/golang/go.git
@@ -7,5 +7,3 @@ RUN ./make.bash
 
 ENV PATH "/master/go/bin:${PATH}"
 RUN echo "PATH=${PATH}" >> /etc/bash.bashrc && echo "${PATH}"
-
-RUN go install golang.org/x/tools/gopls@latest
