@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1645889145236,
+  "lastUpdate": 1647975627000,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -7020,6 +7020,60 @@ window.BENCHMARK_DATA = {
             "value": 44858,
             "unit": "ns/op",
             "extra": "26632 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "67361dd52ed335f08f279f0d7e0564c7e578e940",
+          "message": "fix(bindings): fix bindings bulding",
+          "timestamp": "2022-03-22T18:58:05Z",
+          "tree_id": "22eb0e7a845870e7cc279faf2c380fac18dab3d2",
+          "url": "https://github.com/nimona/go-nimona/commit/67361dd52ed335f08f279f0d7e0564c7e578e940"
+        },
+        "date": 1647975625331,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 8808567,
+            "unit": "ns/op",
+            "extra": "134 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 419251644,
+            "unit": "ns/op",
+            "extra": "3 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3862690138,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1975973,
+            "unit": "ns/op",
+            "extra": "556 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 59296,
+            "unit": "ns/op",
+            "extra": "19944 times\n2 procs"
           }
         ]
       }
