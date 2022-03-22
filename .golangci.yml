@@ -1,6 +1,6 @@
 linters-settings:
   depguard:
-    list-type: blacklist
+    list-type: denylist
     packages:
       - github.com/sirupsen/logrus
       - gotest.tools/assert
@@ -37,7 +37,11 @@ linters-settings:
     settings:
       mnd:
         # don't include the "operation" and "assign"
-        checks: argument,case,condition,return
+        checks:
+          - argument
+          - case
+          - condition
+          - return
   govet:
     # TODO reconsider checking for shadowing
     check-shadowing: false
@@ -99,8 +103,8 @@ linters:
 
 issues:
   exclude:
-     - Using the variable on range scope `tt` in function literal
-     - Using the variable on range scope `tc` in function literal
+    - Using the variable on range scope `tt` in function literal
+    - Using the variable on range scope `tc` in function literal
   exclude-rules:
     - linters:
         - lll
@@ -119,7 +123,7 @@ issues:
       text: "hugeParam:"
 
 run:
-  go: 1.18
+  go: "1.18"
   timeout: 2m
   allow-parallel-runners: true
   modules-download-mode: readonly
