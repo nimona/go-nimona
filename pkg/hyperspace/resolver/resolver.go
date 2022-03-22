@@ -314,7 +314,7 @@ func (r *Resolver) handleAnnouncement(
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "resolver.handleAnnouncement"),
-		log.String("peer.publicKey", p.ConnectionInfo.PublicKey.String()),
+		log.String("peer.publicKey", p.ConnectionInfo.Metadata.Owner.String()),
 		log.Strings("peer.addresses", p.ConnectionInfo.Addresses),
 	)
 	logger.Debug("adding peer to cache")
@@ -353,7 +353,7 @@ func (r *Resolver) announceSelf() {
 		if err != nil {
 			logger.Error(
 				"error announcing self to bootstrap",
-				log.String("peer", p.PublicKey.String()),
+				log.String("peer", p.Metadata.Owner.String()),
 				log.Error(err),
 			)
 			continue
@@ -400,7 +400,9 @@ func (r *Resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 		},
 		Version: time.Now().Unix(),
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: r.peerKey.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: r.peerKey.PublicKey().DID(),
+			},
 			Addresses: addresses,
 			// Relays:    relays,
 		},

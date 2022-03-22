@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"nimona.io/pkg/did"
 )
 
 // nolint: lll
@@ -12,20 +14,23 @@ func TestShorthand(t *testing.T) {
 		name          string
 		shorthand     Shorthand
 		wantValid     bool
-		wantPublicKey string
+		wantOwner     did.DID
 		wantAddresses []string
 		wantPeerError error
 	}{{
-		name:          "should pass, valid shorthand",
-		shorthand:     "z6MktxdZRoFTVasDPBYTqYWwWgspFGWYSzhP3r8aNH8pppeh@127.0.0.1:18000",
-		wantValid:     true,
-		wantPublicKey: "z6MktxdZRoFTVasDPBYTqYWwWgspFGWYSzhP3r8aNH8pppeh",
+		name:      "should pass, valid shorthand",
+		shorthand: "z6MktxdZRoFTVasDPBYTqYWwWgspFGWYSzhP3r8aNH8pppeh@127.0.0.1:18000",
+		wantValid: true,
+		wantOwner: did.DID{
+			Method:       did.MethodNimona,
+			IdentityType: did.IdentityTypePeer,
+			Identity:     "z6MktxdZRoFTVasDPBYTqYWwWgspFGWYSzhP3r8aNH8pppeh",
+		},
 		wantAddresses: []string{"127.0.0.1:18000"},
 	}, {
 		name:          "should fail, invalid shorthand",
 		shorthand:     "foo",
 		wantValid:     false,
-		wantPublicKey: "",
 		wantAddresses: nil,
 		wantPeerError: ErrInvalidShorthand,
 	}}
@@ -37,7 +42,7 @@ func TestShorthand(t *testing.T) {
 			gotPeer, gotPeerError := tt.shorthand.GetConnectionInfo()
 			if tt.wantValid {
 				assert.Equal(t, tt.wantAddresses, gotPeer.Addresses)
-				assert.Equal(t, tt.wantPublicKey, gotPeer.PublicKey.String())
+				assert.Equal(t, tt.wantOwner, gotPeer.Metadata.Owner)
 			}
 			assert.Equal(t, tt.wantPeerError, gotPeerError)
 		})

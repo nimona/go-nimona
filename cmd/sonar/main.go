@@ -199,11 +199,11 @@ func main() {
 						"nonce": tilde.String(rand.String(8)),
 					},
 				},
-				recipient.PublicKey.DID(),
+				recipient.Metadata.Owner,
 			); err != nil {
 				logger.Error(
 					"error sending ping to peer",
-					log.String("publicKey", recipient.PublicKey.String()),
+					log.String("publicKey", recipient.Metadata.Owner.String()),
 					log.Strings("addresses", recipient.Addresses),
 					log.Error(err),
 				)
@@ -211,7 +211,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s sent ping to %s\n",
-				recipient.PublicKey.String(),
+				recipient.Metadata.Owner.String(),
 				nnet.GetPeerKey().PublicKey().String(),
 			)
 			return nil

@@ -3,6 +3,7 @@ package net
 import (
 	"crypto/ed25519"
 	"crypto/tls"
+	"fmt"
 	"math"
 	"net"
 	"strings"
@@ -126,21 +127,26 @@ func (n *network) Dial(
 	p *peer.ConnectionInfo,
 ) (Connection, error) {
 	logger := log.FromContext(ctx).With(
-		log.String("peer", p.PublicKey.String()),
+		log.String("peer", p.Metadata.Owner.String()),
 		log.Strings("addresses", p.Addresses),
 	)
 
-	if !p.PublicKey.IsEmpty() {
-		n.connectionsMutex.RLock()
-		conn, ok := n.connections[p.PublicKey.String()]
-		if ok {
-			if !conn.IsClosed() {
-				n.connectionsMutex.RUnlock()
-				return conn, nil
-			}
-		}
-		n.connectionsMutex.RUnlock()
+	// TODO: Can we dial a peer without an owner/public-key?
+
+	pubKey, err := crypto.PublicKeyFromDID(p.Metadata.Owner)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get public key from did: %w", err)
 	}
+
+	n.connectionsMutex.RLock()
+	conn, ok := n.connections[pubKey.String()]
+	if ok {
+		if !conn.IsClosed() {
+			n.connectionsMutex.RUnlock()
+			return conn, nil
+		}
+	}
+	n.connectionsMutex.RUnlock()
 
 	if len(p.Addresses) == 0 {
 		return nil, ErrNoAddresses
@@ -156,7 +162,7 @@ func (n *network) Dial(
 	// go through all addresses and try to dial them
 	for _, address := range p.Addresses {
 		// check if address is currently blocked
-		if n.isAddressBlocked(p.PublicKey, address) {
+		if n.isAddressBlocked(*pubKey, address) {
 			logger.Debug("address is blocked, skipping")
 			continue
 		}
@@ -178,7 +184,7 @@ func (n *network) Dial(
 		if err != nil {
 			// blocking address
 			attempts, backoff := n.blockAddress(
-				p.PublicKey,
+				*pubKey,
 				address,
 			)
 			logger.Error("could not dial address, blocking",
@@ -191,13 +197,13 @@ func (n *network) Dial(
 		}
 
 		// check negotiated key against dialed
-		if !conn.remotePeerKey.Equals(p.PublicKey) {
+		if !conn.remotePeerKey.Equals(*pubKey) {
 			n.blockAddress(
-				p.PublicKey,
+				*pubKey,
 				address,
 			)
 			logger.Error("remote didn't match expect key, blocking",
-				log.String("expected", p.PublicKey.String()),
+				log.String("expected", pubKey.String()),
 				log.String("received", conn.remotePeerKey.String()),
 			)
 			continue
@@ -212,7 +218,7 @@ func (n *network) Dial(
 		}
 		if err := conn.Write(ctx, ping); err != nil {
 			n.blockAddress(
-				p.PublicKey,
+				*pubKey,
 				address,
 			)
 			logger.Error("could not actually write to remote, blocking")
@@ -222,7 +228,7 @@ func (n *network) Dial(
 		// at this point we consider the connection successful, so we can
 		// reset the failed attempts
 		n.attempts.Put(address, 0)
-		n.attempts.Put(p.PublicKey.String(), 0)
+		n.attempts.Put(pubKey.String(), 0)
 
 		connDialSuccessCounter.Inc()
 		connConnOutCounter.Inc()
@@ -232,7 +238,7 @@ func (n *network) Dial(
 		return conn, nil
 	}
 
-	err := ErrAllAddressesFailed
+	err = ErrAllAddressesFailed
 	if allBlocked {
 		err = ErrAllAddressesBlocked
 		connDialBlockedCounter.Inc()

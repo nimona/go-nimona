@@ -21,7 +21,9 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	// net0 is our provider
 	net0, k0 := newPeer(context.New(context.WithCorrelationID("prv0")), t)
 	pr0 := &peer.ConnectionInfo{
-		PublicKey: k0.PublicKey(),
+		Metadata: object.Metadata{
+			Owner: k0.PublicKey().DID(),
+		},
 		Addresses: net0.Addresses(),
 	}
 
@@ -32,7 +34,9 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 			Owner: k1.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: k1.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: k1.PublicKey().DID(),
+			},
 			Addresses: net1.Addresses(),
 		},
 		Digests: []tilde.Digest{"foo", "bar"},
@@ -61,14 +65,18 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	// net0 is our provider
 	net0, k0 := newPeer(context.New(context.WithCorrelationID("net0")), t)
 	pr0 := &peer.ConnectionInfo{
-		PublicKey: k0.PublicKey(),
+		Metadata: object.Metadata{
+			Owner: k0.PublicKey().DID(),
+		},
 		Addresses: net0.Addresses(),
 	}
 
 	// net1 is another provider
 	net1, k1 := newPeer(context.New(context.WithCorrelationID("net1")), t)
 	pr1 := &peer.ConnectionInfo{
-		PublicKey: k1.PublicKey(),
+		Metadata: object.Metadata{
+			Owner: k1.PublicKey().DID(),
+		},
 		Addresses: net1.Addresses(),
 	}
 
@@ -79,7 +87,9 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 			Owner: k2.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: k2.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: k2.PublicKey().DID(),
+			},
 			Addresses: net2.Addresses(),
 		},
 		Digests:          []tilde.Digest{"foo", "bar"},
@@ -133,7 +143,9 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 		// wait a bit and check if both providers have cached the peer
 		var existsInPrv1 error
 		for i := 0; i < 10; i++ {
-			_, existsInPrv1 = prv0.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+			_, existsInPrv1 = prv0.peerCache.Get(
+				pr2.ConnectionInfo.Metadata.Owner,
+			)
 			if existsInPrv1 != nil {
 				time.Sleep(time.Second)
 				fmt.Println("existsInPrv1 failed", i+1, "times")
@@ -143,7 +155,9 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 		assert.NoError(t, existsInPrv1)
 		var existsInPrv2 error
 		for i := 0; i < 10; i++ {
-			_, existsInPrv2 = prv1.peerCache.Get(pr2.ConnectionInfo.PublicKey)
+			_, existsInPrv2 = prv1.peerCache.Get(
+				pr2.ConnectionInfo.Metadata.Owner,
+			)
 			if existsInPrv2 != nil {
 				time.Sleep(time.Second)
 				fmt.Println("existsInPrv2 failed", i+1, "times")
@@ -162,7 +176,9 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 			Owner: k0.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: k0.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: k0.PublicKey().DID(),
+			},
 			Addresses: net0.Addresses(),
 		},
 	}
@@ -199,7 +215,9 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	require.NoError(t, err)
 	pr2 := &hyperspace.Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: pr2k.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: pr2k.PublicKey().DID(),
+			},
 		},
 		Digests: []tilde.Digest{"foo", "bar"},
 	}
@@ -207,7 +225,9 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	require.NoError(t, err)
 	pr3 := &hyperspace.Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: pr3k.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: pr3k.PublicKey().DID(),
+			},
 		},
 		Digests: []tilde.Digest{"not-foo"},
 	}

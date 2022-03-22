@@ -249,7 +249,7 @@ func (f *syncStrategyTopographical) Fetch(
 					Limit:     limit,
 					Skip:      skip,
 				}),
-				provider.PublicKey.DID(),
+				provider.Metadata.Owner,
 				network.SendWithConnectionInfo(provider),
 				network.SendWithResponse(res, time.Second),
 			)
@@ -284,7 +284,7 @@ func (f *syncStrategyTopographical) Fetch(
 					RequestID:  f.newRequestID(),
 					ObjectHash: digest,
 				}),
-				provider.PublicKey.DID(),
+				provider.Metadata.Owner,
 				network.SendWithConnectionInfo(provider),
 				network.SendWithResponse(res, time.Second),
 			)
