@@ -296,7 +296,7 @@ BINDING_MACOS_SDK_ROOT = $(shell xcrun --sdk macosx --show-sdk-path)
 cross-build:
 	docker run -t --rm -v "${CURDIR}":/app -w /app \
 		-e CGO_ENABLED=1 ${BINDING_CROSS_ARGS} \
-		docker.elastic.co/beats-dev/golang-crossbuild:1.15.10-${BINDING_CROSS_TAG} \
+		docker.elastic.co/beats-dev/golang-crossbuild:1.18-${BINDING_CROSS_TAG} \
 		--build-cmd "${BINDING_CROSS_CMD}" -p "${GOOS}/${GOARCH}"
 
 .PHONY: bindings
