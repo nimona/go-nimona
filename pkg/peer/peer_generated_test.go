@@ -19,15 +19,15 @@ func TestEncoding(t *testing.T) {
 
 	c := &ConnectionInfo{
 		Metadata: object.Metadata{
-			Owner: did.DID{
-				Method:       did.MethodNimona,
-				IdentityType: did.IdentityTypePeer,
-				Identity:     "foo",
-			},
+			Owner:     k.PublicKey().DID(),
 			Timestamp: time.Now().Format(time.RFC3339),
 		},
-		Version:       1,
-		PublicKey:     k.PublicKey(),
+		Version: 1,
+		Delegator: did.DID{
+			Method:       did.MethodNimona,
+			IdentityType: did.IdentityTypePeer,
+			Identity:     "foo",
+		},
 		Addresses:     []string{"foo", "bar"},
 		ObjectFormats: []string{"foobar"},
 	}

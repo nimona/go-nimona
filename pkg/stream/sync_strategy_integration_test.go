@@ -9,6 +9,7 @@ import (
 
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
+	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/hyperspace/provider"
 	"nimona.io/pkg/object"
@@ -20,6 +21,9 @@ import (
 func TestSyncStrategy_Integration(t *testing.T) {
 	_, c0 := provider.NewTestProvider(context.Background(), t)
 
+	k0, err := crypto.PublicKeyFromDID(c0.Metadata.Owner)
+	require.NoError(t, err)
+
 	d1, err := daemon.New(
 		context.New(),
 		daemon.WithConfigOptions(
@@ -27,7 +31,7 @@ func TestSyncStrategy_Integration(t *testing.T) {
 			config.WithDefaultListenOnLocalIPs(),
 			config.WithDefaultListenOnPrivateIPs(),
 			config.WithDefaultBootstraps([]peer.Shorthand{
-				peer.Shorthand(fmt.Sprintf("%s@%s", c0.PublicKey, c0.Addresses[0])),
+				peer.Shorthand(fmt.Sprintf("%s@%s", k0, c0.Addresses[0])),
 			}),
 		),
 	)
@@ -42,7 +46,7 @@ func TestSyncStrategy_Integration(t *testing.T) {
 			config.WithDefaultListenOnLocalIPs(),
 			config.WithDefaultListenOnPrivateIPs(),
 			config.WithDefaultBootstraps([]peer.Shorthand{
-				peer.Shorthand(fmt.Sprintf("%s@%s", c0.PublicKey, c0.Addresses[0])),
+				peer.Shorthand(fmt.Sprintf("%s@%s", k0, c0.Addresses[0])),
 			}),
 		),
 	)
@@ -90,6 +94,9 @@ func TestSyncStrategy_Integration(t *testing.T) {
 func TestSyncStrategy_Announcements_Integration(t *testing.T) {
 	_, c0 := provider.NewTestProvider(context.Background(), t)
 
+	k0, err := crypto.PublicKeyFromDID(c0.Metadata.Owner)
+	require.NoError(t, err)
+
 	d1, err := daemon.New(
 		context.New(),
 		daemon.WithConfigOptions(
@@ -97,7 +104,7 @@ func TestSyncStrategy_Announcements_Integration(t *testing.T) {
 			config.WithDefaultListenOnLocalIPs(),
 			config.WithDefaultListenOnPrivateIPs(),
 			config.WithDefaultBootstraps([]peer.Shorthand{
-				peer.Shorthand(fmt.Sprintf("%s@%s", c0.PublicKey, c0.Addresses[0])),
+				peer.Shorthand(fmt.Sprintf("%s@%s", k0, c0.Addresses[0])),
 			}),
 		),
 	)
@@ -110,7 +117,7 @@ func TestSyncStrategy_Announcements_Integration(t *testing.T) {
 			config.WithDefaultListenOnLocalIPs(),
 			config.WithDefaultListenOnPrivateIPs(),
 			config.WithDefaultBootstraps([]peer.Shorthand{
-				peer.Shorthand(fmt.Sprintf("%s@%s", c0.PublicKey, c0.Addresses[0])),
+				peer.Shorthand(fmt.Sprintf("%s@%s", k0, c0.Addresses[0])),
 			}),
 		),
 	)

@@ -179,7 +179,7 @@ func (p *Provider) handleAnnouncement(
 	}
 	logger := log.FromContext(ctx).With(
 		log.String("method", "provider.handleAnnouncement"),
-		log.String("peer.publicKey", ann.ConnectionInfo.PublicKey.String()),
+		log.String("peer.owner", ann.ConnectionInfo.Metadata.Owner.String()),
 		log.Strings("peer.addresses", ann.ConnectionInfo.Addresses),
 	)
 	// TODO check if we've already received this peer, and if not forward it
@@ -243,7 +243,9 @@ func (p *Provider) handlePeerLookupByDigest(
 	}
 
 	pr := &peer.ConnectionInfo{
-		PublicKey: s,
+		Metadata: object.Metadata{
+			Owner: s.DID(),
+		},
 	}
 
 	reso, err := object.Marshal(res)
@@ -321,7 +323,9 @@ func (p *Provider) handlePeerLookupByDID(
 	}
 
 	pr := &peer.ConnectionInfo{
-		PublicKey: s,
+		Metadata: object.Metadata{
+			Owner: s.DID(),
+		},
 	}
 
 	reso, err := object.Marshal(res)
@@ -384,7 +388,7 @@ func (p *Provider) distributeAnnouncement(
 		); err != nil {
 			logger.Error(
 				"error announcing self to other provider",
-				log.String("provider", ci.ConnectionInfo.PublicKey.String()),
+				log.String("provider", ci.ConnectionInfo.Metadata.Owner.String()),
 				log.Error(err),
 			)
 		}
@@ -408,8 +412,10 @@ func (p *Provider) announceSelf() {
 	ann := &hyperspace.Announcement{
 		Version: announceVersion,
 		ConnectionInfo: &peer.ConnectionInfo{
+			Metadata: object.Metadata{
+				Owner: p.peerKey.PublicKey().DID(),
+			},
 			Version:   p.announcementVersion,
-			PublicKey: p.peerKey.PublicKey(),
 			Addresses: p.network.Addresses(),
 		},
 		PeerCapabilities: []string{
@@ -442,7 +448,7 @@ func (p *Provider) announceSelf() {
 		); err != nil {
 			logger.Error(
 				"error announcing self to other provider",
-				log.String("provider", ci.ConnectionInfo.PublicKey.String()),
+				log.String("provider", ci.ConnectionInfo.Metadata.Owner.String()),
 				log.Error(err),
 			)
 		}

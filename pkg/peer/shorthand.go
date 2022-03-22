@@ -5,6 +5,7 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/object"
 )
 
 const (
@@ -30,7 +31,9 @@ func (s Shorthand) GetConnectionInfo() (*ConnectionInfo, error) {
 		return nil, err
 	}
 	return &ConnectionInfo{
-		PublicKey: pk,
+		Metadata: object.Metadata{
+			Owner: pk.DID(),
+		},
 		Addresses: []string{
 			ps[1],
 		},

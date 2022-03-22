@@ -114,7 +114,9 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	peer1 := &peer.ConnectionInfo{
-		PublicKey: peer1Key.PublicKey(),
+		Metadata: object.Metadata{
+			Owner: peer1Key.PublicKey().DID(),
+		},
 	}
 
 	f00 := object.MustMarshal(peer1)

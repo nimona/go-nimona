@@ -3,9 +3,13 @@ package nimona.io/peer
 import nimona.io/crypto crypto
 import nimona.io/peer peer
 
+// Notes:
+// - `metadata.owner` reflects the peer that created the object.
+// - `delegator` reflects the peer's delegators, can be zero or more.
+//
 signed object nimona.io/peer.ConnectionInfo {
     version int
-    publicKey string type=nimona.io/crypto.PublicKey
+    delegator string type=nimona.io/did.DID
     addresses repeated string
     optional relays repeated object type=nimona.io/peer.ConnectionInfo
     objectFormats repeated string

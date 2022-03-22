@@ -161,7 +161,7 @@ func (m *manager) NewDelegationRequest(
 		// send back the root hash of the keystream
 		ver := &DelegationVerification{
 			Metadata: object.Metadata{
-				Owner: ci.PublicKey.DID(),
+				Owner: ci.Metadata.Owner,
 			},
 			DelegateSeal: DelegateSeal{
 				Root:        ctrl.GetKeyStream().Root,
@@ -226,7 +226,7 @@ func (m *manager) HandleDelegationRequest(
 	err = m.network.Send(
 		ctx,
 		doObj,
-		dr.InitiatorConnectionInfo.PublicKey.DID(),
+		dr.InitiatorConnectionInfo.Metadata.Owner,
 		network.SendWithConnectionInfo(
 			dr.InitiatorConnectionInfo,
 		),

@@ -32,7 +32,9 @@ func TestResolver_Integration(t *testing.T) {
 			Owner: k0.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: k0.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: k0.PublicKey().DID(),
+			},
 			Addresses: net0.Addresses(),
 		},
 		PeerCapabilities: []string{"foo", "bar"},
@@ -45,7 +47,9 @@ func TestResolver_Integration(t *testing.T) {
 			Owner: k1.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: k1.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: k1.PublicKey().DID(),
+			},
 			Addresses: net1.Addresses(),
 		},
 		PeerCapabilities: []string{"foo"},
@@ -77,7 +81,9 @@ func TestResolver_Integration(t *testing.T) {
 			Owner: p2.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: p2.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: p2.PublicKey().DID(),
+			},
 		},
 		Digests: []tilde.Digest{"foo", "bar"},
 	}
@@ -86,7 +92,9 @@ func TestResolver_Integration(t *testing.T) {
 			Owner: k0.PublicKey().DID(),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			PublicKey: p3.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: p3.PublicKey().DID(),
+			},
 		},
 		Digests: []tilde.Digest{"foo"},
 	}

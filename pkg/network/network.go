@@ -579,7 +579,7 @@ func (w *network) Send(
 		sent := 0
 		var errs error
 		for _, c := range cs {
-			err = w.Send(ctx, o, c.PublicKey.DID(), SendWithConnectionInfo(c))
+			err = w.Send(ctx, o, c.Metadata.Owner, SendWithConnectionInfo(c))
 			if err != nil {
 				errs = multierror.Append(
 					errs,
@@ -661,7 +661,7 @@ func (w *network) Send(
 		err = w.Send(
 			ctx,
 			dfo,
-			relayConnInfo.PublicKey.DID(),
+			relayConnInfo.Metadata.Owner,
 			SendWithConnectionInfo(relayConnInfo),
 		)
 		if err != nil {
@@ -721,7 +721,9 @@ func (w *network) Send(
 		c, err = w.net.Dial(
 			ctx,
 			&peer.ConnectionInfo{
-				PublicKey: *recipientPublicKey,
+				Metadata: object.Metadata{
+					Owner: id,
+				},
 			},
 		)
 		if err != nil {
@@ -752,9 +754,12 @@ func (w *network) Send(
 		if ci != nil && len(ci.Relays) > 0 {
 			relays = append(relays, ci.Relays...)
 		}
-		// set the public key for future use
-		if ci != nil {
-			recipientPublicKey = &ci.PublicKey
+		recipientPublicKey, err = crypto.PublicKeyFromDID(id)
+		if err != nil {
+			errs = multierror.Append(
+				errs,
+				fmt.Errorf("error getting key for resolved peer: %w", err),
+			)
 		}
 	}
 
@@ -939,7 +944,6 @@ func (w *network) GetConnectionInfo() *peer.ConnectionInfo {
 		Metadata: object.Metadata{
 			Owner: w.peerKey.PublicKey().DID(),
 		},
-		PublicKey: w.peerKey.PublicKey(),
 		Addresses: w.GetAddresses(),
 		Relays:    w.GetRelays(),
 		ObjectFormats: []string{

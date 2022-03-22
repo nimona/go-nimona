@@ -38,7 +38,9 @@ func TestNetConnectionSuccess(t *testing.T) {
 	// attempt to dial own address, should fail
 	t.Run("dial own address, should error", func(t *testing.T) {
 		_, err = n1.Dial(ctx, &peer.ConnectionInfo{
-			PublicKey: n1.peerKey.PublicKey(),
+			Metadata: object.Metadata{
+				Owner: n1.peerKey.PublicKey().DID(),
+			},
 			Addresses: n1.Addresses(),
 		})
 		require.Equal(t, ErrAllAddressesBlocked, err)
@@ -55,7 +57,9 @@ func TestNetConnectionSuccess(t *testing.T) {
 
 		go func() {
 			cconn, err := n2.Dial(ctx, &peer.ConnectionInfo{
-				PublicKey: n1.peerKey.PublicKey(),
+				Metadata: object.Metadata{
+					Owner: n1.peerKey.PublicKey().DID(),
+				},
 				Addresses: n1.Addresses(),
 			})
 			assert.NoError(t, err)
@@ -112,12 +116,16 @@ func TestNetDialBackoff(t *testing.T) {
 
 	ctx := context.New()
 	p := &peer.ConnectionInfo{
-		PublicKey: s1.PublicKey(),
+		Metadata: object.Metadata{
+			Owner: s1.PublicKey().DID(),
+		},
 		Addresses: []string{"tcps:240.0.0.1:1000"},
 	}
 
 	p2 := &peer.ConnectionInfo{
-		PublicKey: s2.PublicKey(),
+		Metadata: object.Metadata{
+			Owner: s2.PublicKey().DID(),
+		},
 		Addresses: p.Addresses,
 	}
 

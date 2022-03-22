@@ -3,7 +3,7 @@
 package hyperspace
 
 import (
-	"nimona.io/pkg/did"
+	did "nimona.io/pkg/did"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
 	tilde "nimona.io/pkg/tilde"
