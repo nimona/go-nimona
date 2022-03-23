@@ -3,8 +3,8 @@ go 1.18
 module nimona.io
 
 require (
-	github.com/Code-Hex/go-generics-cache v0.0.8
-	github.com/Tv0ridobro/data-structure v0.0.0-20220220124854-9485d1236cd2
+	github.com/Code-Hex/go-generics-cache v1.0.0
+	github.com/Tv0ridobro/data-structure v0.0.0-20220227210127-8d31a0422295
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/buger/jsonparser v1.1.1
 	github.com/docker/go-units v0.4.0
@@ -26,22 +26,22 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/muesli/termenv v0.11.0
 	github.com/multiformats/go-multibase v0.0.3
-	github.com/multiformats/go-multicodec v0.4.0
+	github.com/multiformats/go-multicodec v0.4.1
 	github.com/multiformats/go-varint v0.0.6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.12.1
-	github.com/pyroscope-io/pyroscope v0.10.2
-	github.com/rs/xid v1.3.0
+	github.com/pyroscope-io/pyroscope v0.13.0
+	github.com/rs/xid v1.4.0
 	github.com/stoewer/go-strcase v1.2.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8
 	github.com/tyler-smith/go-bip39 v1.1.0
-	github.com/xujiajun/nutsdb v0.6.0
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
-	golang.org/x/tools v0.1.9
+	github.com/xujiajun/nutsdb v0.7.1
+	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064
+	golang.org/x/tools v0.1.10
 	gopkg.in/yaml.v2 v2.4.0
-	modernc.org/sqlite v1.14.7
+	modernc.org/sqlite v1.15.3
 )
 
 require (
@@ -84,7 +84,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/xujiajun/mmap-go v1.0.1 // indirect
 	github.com/xujiajun/utils v0.0.0-20190123093513-8bf096c4f53b // indirect
-	golang.org/x/mod v0.6.0-dev.0.20211013180041-c96bc1413d57 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/text v0.3.7 // indirect
@@ -92,11 +92,11 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
-	modernc.org/cc/v3 v3.35.22 // indirect
-	modernc.org/ccgo/v3 v3.15.13 // indirect
-	modernc.org/libc v1.14.5 // indirect
+	modernc.org/cc/v3 v3.35.24 // indirect
+	modernc.org/ccgo/v3 v3.15.17 // indirect
+	modernc.org/libc v1.14.12 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
-	modernc.org/memory v1.0.5 // indirect
+	modernc.org/memory v1.0.7 // indirect
 	modernc.org/opt v0.1.1 // indirect
 	modernc.org/strutil v1.1.1 // indirect
 	modernc.org/token v1.0.0 // indirect
