@@ -32,7 +32,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.12.1
 	github.com/pyroscope-io/pyroscope v0.10.2
-	github.com/rs/xid v1.3.0
+	github.com/rs/xid v1.4.0
 	github.com/stoewer/go-strcase v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8
