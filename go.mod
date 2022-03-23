@@ -3,7 +3,7 @@ go 1.18
 module nimona.io
 
 require (
-	github.com/Code-Hex/go-generics-cache v0.0.8
+	github.com/Code-Hex/go-generics-cache v1.0.0
 	github.com/Tv0ridobro/data-structure v0.0.0-20220220124854-9485d1236cd2
 	github.com/bmatcuk/doublestar v1.3.4
 	github.com/buger/jsonparser v1.1.1
