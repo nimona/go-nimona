@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1647975627000,
+  "lastUpdate": 1648074989030,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -7074,6 +7074,60 @@ window.BENCHMARK_DATA = {
             "value": 59296,
             "unit": "ns/op",
             "extra": "19944 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "b7a91fc5c7340ec7da6d85b8d22c38b5a79188f9",
+          "message": "chore(peer): remove delegator from connectionInfo",
+          "timestamp": "2022-03-23T22:35:02Z",
+          "tree_id": "2535cca8e7ada337c0f50cd5c0b5f0d0095c79d8",
+          "url": "https://github.com/nimona/go-nimona/commit/b7a91fc5c7340ec7da6d85b8d22c38b5a79188f9"
+        },
+        "date": 1648074988196,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 6350912,
+            "unit": "ns/op",
+            "extra": "171 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 319996933,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 3086017602,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1472819,
+            "unit": "ns/op",
+            "extra": "734 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 44652,
+            "unit": "ns/op",
+            "extra": "26912 times\n2 procs"
           }
         ]
       }
