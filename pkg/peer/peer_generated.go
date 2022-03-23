@@ -3,7 +3,6 @@
 package peer
 
 import (
-	did "nimona.io/pkg/did"
 	object "nimona.io/pkg/object"
 )
 
@@ -12,7 +11,6 @@ const ConnectionInfoType = "nimona.io/peer.ConnectionInfo"
 type ConnectionInfo struct {
 	Metadata      object.Metadata   `nimona:"@metadata:m,type=nimona.io/peer.ConnectionInfo"`
 	Version       int64             `nimona:"version:i"`
-	Delegator     did.DID           `nimona:"delegator:s"`
 	Addresses     []string          `nimona:"addresses:as"`
 	Relays        []*ConnectionInfo `nimona:"relays:am"`
 	ObjectFormats []string          `nimona:"objectFormats:as"`
