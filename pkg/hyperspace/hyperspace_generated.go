@@ -23,7 +23,7 @@ const LookupByDIDRequestType = "nimona.io/hyperspace.LookupByDIDRequest"
 
 type LookupByDIDRequest struct {
 	Metadata            object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupByDIDRequest"`
-	Nonce               string          `nimona:"nonce:s"`
+	RequestID           string          `nimona:"requestID:s"`
 	Owner               did.DID         `nimona:"owner:s"`
 	RequireCapabilities []string        `nimona:"requireCapabilities:as"`
 }
@@ -31,15 +31,15 @@ type LookupByDIDRequest struct {
 const LookupByDigestRequestType = "nimona.io/hyperspace.LookupByDigestRequest"
 
 type LookupByDigestRequest struct {
-	Metadata object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupByDigestRequest"`
-	Nonce    string          `nimona:"nonce:s"`
-	Digest   tilde.Digest    `nimona:"digest:r"`
+	Metadata  object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupByDigestRequest"`
+	RequestID string          `nimona:"requestID:s"`
+	Digest    tilde.Digest    `nimona:"digest:r"`
 }
 
 const LookupResponseType = "nimona.io/hyperspace.LookupResponse"
 
 type LookupResponse struct {
 	Metadata      object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupResponse"`
-	Nonce         string          `nimona:"nonce:s"`
+	RequestID     string          `nimona:"requestID:s"`
 	Announcements []*Announcement `nimona:"announcements:am"`
 }

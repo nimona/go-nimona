@@ -152,7 +152,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct new resolver
 	hres := hresolver.New(
 		ctx,
-		inet,
+		nnet,
 		cfg.Peer.PrivateKey,
 		str,
 		ksm,

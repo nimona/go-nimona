@@ -243,8 +243,8 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 		context.New(),
 		object.MustMarshal(
 			&hyperspace.LookupByDigestRequest{
-				Nonce:  "1",
-				Digest: tilde.Digest("foo"),
+				RequestID: "1",
+				Digest:    tilde.Digest("foo"),
 			},
 		),
 	)
@@ -257,7 +257,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	res := &hyperspace.LookupResponse{}
 	err = object.Unmarshal(respObj, res)
 	require.NoError(t, err)
-	assert.Equal(t, "1", res.Nonce)
+	assert.Equal(t, "1", res.RequestID)
 	assert.ElementsMatch(t, []*hyperspace.Announcement{pr2}, res.Announcements)
 }
 

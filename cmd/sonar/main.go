@@ -92,7 +92,7 @@ func main() {
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		inet,
+		nnet,
 		cfg.Peer.PrivateKey,
 		nil,
 		ksm,

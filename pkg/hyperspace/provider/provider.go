@@ -224,9 +224,9 @@ func (p *Provider) handlePeerLookupByDigest(
 
 	promIncRequestsCounter.Inc()
 
-	logger.Debug("handling peer lookup")
-
 	ans := p.peerCache.LookupByDigest(q.Digest)
+
+	logger.Debug("handling peer lookup by digest", log.Int("n", len(ans)))
 
 	ctx = context.New(
 		context.WithParent(ctx),
@@ -238,7 +238,7 @@ func (p *Provider) handlePeerLookupByDigest(
 		Metadata: object.Metadata{
 			Owner: p.peerKey.PublicKey().DID(),
 		},
-		Nonce:         q.Nonce,
+		RequestID:     q.RequestID,
 		Announcements: ans,
 	}
 
@@ -304,9 +304,9 @@ func (p *Provider) handlePeerLookupByDID(
 
 	promIncRequestsCounter.Inc()
 
-	logger.Debug("handling peer lookup")
-
 	ans := p.peerCache.LookupByDID(q.Owner)
+
+	logger.Debug("handling peer lookup by did", log.Int("n", len(ans)))
 
 	ctx = context.New(
 		context.WithParent(ctx),
@@ -318,7 +318,7 @@ func (p *Provider) handlePeerLookupByDID(
 		Metadata: object.Metadata{
 			Owner: p.peerKey.PublicKey().DID(),
 		},
-		Nonce:         q.Nonce,
+		RequestID:     q.RequestID,
 		Announcements: ans,
 	}
 

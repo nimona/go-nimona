@@ -11,17 +11,17 @@ signed object nimona.io/hyperspace.Announcement {
 }
 
 signed object nimona.io/hyperspace.LookupByDIDRequest {
-    nonce string
+    requestID string
     owner string type=nimona.io/did.DID
     requireCapabilities repeated string
 }
 
 signed object nimona.io/hyperspace.LookupByDigestRequest {
-    nonce string
+    requestID string
     digest string type=nimona.io/tilde.Digest
 }
 
 signed object nimona.io/hyperspace.LookupResponse {
-    nonce string
+    requestID string
     optional announcements repeated object type=nimona.io/hyperspace.Announcement
 }

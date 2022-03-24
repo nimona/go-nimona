@@ -18,6 +18,7 @@ import (
 	"nimona.io/pkg/hyperspace/provider"
 	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/keystreammock"
+	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
@@ -26,7 +27,7 @@ import (
 
 func TestResolver_Integration(t *testing.T) {
 	// net0 is our provider
-	k0, net0 := newPeer(t)
+	k0, n0, net0 := newPeer(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k0.PublicKey().DID(),
@@ -35,13 +36,13 @@ func TestResolver_Integration(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: k0.PublicKey().DID(),
 			},
-			Addresses: net0.Addresses(),
+			Addresses: net0.GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo", "bar"},
 	}
 
 	// net1 is a normal peer
-	k1, net1 := newPeer(t)
+	k1, _, net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k1.PublicKey().DID(),
@@ -50,22 +51,21 @@ func TestResolver_Integration(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: k1.PublicKey().DID(),
 			},
-			Addresses: net1.Addresses(),
+			Addresses: net1.GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo"},
 	}
 
 	// construct provider
-	prv, err := provider.New(context.New(), net0, k0, nil)
+	prv, err := provider.New(context.New(), n0, k0, nil)
 	require.NoError(t, err)
 
 	// net1 announces to provider
-	c0, err := net1.Dial(context.New(), pr0.ConnectionInfo)
-	require.NoError(t, err)
-
-	err = c0.Write(
+	err = net1.Send(
 		context.New(),
 		object.MustMarshal(pr1),
+		pr0.ConnectionInfo.Metadata.Owner,
+		network.SendWithConnectionInfo(pr0.ConnectionInfo),
 	)
 	require.NoError(t, err)
 
@@ -153,25 +153,24 @@ func TestResolver_Integration(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, pr, 1)
 		assert.Equal(t,
-			pr1.Metadata.Signature.Signer.String(),
-			pr[0].Metadata.Signature.Signer.String(),
+			pr1.Metadata.Owner.String(),
+			pr[0].Metadata.Owner.String(),
 		)
 	})
 }
 
-func newPeer(t *testing.T) (crypto.PrivateKey, net.Network) {
+func newPeer(t *testing.T) (crypto.PrivateKey, net.Network, network.Network) {
 	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	ctx := context.New()
 
 	n := net.New(k)
-	lis, err := n.Listen(
+	nn := network.New(ctx, n, k)
+	lis, err := nn.Listen(
 		ctx,
 		"127.0.0.1:0",
-		&net.ListenConfig{
-			BindLocal: true,
-		},
+		network.ListenOnLocalIPs,
 	)
 	require.NoError(t, err)
 
@@ -179,7 +178,7 @@ func newPeer(t *testing.T) (crypto.PrivateKey, net.Network) {
 		lis.Close() // nolint: errcheck
 	})
 
-	return k, n
+	return k, n, nn
 }
 
 func tempObjectStore(t *testing.T) *sqlobjectstore.Store {

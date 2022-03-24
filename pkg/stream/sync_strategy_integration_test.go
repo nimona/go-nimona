@@ -84,6 +84,8 @@ func TestSyncStrategy_Integration(t *testing.T) {
 	c2, err := m2.GetOrCreateController(h1)
 	require.NoError(t, err)
 
+	time.Sleep(time.Second)
+
 	// attempt to fetch the stream using the stream manager on p2.
 	n, err := m2.Fetch(context.New(), c2, h1)
 	require.NoError(t, err)
