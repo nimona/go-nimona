@@ -18,8 +18,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"nimona.io/internal/connmanager"
 	"nimona.io/internal/nat"
-	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -104,7 +104,7 @@ type (
 			ctx context.Context,
 			bindAddress string,
 			options ...ListenOption,
-		) (net.Listener, error)
+		) (connmanager.Listener, error)
 		RegisterResolver(
 			resolver Resolver,
 		)
@@ -122,17 +122,17 @@ type (
 	SendOption func(*sendOptions)
 	// network implements a Network
 	network struct {
-		net        net.Network
-		peerKey    crypto.PrivateKey
-		inboxes    EnvelopePubSub
-		deduplist  *cache.Cache
-		resolvers  *ResolverSyncList
-		addresses  *StringSyncList
-		relayLock  sync.RWMutex
-		relays     []*peer.ConnectionInfo
-		closeFns   []closeFn
-		closeMutex sync.Mutex
-		store      objectstore.Store
+		connmanager connmanager.ConnManager
+		peerKey     crypto.PrivateKey
+		inboxes     EnvelopePubSub
+		deduplist   *cache.Cache
+		resolvers   *ResolverSyncList
+		addresses   *StringSyncList
+		relayLock   sync.RWMutex
+		relays      []*peer.ConnectionInfo
+		closeFns    []closeFn
+		closeMutex  sync.Mutex
+		store       objectstore.Store
 	}
 	// closeFn are functions that will be called during the network's Close
 	closeFn func() error
@@ -141,20 +141,19 @@ type (
 // New creates a network on a given network
 func New(
 	ctx context.Context,
-	nnet net.Network,
 	peerKey crypto.PrivateKey,
 	stores ...objectstore.Store,
 ) Network {
 	w := &network{
-		inboxes:    NewEnvelopePubSub(),
-		deduplist:  cache.New(10*time.Second, 1*time.Minute),
-		resolvers:  &ResolverSyncList{},
-		addresses:  &StringSyncList{},
-		relays:     []*peer.ConnectionInfo{},
-		closeFns:   []closeFn{},
-		closeMutex: sync.Mutex{},
-		peerKey:    peerKey,
-		net:        nnet,
+		inboxes:     NewEnvelopePubSub(),
+		deduplist:   cache.New(10*time.Second, 1*time.Minute),
+		resolvers:   &ResolverSyncList{},
+		addresses:   &StringSyncList{},
+		relays:      []*peer.ConnectionInfo{},
+		closeFns:    []closeFn{},
+		closeMutex:  sync.Mutex{},
+		peerKey:     peerKey,
+		connmanager: connmanager.New(peerKey),
 	}
 
 	if w.peerKey.IsEmpty() {
@@ -183,7 +182,7 @@ func New(
 
 	go w.handleObjects(subs)
 
-	w.net.RegisterConnectionHandler(w.handleConnection)
+	w.connmanager.RegisterConnectionHandler(w.handleConnection)
 
 	return w
 }
@@ -195,7 +194,7 @@ func (w *network) GetPeerKey() crypto.PrivateKey {
 type (
 	ListenOption func(c *listenConfig)
 	listenConfig struct {
-		net.ListenConfig
+		connmanager.ListenConfig
 		upnp bool
 	}
 )
@@ -247,7 +246,7 @@ func (w *network) Listen(
 	ctx context.Context,
 	bindAddress string,
 	options ...ListenOption,
-) (net.Listener, error) {
+) (connmanager.Listener, error) {
 	listenConfig := &listenConfig{}
 	for _, o := range options {
 		o(listenConfig)
@@ -257,7 +256,7 @@ func (w *network) Listen(
 		log.String("bindAddress", bindAddress),
 		log.Any("listenConfig", listenConfig),
 	)
-	listener, err := w.net.Listen(
+	listener, err := w.connmanager.Listen(
 		ctx,
 		bindAddress,
 		&listenConfig.ListenConfig,
@@ -317,7 +316,7 @@ func (w *network) Listen(
 }
 
 func (w *network) handleConnection(
-	conn net.Connection,
+	conn connmanager.Connection,
 ) {
 	remotePeerKey := conn.RemotePeerKey()
 	reader := conn.Read(context.Background())
@@ -330,7 +329,7 @@ func (w *network) handleConnection(
 			if err != nil {
 				// nolint: gocritic
 				switch err {
-				case net.ErrInvalidSignature:
+				case connmanager.ErrInvalidSignature:
 					log.DefaultLogger.Warn(
 						"error reading from connection, non fatal",
 						log.String(
@@ -697,14 +696,14 @@ func (w *network) Send(
 		return nil
 	}
 
-	var c net.Connection
+	var c connmanager.Connection
 	var ci *peer.ConnectionInfo
 	var errs error
 	var relays []*peer.ConnectionInfo
 
 	// dial with given connection info
 	if opt.connectionInfo != nil {
-		c, err = w.net.Dial(ctx, opt.connectionInfo)
+		c, err = w.connmanager.Dial(ctx, opt.connectionInfo)
 		if err != nil {
 			errs = multierror.Append(
 				errs,
@@ -718,7 +717,7 @@ func (w *network) Send(
 
 	// dial with basic connection info if the did is a public key
 	if c == nil && err == nil && recipientPublicKey != nil {
-		c, err = w.net.Dial(
+		c, err = w.connmanager.Dial(
 			ctx,
 			&peer.ConnectionInfo{
 				Metadata: object.Metadata{
@@ -765,7 +764,7 @@ func (w *network) Send(
 
 	// dial with lookup connection info
 	if c == nil && ci != nil {
-		c, err = w.net.Dial(ctx, ci)
+		c, err = w.connmanager.Dial(ctx, ci)
 		if err != nil {
 			errs = multierror.Append(
 				errs,

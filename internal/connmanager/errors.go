@@ -1,4 +1,4 @@
-package net
+package connmanager
 
 import "nimona.io/pkg/errors"
 

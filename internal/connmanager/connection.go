@@ -1,4 +1,4 @@
-package net
+package connmanager
 
 import (
 	"encoding/json"

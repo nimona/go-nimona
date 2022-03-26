@@ -4,7 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"nimona.io/internal/net"
+	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/did"
@@ -91,7 +91,7 @@ func (m *MockNetworkSimple) Listen(
 	ctx context.Context,
 	bindAddress string,
 	options ...network.ListenOption,
-) (net.Listener, error) {
+) (connmanager.Listener, error) {
 	panic("not implemented")
 }
 

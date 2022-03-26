@@ -1,4 +1,4 @@
-package net
+package connmanager
 
 import (
 	"crypto/ed25519"

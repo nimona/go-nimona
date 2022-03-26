@@ -5,11 +5,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/net"
+	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
-	"nimona.io/pkg/network"
+	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -24,26 +24,23 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 	require.NoError(t, err)
 
 	// construct new network
-	inet := net.New(peerKey)
-	nnet := network.New(
-		ctx,
-		inet,
-		peerKey,
-	)
+	con := connmanager.New(peerKey)
 
 	// start listening
-	lis, err := nnet.Listen(
+	lis, err := con.Listen(
 		ctx,
 		"0.0.0.0:0",
-		network.ListenOnLocalIPs,
-		network.ListenOnPrivateIPs,
+		&connmanager.ListenConfig{
+			BindLocal:   true,
+			BindPrivate: true,
+		},
 	)
 	require.NoError(t, err)
 
 	// construct new hyperspace provider
 	_, err = provider.New(
 		ctx,
-		inet,
+		con,
 		peerKey,
 		nil,
 	)
@@ -54,5 +51,10 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 		require.NoError(t, err)
 	})
 
-	return nnet.GetConnectionInfo()
+	return &peer.ConnectionInfo{
+		Metadata: object.Metadata{
+			Owner: peerKey.PublicKey().DID(),
+		},
+		Addresses: con.Addresses(),
+	}
 }

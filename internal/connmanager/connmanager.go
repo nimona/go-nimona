@@ -1,4 +1,4 @@
-package net
+package connmanager
 
 import (
 	"crypto/ed25519"
@@ -22,7 +22,7 @@ import (
 	"nimona.io/pkg/tilde"
 )
 
-//go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_objects_generated.go -pkg=net gen "ObjectType=*object.Object Name=Object name=object"
+//go:generate genny -in=$GENERATORS/pubsub/pubsub.go -out=pubsub_objects_generated.go -pkg=connmanager gen "ObjectType=*object.Object Name=Object name=object"
 
 var (
 	connConnOutCounter = promauto.NewCounter(
@@ -64,8 +64,8 @@ var (
 )
 
 type (
-	// Network interface
-	Network interface {
+	// ConnManager interface
+	ConnManager interface {
 		Dial(
 			ctx context.Context,
 			peer *peer.ConnectionInfo,
@@ -83,10 +83,10 @@ type (
 	ConnectionHandler func(Connection)
 )
 
-// New creates a new p2p network
+// New creates a new transport
 func New(
 	peerKey crypto.PrivateKey,
-) Network {
+) ConnManager {
 	n := &network{
 		peerKey: peerKey,
 		transports: map[string]Transport{

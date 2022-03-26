@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/net"
 	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -30,7 +29,7 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 	require.NoError(t, err)
 	k0, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	n0 := network.New(context.Background(), net.New(k0), k0)
+	n0 := network.New(context.Background(), k0)
 	l0, err := n0.Listen(
 		context.Background(),
 		"127.0.0.1:0",
@@ -59,7 +58,7 @@ func TestKeyStreamManager_Handshake(t *testing.T) {
 
 	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	n1 := network.New(context.Background(), net.New(k1), k1)
+	n1 := network.New(context.Background(), k1)
 	l1, err := n1.Listen(
 		context.Background(),
 		"127.0.0.1:0",

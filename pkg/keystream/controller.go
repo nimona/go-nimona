@@ -24,6 +24,7 @@ type (
 		CurrentKey() crypto.PrivateKey
 		// TODO should this be returning a pointer or copy?
 		GetKeyStream() *State
+		GetInception() (*Inception, error)
 	}
 	controller struct {
 		mutex             sync.RWMutex
@@ -156,6 +157,25 @@ func (c *controller) GetKeyStream() *State {
 	copier.Copy(&state, c.state)
 	c.mutex.RUnlock()
 	return state
+}
+
+func (c *controller) GetInception() (*Inception, error) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+	r, err := c.streamController.GetReader(context.New())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get stream reader, %w", err)
+	}
+	o, err := r.Read()
+	if err != nil {
+		return nil, fmt.Errorf("unable to read object, %w", err)
+	}
+	inception := &Inception{}
+	err = object.Unmarshal(o, inception)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal object, %w", err)
+	}
+	return inception, nil
 }
 
 func (c *controller) Rotate() (*Rotation, error) {

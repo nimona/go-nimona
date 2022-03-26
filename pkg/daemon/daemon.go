@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"nimona.io/internal/net"
+	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/configstore"
 	"nimona.io/pkg/context"
@@ -44,7 +44,7 @@ type (
 		streammanager   stream.Manager
 		keystreamanager keystream.Manager
 		// internal
-		listener net.Listener
+		listener connmanager.Listener
 	}
 	Option func(d *daemon) error
 )
@@ -89,17 +89,15 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// construct new network
-	inet := net.New(cfg.Peer.PrivateKey)
-	nnet := network.New(
+	net := network.New(
 		ctx,
-		inet,
 		cfg.Peer.PrivateKey,
 		str,
 	)
 
 	if cfg.Peer.BindAddress != "" {
 		// start listening
-		lis, err := nnet.Listen(
+		lis, err := net.Listen(
 			ctx,
 			cfg.Peer.BindAddress,
 			network.ListenOnLocalIPs,
@@ -122,7 +120,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	}
 
 	// add bootstrap peers as relays
-	nnet.RegisterRelays(bootstrapPeers...)
+	net.RegisterRelays(bootstrapPeers...)
 
 	// construct new composite resolver
 	res := resolver.New()
@@ -130,7 +128,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct new stream manager
 	sm, err := stream.NewManager(
 		ctx,
-		nnet,
+		net,
 		res,
 		str,
 	)
@@ -140,7 +138,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 	// construct key stream manager
 	ksm, err := keystream.NewKeyManager(
-		nnet,
+		net,
 		str,
 		sm,
 		prf,
@@ -152,7 +150,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	// construct new resolver
 	hres := hresolver.New(
 		ctx,
-		nnet,
+		net,
 		cfg.Peer.PrivateKey,
 		str,
 		ksm,
@@ -163,12 +161,12 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 	res.RegisterResolver(hres)
 
 	// register resolver
-	nnet.RegisterResolver(res)
+	net.RegisterResolver(res)
 
 	// construct manager
 	man := objectmanager.New(
 		ctx,
-		nnet,
+		net,
 		res,
 		str,
 	)
@@ -178,7 +176,7 @@ func New(ctx context.Context, opts ...Option) (Daemon, error) {
 
 	d.config = *cfg
 	d.configstore = prf
-	d.network = nnet
+	d.network = net
 	d.resolver = res
 	d.objectstore = str
 	d.objectmanager = man

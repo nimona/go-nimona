@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/internal/fixtures"
-	"nimona.io/internal/net"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/did"
@@ -28,8 +27,8 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	k2, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	n1 := New(context.Background(), net.New(k1), k1)
-	n2 := New(context.Background(), net.New(k2), k2)
+	n1 := New(context.Background(), k1)
+	n2 := New(context.Background(), k2)
 
 	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(t, err)
@@ -100,7 +99,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 
 	t.Run("re-establish broken connections", func(t *testing.T) {
 		// close p2's connection to p1
-		c, err := n2.(*network).net.Dial(
+		c, err := n2.(*network).connmanager.Dial(
 			context.New(),
 			&peer.ConnectionInfo{
 				Metadata: object.Metadata{
@@ -226,11 +225,11 @@ func TestNetwork_Relay(t *testing.T) {
 	k2, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	n0 := New(context.Background(), net.New(k0), k0)
+	n0 := New(context.Background(), k0)
 	time.Sleep(time.Millisecond * 500)
-	n1 := New(context.Background(), net.New(k1), k1)
+	n1 := New(context.Background(), k1)
 	time.Sleep(time.Millisecond * 500)
-	n2 := New(context.Background(), net.New(k2), k2)
+	n2 := New(context.Background(), k2)
 	time.Sleep(time.Millisecond * 500)
 
 	l0, err := n0.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
@@ -441,7 +440,6 @@ func Test_network_lookup(t *testing.T) {
 			require.NoError(t, err)
 			w := New(
 				context.Background(),
-				net.New(k),
 				k,
 			).(*network)
 			for _, r := range tt.fields.resolvers {
@@ -462,7 +460,7 @@ func Test_network_lookup(t *testing.T) {
 func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 	k1, err := crypto.NewEd25519PrivateKey()
 	require.NoError(b, err)
-	n1 := New(context.Background(), net.New(k1), k1).(*network)
+	n1 := New(context.Background(), k1).(*network)
 
 	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(b, err)
@@ -473,7 +471,7 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		k2, err := crypto.NewEd25519PrivateKey()
 		require.NoError(b, err)
-		n2 := New(context.Background(), net.New(k2), k2).(*network)
+		n2 := New(context.Background(), k2).(*network)
 		err = n2.Send(
 			context.Background(),
 			&object.Object{
@@ -514,8 +512,8 @@ func TestNetwork_RequestRespond(t *testing.T) {
 	s1 := objectstoremock.NewMockStore(gomock.NewController(t))
 	s2 := objectstoremock.NewMockStore(gomock.NewController(t))
 
-	n1 := New(context.Background(), net.New(k1), k1, s1)
-	n2 := New(context.Background(), net.New(k2), k2, s2)
+	n1 := New(context.Background(), k1, s1)
+	n2 := New(context.Background(), k2, s2)
 
 	l1, err := n1.Listen(context.Background(), "127.0.0.1:0", ListenOnLocalIPs)
 	require.NoError(t, err)

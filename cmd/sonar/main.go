@@ -7,7 +7,6 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 
-	"nimona.io/internal/net"
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
@@ -58,15 +57,13 @@ func main() {
 	}
 
 	// construct new network
-	inet := net.New(cfg.Peer.PrivateKey)
-	nnet := network.New(
+	net := network.New(
 		ctx,
-		inet,
 		cfg.Peer.PrivateKey,
 	)
 
 	// start listening
-	lis, err := nnet.Listen(
+	lis, err := net.Listen(
 		ctx,
 		cfg.Peer.BindAddress,
 		network.ListenOnLocalIPs,
@@ -92,7 +89,7 @@ func main() {
 	// construct new resolver
 	res := resolver.New(
 		ctx,
-		nnet,
+		net,
 		cfg.Peer.PrivateKey,
 		nil,
 		ksm,
@@ -100,11 +97,11 @@ func main() {
 	)
 
 	// register resolver
-	nnet.RegisterResolver(res)
+	net.RegisterResolver(res)
 
 	logger = logger.With(
-		log.String("peer.publicKey", nnet.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", nnet.GetAddresses()),
+		log.String("peer.publicKey", net.GetPeerKey().PublicKey().String()),
+		log.Strings("peer.addresses", net.GetAddresses()),
 	)
 
 	logger.Info("ready")
@@ -123,7 +120,7 @@ func main() {
 	// construct manager
 	man := objectmanager.New(
 		ctx,
-		nnet,
+		net,
 		res,
 		str,
 	)
@@ -151,7 +148,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s received ping from %s\n",
-				nnet.GetPeerKey().PublicKey().String(),
+				net.GetPeerKey().PublicKey().String(),
 				env.Metadata.Owner.Identity,
 			)
 			if !env.Metadata.Owner.IsEmpty() {
@@ -188,12 +185,12 @@ func main() {
 			return errors.Error("no recipients")
 		}
 		for _, recipient := range recipients {
-			if err := nnet.Send(
+			if err := net.Send(
 				sctx,
 				&object.Object{
 					Type: "ping",
 					Metadata: object.Metadata{
-						Owner: nnet.GetPeerKey().PublicKey().DID(),
+						Owner: net.GetPeerKey().PublicKey().DID(),
 					},
 					Data: tilde.Map{
 						"nonce": tilde.String(rand.String(8)),
@@ -212,7 +209,7 @@ func main() {
 			fmt.Printf(
 				"%s sent ping to %s\n",
 				recipient.Metadata.Owner.String(),
-				nnet.GetPeerKey().PublicKey().String(),
+				net.GetPeerKey().PublicKey().String(),
 			)
 			return nil
 		}

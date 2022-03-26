@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/net"
+	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
@@ -193,7 +193,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	// start listening for lookup responses on net1
 	resp := make(chan *object.Object)
 	net1.RegisterConnectionHandler(
-		func(c net.Connection) {
+		func(c connmanager.Connection) {
 			go func() {
 				or := c.Read(context.New())
 				for {
@@ -262,17 +262,17 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 }
 
 func newPeer(ctx context.Context, t *testing.T) (
-	net.Network,
+	connmanager.ConnManager,
 	crypto.PrivateKey,
 ) {
 	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	n := net.New(k)
+	n := connmanager.New(k)
 	lis, err := n.Listen(
 		ctx,
 		"127.0.0.1:0",
-		&net.ListenConfig{
+		&connmanager.ListenConfig{
 			BindLocal: true,
 		},
 	)

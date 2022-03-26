@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"nimona.io/internal/net"
+	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
@@ -42,7 +42,7 @@ var (
 type (
 	Provider struct {
 		context             context.Context
-		network             net.Network
+		connmanager         connmanager.ConnManager
 		announcementVersion int64
 		peerKey             crypto.PrivateKey
 		peerCache           *peerstore.PeerCache
@@ -52,13 +52,13 @@ type (
 
 func New(
 	ctx context.Context,
-	network net.Network,
+	connManager connmanager.ConnManager,
 	peerKey crypto.PrivateKey,
 	bootstrapProviders []*peer.ConnectionInfo,
 ) (*Provider, error) {
 	p := &Provider{
 		context:             ctx,
-		network:             network,
+		connmanager:         connManager,
 		announcementVersion: time.Now().Unix(),
 		peerKey:             peerKey,
 		peerCache: peerstore.NewPeerCache(
@@ -73,8 +73,8 @@ func New(
 
 	// we are listening for all incoming object types in order to learn about
 	// new peers that are talking to us so we can announce ourselves to them
-	p.network.RegisterConnectionHandler(
-		func(c net.Connection) {
+	p.connmanager.RegisterConnectionHandler(
+		func(c connmanager.Connection) {
 			go func() {
 				or := c.Read(ctx)
 				for {
@@ -256,7 +256,7 @@ func (p *Provider) handlePeerLookupByDigest(
 		return
 	}
 
-	pc, err := p.network.Dial(ctx, pr)
+	pc, err := p.connmanager.Dial(ctx, pr)
 	if err != nil {
 		logger.Debug("could not dial peer",
 			log.Error(err),
@@ -336,7 +336,7 @@ func (p *Provider) handlePeerLookupByDID(
 		return
 	}
 
-	pc, err := p.network.Dial(ctx, pr)
+	pc, err := p.connmanager.Dial(ctx, pr)
 	if err != nil {
 		logger.Debug("could not dial peer",
 			log.Error(err),
@@ -360,7 +360,7 @@ func (p *Provider) handlePeerLookupByDID(
 // know about.
 //
 // NOTE: in this version of the hyperspace all providers have a complete
-// picture of the network.
+// picture of the connmanager.
 // TODO: consider batching up announcements somehow
 func (p *Provider) distributeAnnouncement(
 	annObj *object.Object,
@@ -374,7 +374,7 @@ func (p *Provider) distributeAnnouncement(
 	n := 0
 	providersList := p.providerCache.List()
 	for _, ci := range providersList {
-		pc, err := p.network.Dial(ctx, ci.ConnectionInfo)
+		pc, err := p.connmanager.Dial(ctx, ci.ConnectionInfo)
 		if err != nil {
 			logger.Debug("could not dial peer", log.Error(err))
 			continue
@@ -416,7 +416,7 @@ func (p *Provider) announceSelf() {
 				Owner: p.peerKey.PublicKey().DID(),
 			},
 			Version:   p.announcementVersion,
-			Addresses: p.network.Addresses(),
+			Addresses: p.connmanager.Addresses(),
 		},
 		PeerCapabilities: []string{
 			hyperspace.AnnouncementType,
@@ -434,7 +434,7 @@ func (p *Provider) announceSelf() {
 	}
 	n := 0
 	for _, ci := range p.providerCache.List() {
-		pc, err := p.network.Dial(ctx, ci.ConnectionInfo)
+		pc, err := p.connmanager.Dial(ctx, ci.ConnectionInfo)
 		if err != nil {
 			logger.Error("unable to dial provider", log.Error(err))
 			return

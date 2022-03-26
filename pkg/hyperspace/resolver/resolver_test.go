@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/net"
+	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace"
@@ -27,7 +27,7 @@ import (
 
 func TestResolver_Integration(t *testing.T) {
 	// net0 is our provider
-	k0, n0, net0 := newPeer(t)
+	k0, n0 := newPeerConnManager(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k0.PublicKey().DID(),
@@ -36,13 +36,13 @@ func TestResolver_Integration(t *testing.T) {
 			Metadata: object.Metadata{
 				Owner: k0.PublicKey().DID(),
 			},
-			Addresses: net0.GetAddresses(),
+			Addresses: n0.Addresses(),
 		},
 		PeerCapabilities: []string{"foo", "bar"},
 	}
 
 	// net1 is a normal peer
-	k1, _, net1 := newPeer(t)
+	k1, net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
 			Owner: k1.PublicKey().DID(),
@@ -159,14 +159,16 @@ func TestResolver_Integration(t *testing.T) {
 	})
 }
 
-func newPeer(t *testing.T) (crypto.PrivateKey, net.Network, network.Network) {
+func newPeer(t *testing.T) (
+	crypto.PrivateKey,
+	network.Network,
+) {
 	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	ctx := context.New()
 
-	n := net.New(k)
-	nn := network.New(ctx, n, k)
+	nn := network.New(ctx, k)
 	lis, err := nn.Listen(
 		ctx,
 		"127.0.0.1:0",
@@ -178,7 +180,33 @@ func newPeer(t *testing.T) (crypto.PrivateKey, net.Network, network.Network) {
 		lis.Close() // nolint: errcheck
 	})
 
-	return k, n, nn
+	return k, nn
+}
+
+func newPeerConnManager(t *testing.T) (
+	crypto.PrivateKey,
+	connmanager.ConnManager,
+) {
+	k, err := crypto.NewEd25519PrivateKey()
+	require.NoError(t, err)
+
+	ctx := context.New()
+
+	n := connmanager.New(k)
+	lis, err := n.Listen(
+		ctx,
+		"127.0.0.1:0",
+		&connmanager.ListenConfig{
+			BindLocal: true,
+		},
+	)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		lis.Close() // nolint: errcheck
+	})
+
+	return k, n
 }
 
 func tempObjectStore(t *testing.T) *sqlobjectstore.Store {

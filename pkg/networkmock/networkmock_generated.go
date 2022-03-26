@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	net "nimona.io/internal/net"
+	connmanager "nimona.io/internal/connmanager"
 	context "nimona.io/pkg/context"
 	crypto "nimona.io/pkg/crypto"
 	did "nimona.io/pkg/did"
@@ -149,14 +149,14 @@ func (mr *MockNetworkMockRecorder) GetRelays() *gomock.Call {
 }
 
 // Listen mocks base method.
-func (m *MockNetwork) Listen(ctx context.Context, bindAddress string, options ...network.ListenOption) (net.Listener, error) {
+func (m *MockNetwork) Listen(ctx context.Context, bindAddress string, options ...network.ListenOption) (connmanager.Listener, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, bindAddress}
 	for _, a := range options {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Listen", varargs...)
-	ret0, _ := ret[0].(net.Listener)
+	ret0, _ := ret[0].(connmanager.Listener)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

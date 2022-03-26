@@ -14,12 +14,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/pyroscope-io/pyroscope/pkg/agent/profiler"
 
-	"nimona.io/internal/net"
+	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
 	"nimona.io/pkg/log"
-	"nimona.io/pkg/network"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/version"
 )
@@ -72,27 +71,19 @@ func main() {
 	}
 
 	// construct new network
-	inet := net.New(cfg.Peer.PrivateKey)
-	nnet := network.New(
-		ctx,
-		inet,
-		cfg.Peer.PrivateKey,
-	)
+	con := connmanager.New(cfg.Peer.PrivateKey)
 
 	// start listening
-	lis, err := nnet.Listen(
+	lis, err := con.Listen(
 		ctx,
 		cfg.Peer.BindAddress,
-		network.ListenOnLocalIPs,
-		network.ListenOnPrivateIPs,
+		&connmanager.ListenConfig{
+			BindLocal:   true,
+			BindPrivate: true,
+		},
 	)
 	if err != nil {
 		logger.Fatal("error while listening", log.Error(err))
-	}
-
-	// add announce address
-	if cfg.Peer.AnnounceAddress != "" {
-		nnet.RegisterAddresses("tcps:" + cfg.Peer.AnnounceAddress)
 	}
 
 	// convert shorthands into connection infos
@@ -108,7 +99,7 @@ func main() {
 	// construct new hyperspace provider
 	_, err = provider.New(
 		ctx,
-		inet,
+		con,
 		cfg.Peer.PrivateKey,
 		bootstrapProviders,
 	)
@@ -117,8 +108,8 @@ func main() {
 	}
 
 	logger = logger.With(
-		log.String("peer.publicKey", nnet.GetPeerKey().PublicKey().String()),
-		log.Strings("peer.addresses", nnet.GetAddresses()),
+		log.String("peer.publicKey", cfg.Peer.PrivateKey.PublicKey().String()),
+		log.Strings("peer.addresses", con.Addresses()),
 	)
 
 	logger.Info("bootstrap node ready")
