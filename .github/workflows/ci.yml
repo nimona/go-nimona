@@ -535,7 +535,7 @@ jobs:
         with:
           terraform_version: 0.13.5
 
-      - uses: actions/setup-python@v2.3.2
+      - uses: actions/setup-python@v3.1.2
         with:
           python-version: 3.8
 
