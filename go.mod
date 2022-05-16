@@ -30,7 +30,7 @@ require (
 	github.com/multiformats/go-varint v0.0.6
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.12.2
 	github.com/pyroscope-io/pyroscope v0.13.0
 	github.com/rs/xid v1.4.0
 	github.com/stoewer/go-strcase v1.2.0
