@@ -154,8 +154,8 @@ func Generate(doc *Document, output string) ([]byte, error) {
 	if doc.Package != "nimona.io/object" {
 		doc.Imports["object"] = "nimona.io/object"
 	}
-	if doc.Package != "nimona.io/did" {
-		doc.Imports["did"] = "nimona.io/did"
+	if doc.Package != "nimona.io/peer" {
+		doc.Imports["peer"] = "nimona.io/peer"
 	}
 	if doc.Package != "nimona.io/stream" {
 		doc.Imports["stream"] = "nimona.io/stream"

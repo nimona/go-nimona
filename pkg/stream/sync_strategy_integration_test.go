@@ -9,7 +9,6 @@ import (
 
 	"nimona.io/pkg/config"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
 	"nimona.io/pkg/hyperspace/provider"
 	"nimona.io/pkg/object"
@@ -21,7 +20,7 @@ import (
 func TestSyncStrategy_Integration(t *testing.T) {
 	_, c0 := provider.NewTestProvider(context.Background(), t)
 
-	k0, err := crypto.PublicKeyFromDID(c0.Metadata.Owner)
+	k0, err := peer.NewIDFromKey(c0.Owner)
 	require.NoError(t, err)
 
 	d1, err := daemon.New(
@@ -96,7 +95,7 @@ func TestSyncStrategy_Integration(t *testing.T) {
 func TestSyncStrategy_Announcements_Integration(t *testing.T) {
 	_, c0 := provider.NewTestProvider(context.Background(), t)
 
-	k0, err := crypto.PublicKeyFromDID(c0.Metadata.Owner)
+	k0, err := peer.NewIDFromKey(c0.Owner)
 	require.NoError(t, err)
 
 	d1, err := daemon.New(
@@ -148,7 +147,7 @@ func TestSyncStrategy_Announcements_Integration(t *testing.T) {
 	o2 := object.MustMarshal(
 		&stream.Subscription{
 			Metadata: object.Metadata{
-				Owner: d2.Network().GetConnectionInfo().Metadata.Owner,
+				Owner: d2.Network().GetConnectionInfo().Owner,
 			},
 			RootHashes: []tilde.Digest{
 				h1,
@@ -171,7 +170,7 @@ func TestSyncStrategy_Announcements_Integration(t *testing.T) {
 	gs, err := c1.GetSubscribers()
 	require.NoError(t, err)
 	require.Len(t, gs, 1)
-	require.Equal(t, d2.Network().GetConnectionInfo().Metadata.Owner, gs[0])
+	require.Equal(t, d2.Network().GetConnectionInfo().Owner, gs[0])
 
 	time.Sleep(time.Second * 3)
 
@@ -181,5 +180,5 @@ func TestSyncStrategy_Announcements_Integration(t *testing.T) {
 	gs, err = c2.GetSubscribers()
 	require.NoError(t, err)
 	require.Len(t, gs, 1)
-	require.Equal(t, d2.Network().GetConnectionInfo().Metadata.Owner, gs[0])
+	require.Equal(t, d2.Network().GetConnectionInfo().Owner, gs[0])
 }

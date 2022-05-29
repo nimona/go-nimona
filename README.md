@@ -111,7 +111,7 @@ on their own or in groups.
 
 ```go
 func LookupByDigest(hash tilde.Digest) LookupOption { ... }
-func LookupByDID(id did.DID) LookupOption { ... }
+func LookupByDID(id peer.ID) LookupOption { ... }
 ```
 
 <!-- Links -->

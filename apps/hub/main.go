@@ -34,11 +34,11 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/daemon"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/keystream"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
 	"nimona.io/schema/relationship"
@@ -163,7 +163,7 @@ func New(
 	return h, nil
 }
 
-func (h *Hub) GetIdentityDID() *did.DID {
+func (h *Hub) GetIdentityDID() *peer.ID {
 	keyStreamController, err := h.daemon.KeyStreamManager().GetController()
 	if err != nil || keyStreamController == nil {
 		return nil
@@ -361,7 +361,7 @@ func main() {
 
 		values := struct {
 			DID                      string
-			DelegateDIDs             []did.DID
+			DelegateDIDs             []peer.ID
 			Delegated                bool
 			PrivateBIP39             string
 			Show                     bool

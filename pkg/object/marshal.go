@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -47,6 +48,22 @@ func Marshal(in interface{}) (*Object, error) {
 		o.Metadata = v
 	}
 
+	metaOwner, err := marshalPickSpecial(v, "@metadata.owner:s")
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := metaOwner.(peer.ID); ok {
+		o.Metadata.Owner = v
+	}
+
+	metaTimestamp, err := marshalPickSpecial(v, "@metadata.timestamp:s")
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := metaTimestamp.(string); ok {
+		o.Metadata.Timestamp = v
+	}
+
 	otype, err := marshalPickSpecial(v, "@type:s")
 	if err != nil {
 		return nil, err
@@ -64,6 +81,8 @@ func Marshal(in interface{}) (*Object, error) {
 	}
 
 	delete(m, "@metadata")
+	delete(m, "@metadata.owner")
+	delete(m, "@metadata.timestamp")
 
 	if t, ok := m["@type"]; ok {
 		if tt, ok := t.(tilde.String); ok {
@@ -336,6 +355,15 @@ func marshalStruct(h tilde.Hint, v reflect.Value) (tilde.Map, error) {
 			}
 			continue
 		}
+		// handle special cases where we don't have full `@metadata`, but type
+		// has been added to an individual metadata field, ie `@metadata.owner`
+		// TODO: should we make sure only one field has the type set?
+		if strings.HasPrefix(ig, "@metadata.") {
+			if t, ok := igKvs["type"]; ok {
+				m["@type"] = tilde.String(t)
+			}
+		}
+		// look for the field's hint
 		in, ih, err := tilde.ExtractHint(ig)
 		if err != nil {
 			// if there is hint in the key, we check if the value is a primitive

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -229,6 +230,41 @@ func TestMarshal_ObjectWithTags(t *testing.T) {
 	e := &Object{
 		Type: "foo",
 		Metadata: Metadata{
+			Timestamp: "now",
+		},
+		Data: tilde.Map{
+			"string": tilde.String("hello"),
+		},
+	}
+
+	g, err := Marshal(s)
+	require.NoError(t, err)
+	require.Equal(t, e, g)
+}
+
+type TestObjectWithIndividualMetadata struct {
+	Owner     peer.ID `nimona:"@metadata.owner:s,type=test/individual_metadata"`
+	Timestamp string  `nimona:"@metadata.timestamp:s"`
+	String    string  `nimona:"string:s"`
+}
+
+func TestMarshal_ObjectWithIndividualMetadata(t *testing.T) {
+	pid := peer.ID{
+		Method:       peer.MethodNimona,
+		IdentityType: peer.IdentityTypePeer,
+		Identity:     "foo",
+	}
+
+	s := &TestObjectWithIndividualMetadata{
+		Owner:     pid,
+		Timestamp: "now",
+		String:    "hello",
+	}
+
+	e := &Object{
+		Type: "test/individual_metadata",
+		Metadata: Metadata{
+			Owner:     pid,
 			Timestamp: "now",
 		},
 		Data: tilde.Map{

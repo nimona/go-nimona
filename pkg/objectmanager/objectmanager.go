@@ -5,12 +5,12 @@ import (
 
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/resolver"
 	"nimona.io/pkg/stream"
 	"nimona.io/pkg/tilde"
@@ -34,7 +34,7 @@ type (
 		Request(
 			ctx context.Context,
 			hash tilde.Digest,
-			id did.DID,
+			id peer.ID,
 		) (*object.Object, error)
 		Subscribe(
 			lookupOptions ...LookupOption,
@@ -109,7 +109,7 @@ func (m *manager) isWellKnownEphemeral(
 func (m *manager) Request(
 	ctx context.Context,
 	hash tilde.Digest,
-	pr did.DID,
+	pr peer.ID,
 ) (*object.Object, error) {
 	objCh := make(chan *object.Object)
 	errCh := make(chan error)
@@ -265,7 +265,7 @@ func (m *manager) handleObjectRequest(
 
 	resp := &object.Response{
 		Metadata: object.Metadata{
-			Owner: m.network.GetPeerKey().PublicKey().DID(),
+			Owner: m.network.GetPeerID(),
 		},
 		Object:    nil,
 		RequestID: req.RequestID,

@@ -1,7 +1,7 @@
 package object
 
 import (
-	"nimona.io/pkg/did"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -11,7 +11,7 @@ type (
 	// TODO: add authors, contributors, license, copyright
 	// TODO: add version
 	Metadata struct {
-		Owner     did.DID      `nimona:"owner:s"`
+		Owner     peer.ID      `nimona:"owner:s"`
 		Parents   Parents      `nimona:"parents:m"`
 		Policies  Policies     `nimona:"policies:am"`
 		Root      tilde.Digest `nimona:"root:r"`

@@ -7,7 +7,6 @@ import (
 	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
@@ -59,7 +58,7 @@ func (m *MockNetworkSimple) SubscribeOnce(
 func (m *MockNetworkSimple) Send(
 	ctx context.Context,
 	obj *object.Object,
-	id did.DID,
+	id peer.ID,
 	opt ...network.SendOption,
 ) error {
 	m.mutex.Lock()
@@ -102,6 +101,10 @@ func (m *MockNetworkSimple) RegisterResolver(
 
 func (m *MockNetworkSimple) GetPeerKey() crypto.PrivateKey {
 	return m.ReturnPeerKey
+}
+
+func (w *MockNetworkSimple) GetPeerID() peer.ID {
+	return peer.IDFromPublicKey(w.ReturnPeerKey.PublicKey())
 }
 
 func (m *MockNetworkSimple) GetAddresses() []string {

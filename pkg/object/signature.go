@@ -4,8 +4,8 @@ import (
 	"reflect"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -25,8 +25,8 @@ const (
 
 type Signature struct {
 	_         *Metadata        `nimona:"@metadata:m,type=Signature"`
-	Delegator did.DID          `nimona:"d:s"`
-	Signer    did.DID          `nimona:"s:s"`
+	Delegator peer.ID          `nimona:"d:s"`
+	Signer    peer.ID          `nimona:"s:s"`
 	Key       crypto.PublicKey `nimona:"jwk:s"`
 	Alg       string           `nimona:"alg:s"`
 	X         []byte           `nimona:"x:d"`
@@ -62,7 +62,7 @@ func newSignature(
 	}
 	x := k.Sign(h)
 	s := &Signature{
-		Signer: k.PublicKey().DID(),
+		Signer: peer.IDFromPublicKey(k.PublicKey()),
 		Key:    k.PublicKey(),
 		Alg:    AlgorithmObjectHash,
 		X:      x,
@@ -106,11 +106,11 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 		if !meta.Signature.IsEmpty() {
 			return true
 		}
-		if meta.Owner == did.Empty {
+		if meta.Owner == peer.EmptyID {
 			return true
 		}
 		// TODO(geoah): figure out if we should be signing this object
-		if !meta.Owner.Equals(pk.DID()) {
+		if !meta.Owner.Equals(peer.IDFromPublicKey(pk)) {
 			return true
 		}
 		sig, err := newSignature(k, m)
@@ -130,7 +130,7 @@ func SignDeep(k crypto.PrivateKey, o *Object) error {
 		return true
 	})
 	// TODO(geoah): figure out if we should be signing this object
-	if !o.Metadata.Owner.Equals(pk.DID()) {
+	if !o.Metadata.Owner.Equals(peer.IDFromPublicKey(pk)) {
 		return nil
 	}
 	m, err := o.MarshalMap()

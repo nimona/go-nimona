@@ -3,7 +3,6 @@
 package hyperspace
 
 import (
-	did "nimona.io/pkg/did"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
 	tilde "nimona.io/pkg/tilde"
@@ -24,7 +23,7 @@ const LookupByDIDRequestType = "nimona.io/hyperspace.LookupByDIDRequest"
 type LookupByDIDRequest struct {
 	Metadata            object.Metadata `nimona:"@metadata:m,type=nimona.io/hyperspace.LookupByDIDRequest"`
 	RequestID           string          `nimona:"requestID:s"`
-	Owner               did.DID         `nimona:"owner:s"`
+	Owner               peer.ID         `nimona:"owner:s"`
 	RequireCapabilities []string        `nimona:"requireCapabilities:as"`
 }
 

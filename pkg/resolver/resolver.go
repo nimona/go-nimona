@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
@@ -17,7 +16,7 @@ const ErrNotFound errors.Error = "not found"
 type Resolver interface {
 	LookupByDID(
 		ctx context.Context,
-		id did.DID,
+		id peer.ID,
 	) ([]*peer.ConnectionInfo, error)
 	LookupByContent(
 		ctx context.Context,
@@ -39,7 +38,7 @@ func New(resolvers ...Resolver) *CompositeResolver {
 
 func (r *CompositeResolver) LookupByDID(
 	ctx context.Context,
-	id did.DID,
+	id peer.ID,
 ) ([]*peer.ConnectionInfo, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()

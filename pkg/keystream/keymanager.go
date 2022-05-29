@@ -96,7 +96,7 @@ func (m *manager) NewController(
 ) (Controller, error) {
 	// create controller
 	c, err := NewController(
-		m.network.GetConnectionInfo().Metadata.Owner,
+		m.network.GetConnectionInfo().Owner,
 		m.objectStore,
 		m.streamManager,
 		delegatorSeal,

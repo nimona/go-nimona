@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -40,7 +41,7 @@ func TestVerify(t *testing.T) {
 		name: "should fail, with owner, no signature",
 		object: &Object{
 			Metadata: Metadata{
-				Owner: testKey0.PublicKey().DID(),
+				Owner: peer.IDFromPublicKey(testKey0.PublicKey()),
 			},
 			Data: tilde.Map{
 				"foo:s": tilde.String("bar"),
@@ -54,7 +55,7 @@ func TestVerify(t *testing.T) {
 			testKey1,
 			&Object{
 				Metadata: Metadata{
-					Owner: testKey0.PublicKey().DID(),
+					Owner: peer.IDFromPublicKey(testKey0.PublicKey()),
 				},
 				Data: tilde.Map{
 					"foo:s": tilde.String("bar"),
@@ -69,7 +70,7 @@ func TestVerify(t *testing.T) {
 			testKey1,
 			&Object{
 				Metadata: Metadata{
-					Owner: testKey0.PublicKey().DID(),
+					Owner: peer.IDFromPublicKey(testKey0.PublicKey()),
 					Signature: Signature{
 						X: []byte{1, 2, 3},
 					},
@@ -87,7 +88,7 @@ func TestVerify(t *testing.T) {
 			testKey0,
 			&Object{
 				Metadata: Metadata{
-					Owner: testKey0.PublicKey().DID(),
+					Owner: peer.IDFromPublicKey(testKey0.PublicKey()),
 				},
 				Data: tilde.Map{
 					"foo:s": tilde.String("bar"),

@@ -19,9 +19,7 @@ func TestAnnouncement_MarshalWithSignature(t *testing.T) {
 
 	p := &Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: k.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(k.PublicKey()),
 			Addresses: []string{"foo", "foo"},
 		},
 		Digests: []tilde.Digest{"foo", "bar"},
@@ -57,9 +55,7 @@ func TestResponse_MarshalWithSignature(t *testing.T) {
 	p := &LookupResponse{
 		Announcements: []*Announcement{{
 			ConnectionInfo: &peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner: k.PublicKey().DID(),
-				},
+				Owner:     peer.IDFromPublicKey(k.PublicKey()),
 				Addresses: []string{"foo", "foo"},
 			},
 			Digests: []tilde.Digest{"foo", "bar"},
@@ -98,22 +94,18 @@ func TestAnnouncement_SignDeep(t *testing.T) {
 	t.Run("should pass, sign announcement ", func(t *testing.T) {
 		n := &Announcement{
 			Metadata: object.Metadata{
-				Owner:     k.PublicKey().DID(),
+				Owner:     peer.IDFromPublicKey(k.PublicKey()),
 				Timestamp: "foo",
 			},
 			ConnectionInfo: &peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner:     k.PublicKey().DID(),
-					Timestamp: "foo",
-				},
+				Owner:         peer.IDFromPublicKey(k.PublicKey()),
+				Timestamp:     "foo",
 				Version:       2,
 				Addresses:     []string{"1", "2"},
 				ObjectFormats: []string{"foo", "bar"},
 				Relays: []*peer.ConnectionInfo{{
-					Metadata: object.Metadata{
-						Owner:     k.PublicKey().DID(),
-						Timestamp: "foo",
-					},
+					Owner:         peer.IDFromPublicKey(k.PublicKey()),
+					Timestamp:     "foo",
 					Version:       3,
 					Addresses:     []string{"1", "2"},
 					ObjectFormats: []string{"foo", "bar"},

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -159,4 +160,34 @@ func TestUnmarshal_IntoObject(t *testing.T) {
 	err := Unmarshal(from, to)
 	assert.NoError(t, err)
 	assert.Equal(t, from, to)
+}
+
+func TestUnmarshal_ObjectWithIndividualMetadata(t *testing.T) {
+	pid := peer.ID{
+		Method:       peer.MethodNimona,
+		IdentityType: peer.IdentityTypePeer,
+		Identity:     "foo",
+	}
+
+	s := &TestObjectWithIndividualMetadata{
+		Owner:     pid,
+		Timestamp: "now",
+		String:    "hello",
+	}
+
+	e := &Object{
+		Type: "test/individual_metadata",
+		Metadata: Metadata{
+			Owner:     pid,
+			Timestamp: "now",
+		},
+		Data: tilde.Map{
+			"string": tilde.String("hello"),
+		},
+	}
+
+	g := &TestObjectWithIndividualMetadata{}
+	err := Unmarshal(e, g)
+	require.NoError(t, err)
+	require.Equal(t, s, g)
 }

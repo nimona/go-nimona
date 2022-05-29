@@ -12,6 +12,7 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 )
 
 type (
@@ -19,15 +20,14 @@ type (
 		Close() error
 		LocalAddr() string
 		RemoteAddr() string
-		LocalPeerKey() crypto.PublicKey
 		RemotePeerKey() crypto.PublicKey
+		RemotePeerID() peer.ID
 		Write(ctx context.Context, o *object.Object) error
 		Read(ctx context.Context) object.ReadCloser
 	}
 	connection struct {
 		ID string
 
-		localPeerKey  crypto.PublicKey
 		remotePeerKey crypto.PublicKey
 		IsIncoming    bool
 
@@ -86,12 +86,12 @@ func (c *connection) RemoteAddr() string {
 	return c.remoteAddress
 }
 
-func (c *connection) LocalPeerKey() crypto.PublicKey {
-	return c.localPeerKey
-}
-
 func (c *connection) RemotePeerKey() crypto.PublicKey {
 	return c.remotePeerKey
+}
+
+func (c *connection) RemotePeerID() peer.ID {
+	return peer.IDFromPublicKey(c.remotePeerKey)
 }
 
 func (c *connection) Write(ctx context.Context, o *object.Object) error {

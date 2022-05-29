@@ -12,7 +12,7 @@ signed object nimona.io/hyperspace.Announcement {
 
 signed object nimona.io/hyperspace.LookupByDIDRequest {
     requestID string
-    owner string type=nimona.io/did.DID
+    owner string type=nimona.io/peer.ID
     requireCapabilities repeated string
 }
 

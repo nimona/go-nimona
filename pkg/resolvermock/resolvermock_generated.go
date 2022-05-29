@@ -9,7 +9,6 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	context "nimona.io/pkg/context"
-	did "nimona.io/pkg/did"
 	peer "nimona.io/pkg/peer"
 	tilde "nimona.io/pkg/tilde"
 )
@@ -53,7 +52,7 @@ func (mr *MockResolverMockRecorder) LookupByContent(ctx, cid interface{}) *gomoc
 }
 
 // LookupByDID mocks base method.
-func (m *MockResolver) LookupByDID(ctx context.Context, id did.DID) ([]*peer.ConnectionInfo, error) {
+func (m *MockResolver) LookupByDID(ctx context.Context, id peer.ID) ([]*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LookupByDID", ctx, id)
 	ret0, _ := ret[0].([]*peer.ConnectionInfo)

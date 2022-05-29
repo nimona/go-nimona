@@ -14,7 +14,6 @@ import (
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/crypto/curve25519"
 
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/multiheader"
 	"nimona.io/pkg/tilde"
 )
@@ -60,14 +59,6 @@ func (k PublicKey) String() string {
 	// nolint: errcheck // cannot error
 	s, _ := multibase.Encode(multibase.Base58BTC, b)
 	return s
-}
-
-func (k PublicKey) DID() did.DID {
-	return did.DID{
-		Method:       did.MethodNimona,
-		IdentityType: did.IdentityTypePeer,
-		Identity:     k.String(),
-	}
 }
 
 func (k PublicKey) IsEmpty() bool {
@@ -315,13 +306,4 @@ func (k PublicKey) Verify(message []byte, signature []byte) error {
 func (k PublicKey) Equals(w PublicKey) bool {
 	return k.Algorithm == w.Algorithm &&
 		k.RawKey.Equal(w.RawKey)
-}
-
-func PublicKeyFromDID(d did.DID) (*PublicKey, error) {
-	pk := &PublicKey{}
-	err := pk.UnmarshalString(d.Identity)
-	if err != nil {
-		return nil, err
-	}
-	return pk, nil
 }

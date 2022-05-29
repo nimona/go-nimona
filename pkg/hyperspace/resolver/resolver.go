@@ -10,7 +10,6 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/hyperspace"
 	"nimona.io/pkg/hyperspace/peerstore"
@@ -35,6 +34,7 @@ const (
 type (
 	Resolver struct {
 		peerKey                        crypto.PrivateKey
+		peerID                         peer.ID
 		context                        context.Context
 		network                        network.Network
 		peerCache                      *peerstore.PeerCache
@@ -62,6 +62,7 @@ func New(
 	r := &Resolver{
 		context: ctx,
 		peerKey: peerKey,
+		peerID:  peer.IDFromPublicKey(peerKey.PublicKey()),
 		network: net,
 		peerCache: peerstore.NewPeerCache(
 			time.Minute,
@@ -152,7 +153,7 @@ func New(
 
 func (r *Resolver) LookupByDID(
 	ctx context.Context,
-	id did.DID,
+	id peer.ID,
 ) ([]*peer.ConnectionInfo, error) {
 	if len(r.bootstrapPeers) == 0 {
 		return nil, errors.Error("no peers to ask")
@@ -165,7 +166,7 @@ func (r *Resolver) LookupByDID(
 
 	req := &hyperspace.LookupByDIDRequest{
 		Metadata: object.Metadata{
-			Owner: r.peerKey.PublicKey().DID(),
+			Owner: r.peerID,
 		},
 		Owner:     id,
 		RequestID: rand.String(12),
@@ -192,7 +193,7 @@ func (r *Resolver) LookupByContent(
 
 	req := &hyperspace.LookupByDigestRequest{
 		Metadata: object.Metadata{
-			Owner: r.peerKey.PublicKey().DID(),
+			Owner: r.peerID,
 		},
 		RequestID: rand.String(12),
 		Digest:    cid,
@@ -213,14 +214,14 @@ func (r *Resolver) lookup(
 	go func() {
 		for _, bp := range r.bootstrapPeers {
 			logger := logger.With(
-				log.String("peer", bp.Metadata.Owner.String()),
+				log.String("peer", bp.Owner.String()),
 				log.Strings("addresses", bp.Addresses),
 			)
 			resp := &hyperspace.LookupResponse{}
 			err := r.network.Send(
 				ctx,
 				reqObject,
-				bp.Metadata.Owner,
+				bp.Owner,
 				network.SendWithConnectionInfo(bp),
 				network.SendWithResponse(resp, time.Second*3),
 			)
@@ -260,7 +261,7 @@ func (r *Resolver) lookup(
 }
 
 func (r *Resolver) handleObject(
-	sender did.DID,
+	sender peer.ID,
 	o *object.Object,
 ) {
 	// attempt to recover correlation id from request id
@@ -292,7 +293,7 @@ func (r *Resolver) handleAnnouncement(
 ) {
 	logger := log.FromContext(ctx).With(
 		log.String("method", "resolver.handleAnnouncement"),
-		log.String("peer.publicKey", p.ConnectionInfo.Metadata.Owner.String()),
+		log.String("peer.publicKey", p.ConnectionInfo.Owner.String()),
 		log.Strings("peer.addresses", p.ConnectionInfo.Addresses),
 	)
 	logger.Debug("adding peer to cache")
@@ -319,13 +320,13 @@ func (r *Resolver) announceSelf() {
 				context.WithTimeout(time.Second*3),
 			),
 			anno,
-			p.Metadata.Owner,
+			p.Owner,
 			network.SendWithConnectionInfo(p),
 		)
 		if err != nil {
 			logger.Error(
 				"error announcing self to bootstrap",
-				log.String("peer", p.Metadata.Owner.String()),
+				log.String("peer", p.Owner.String()),
 				log.Error(err),
 			)
 			continue
@@ -349,7 +350,7 @@ func (r *Resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 	lastAnnouncement := r.localPeerAnnouncementCache
 	r.localPeerAnnouncementCacheLock.RUnlock()
 
-	owner := r.peerKey.PublicKey().DID()
+	owner := r.peerID
 	ctrl, err := r.keyStreamManager.GetController()
 	if err == nil && ctrl != nil {
 		owner = ctrl.GetKeyStream().GetDID()
@@ -372,9 +373,7 @@ func (r *Resolver) getLocalPeerAnnouncement() *hyperspace.Announcement {
 		},
 		Version: time.Now().Unix(),
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: r.peerKey.PublicKey().DID(),
-			},
+			Owner:     r.peerID,
 			Addresses: addresses,
 			// Relays:    relays,
 		},

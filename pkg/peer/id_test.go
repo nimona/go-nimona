@@ -1,4 +1,4 @@
-package did
+package peer
 
 import (
 	"testing"
@@ -6,49 +6,49 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDID_MarshalString(t *testing.T) {
+func TestID_MarshalString(t *testing.T) {
 	tests := []struct {
-		did              string
+		id               string
 		wantMarshalErr   bool
 		wantUnmarshalErr bool
 	}{{
-		did: "did:nimona:peer:foo",
+		id: "nimona:peer:foo",
 	}, {
-		did: "did:nimona:keystream:foo",
+		id: "nimona:keystream:foo",
 	}, {
-		did:              "did:nimona:foo:foo",
+		id:               "nimona:foo:foo",
 		wantUnmarshalErr: true,
 	}, {
-		did:              "foo:bar:baz",
+		id:               "foo:bar:baz",
 		wantUnmarshalErr: true,
 	}, {
-		did:              "did:baz",
+		id:               "baz",
 		wantUnmarshalErr: true,
 	}}
 	for _, tt := range tests {
-		t.Run(tt.did, func(t *testing.T) {
-			did, err := Parse(tt.did)
+		t.Run(tt.id, func(t *testing.T) {
+			id, err := NewID(tt.id)
 			if (err != nil) != tt.wantUnmarshalErr {
 				t.Errorf("error = %v, wantErr %v", err, tt.wantUnmarshalErr)
 				return
 			}
-			if did != nil {
-				got, err := did.MarshalString()
+			if id != nil {
+				got, err := id.MarshalString()
 				if (err != nil) != tt.wantMarshalErr {
 					t.Errorf("error = %v, wantErr %v", err, tt.wantMarshalErr)
 					return
 				}
 				if !tt.wantMarshalErr && !tt.wantUnmarshalErr {
-					require.Equal(t, tt.did, got)
+					require.Equal(t, tt.id, got)
 				}
 			}
 		})
 	}
 }
 
-func TestDID_Equal(t *testing.T) {
-	d1 := MustParse("did:nimona:peer:foo")
-	d2 := MustParse("did:nimona:peer:foo")
+func TestID_Equal(t *testing.T) {
+	d1 := MustNewID("nimona:peer:foo")
+	d2 := MustNewID("nimona:peer:foo")
 	require.True(t, d1.Equals(*d2))
 	require.True(t, *d1 == *d2)
 }

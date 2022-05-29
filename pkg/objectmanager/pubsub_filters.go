@@ -5,8 +5,8 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -20,7 +20,7 @@ type (
 			ObjectHashes []tilde.Digest
 			StreamHashes []tilde.Digest
 			ContentTypes []string
-			Owners       []did.DID
+			Owners       []peer.ID
 		}
 		// filters are the lookups equivalents for matching objects for pubsub
 		Filters []ObjectFilter
@@ -33,12 +33,12 @@ func newLookupOptions(lookupOptions ...LookupOption) LookupOptions {
 			ObjectHashes []tilde.Digest
 			StreamHashes []tilde.Digest
 			ContentTypes []string
-			Owners       []did.DID
+			Owners       []peer.ID
 		}{
 			ObjectHashes: []tilde.Digest{},
 			StreamHashes: []tilde.Digest{},
 			ContentTypes: []string{},
-			Owners:       []did.DID{},
+			Owners:       []peer.ID{},
 		},
 		Filters: []ObjectFilter{},
 	}
@@ -62,7 +62,7 @@ func FilterByHash(hs ...tilde.Digest) LookupOption {
 	}
 }
 
-func FilterByOwner(hs ...did.DID) LookupOption {
+func FilterByOwner(hs ...peer.ID) LookupOption {
 	return func(opts *LookupOptions) {
 		opts.Lookups.Owners = append(opts.Lookups.Owners, hs...)
 		opts.Filters = append(opts.Filters, func(o *object.Object) bool {

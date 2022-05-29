@@ -11,7 +11,6 @@ import (
 	connmanager "nimona.io/internal/connmanager"
 	context "nimona.io/pkg/context"
 	crypto "nimona.io/pkg/crypto"
-	did "nimona.io/pkg/did"
 	network "nimona.io/pkg/network"
 	object "nimona.io/pkg/object"
 	peer "nimona.io/pkg/peer"
@@ -41,7 +40,7 @@ func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 }
 
 // LookupByDID mocks base method.
-func (m *MockResolver) LookupByDID(ctx context.Context, id did.DID) ([]*peer.ConnectionInfo, error) {
+func (m *MockResolver) LookupByDID(ctx context.Context, id peer.ID) ([]*peer.ConnectionInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LookupByDID", ctx, id)
 	ret0, _ := ret[0].([]*peer.ConnectionInfo)
@@ -118,6 +117,20 @@ func (m *MockNetwork) GetConnectionInfo() *peer.ConnectionInfo {
 func (mr *MockNetworkMockRecorder) GetConnectionInfo() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnectionInfo", reflect.TypeOf((*MockNetwork)(nil).GetConnectionInfo))
+}
+
+// GetPeerID mocks base method.
+func (m *MockNetwork) GetPeerID() peer.ID {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPeerID")
+	ret0, _ := ret[0].(peer.ID)
+	return ret0
+}
+
+// GetPeerID indicates an expected call of GetPeerID.
+func (mr *MockNetworkMockRecorder) GetPeerID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPeerID", reflect.TypeOf((*MockNetwork)(nil).GetPeerID))
 }
 
 // GetPeerKey mocks base method.
@@ -213,7 +226,7 @@ func (mr *MockNetworkMockRecorder) RegisterResolver(resolver interface{}) *gomoc
 }
 
 // Send mocks base method.
-func (m *MockNetwork) Send(ctx context.Context, object *object.Object, id did.DID, sendOptions ...network.SendOption) error {
+func (m *MockNetwork) Send(ctx context.Context, object *object.Object, id peer.ID, sendOptions ...network.SendOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, object, id}
 	for _, a := range sendOptions {
@@ -267,4 +280,42 @@ func (mr *MockNetworkMockRecorder) SubscribeOnce(ctx interface{}, filters ...int
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeOnce", reflect.TypeOf((*MockNetwork)(nil).SubscribeOnce), varargs...)
+}
+
+// MockResolvable is a mock of Resolvable interface.
+type MockResolvable struct {
+	ctrl     *gomock.Controller
+	recorder *MockResolvableMockRecorder
+}
+
+// MockResolvableMockRecorder is the mock recorder for MockResolvable.
+type MockResolvableMockRecorder struct {
+	mock *MockResolvable
+}
+
+// NewMockResolvable creates a new mock instance.
+func NewMockResolvable(ctrl *gomock.Controller) *MockResolvable {
+	mock := &MockResolvable{ctrl: ctrl}
+	mock.recorder = &MockResolvableMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockResolvable) EXPECT() *MockResolvableMockRecorder {
+	return m.recorder
+}
+
+// Resolve mocks base method.
+func (m *MockResolvable) Resolve() (peer.ConnectionInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Resolve")
+	ret0, _ := ret[0].(peer.ConnectionInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Resolve indicates an expected call of Resolve.
+func (mr *MockResolvableMockRecorder) Resolve() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockResolvable)(nil).Resolve))
 }

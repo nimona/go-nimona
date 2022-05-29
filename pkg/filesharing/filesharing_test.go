@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"nimona.io/pkg/blob"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/filesharing"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 
 	"nimona.io/pkg/context"
@@ -34,7 +34,7 @@ func Test_fileSharer_RequestTransfer(t *testing.T) {
 	type args struct {
 		ctx  context.Context
 		file filesharing.File
-		id   did.DID
+		id   peer.ID
 	}
 	tests := []struct {
 		name    string

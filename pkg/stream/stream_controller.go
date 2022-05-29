@@ -8,9 +8,9 @@ import (
 	"github.com/Code-Hex/go-generics-cache/policy/simple"
 
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/tilde"
 )
@@ -28,7 +28,7 @@ type (
 		// state, not thread safe
 		streamInfo *Info
 		// subscriptions
-		subscriptions *simple.Cache[did.DID, bool]
+		subscriptions *simple.Cache[peer.ID, bool]
 	}
 )
 
@@ -42,7 +42,7 @@ func NewController(
 		network:       network,
 		objectStore:   objectStore,
 		streamInfo:    NewInfo(),
-		subscriptions: simple.NewCache[did.DID, bool](),
+		subscriptions: simple.NewCache[peer.ID, bool](),
 	}
 	c.streamInfo.RootDigest = cid
 	return c
@@ -133,7 +133,7 @@ func (s *controller) Insert(v interface{}) (tilde.Digest, error) {
 
 	announcement := &Announcement{
 		Metadata: object.Metadata{
-			Owner: s.network.GetPeerKey().PublicKey().DID(),
+			Owner: s.network.GetPeerID(),
 		},
 		StreamHash:   s.streamInfo.RootDigest,
 		ObjectHashes: []tilde.Digest{h},
@@ -312,7 +312,7 @@ func (s *controller) GetReader(ctx context.Context) (object.ReadCloser, error) {
 	return or, nil
 }
 
-func (s *controller) GetSubscribers() ([]did.DID, error) {
+func (s *controller) GetSubscribers() ([]peer.ID, error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	return s.subscriptions.Keys(), nil

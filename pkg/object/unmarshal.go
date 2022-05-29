@@ -57,6 +57,10 @@ func unmarshalSpecials(o *Object, v reflect.Value) error {
 			iv.Set(reflect.ValueOf(o.Context))
 		case "@metadata:m":
 			iv.Set(reflect.ValueOf(o.Metadata))
+		case "@metadata.owner:s":
+			iv.Set(reflect.ValueOf(o.Metadata.Owner))
+		case "@metadata.timestamp:s":
+			iv.Set(reflect.ValueOf(o.Metadata.Timestamp))
 		}
 	}
 	return nil

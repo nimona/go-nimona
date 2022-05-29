@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -23,7 +23,7 @@ func TestMetadata_Map(t *testing.T) {
 	pk1 := k1.PublicKey()
 
 	want := &Metadata{
-		Owner:     *did.MustParse("did:nimona:keystream:foo"),
+		Owner:     *peer.MustNewID("nimona:keystream:foo"),
 		Timestamp: "foo",
 		Parents: Parents{
 			"*": tilde.DigestArray{
@@ -49,7 +49,7 @@ func TestMetadata_Map(t *testing.T) {
 		}},
 		Root: tilde.Digest("foo"),
 		Signature: Signature{
-			Signer: pk1.DID(),
+			Signer: peer.IDFromPublicKey(pk1),
 			Key:    pk1,
 			Alg:    "alg",
 			X:      []byte{0, 1, 2},

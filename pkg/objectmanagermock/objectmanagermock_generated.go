@@ -9,9 +9,9 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	context "nimona.io/pkg/context"
-	did "nimona.io/pkg/did"
 	object "nimona.io/pkg/object"
 	objectmanager "nimona.io/pkg/objectmanager"
+	peer "nimona.io/pkg/peer"
 	tilde "nimona.io/pkg/tilde"
 )
 
@@ -53,7 +53,7 @@ func (mr *MockObjectManagerMockRecorder) Put(ctx, o interface{}) *gomock.Call {
 }
 
 // Request mocks base method.
-func (m *MockObjectManager) Request(ctx context.Context, hash tilde.Digest, id did.DID) (*object.Object, error) {
+func (m *MockObjectManager) Request(ctx context.Context, hash tilde.Digest, id peer.ID) (*object.Object, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Request", ctx, hash, id)
 	ret0, _ := ret[0].(*object.Object)

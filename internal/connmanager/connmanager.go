@@ -88,6 +88,7 @@ func New(
 	peerKey crypto.PrivateKey,
 ) ConnManager {
 	n := &network{
+		peerID:  peer.IDFromPublicKey(peerKey.PublicKey()),
 		peerKey: peerKey,
 		transports: map[string]Transport{
 			"tcps": &tcpTransport{
@@ -106,6 +107,7 @@ func New(
 
 // network allows dialing and listening for p2p connections
 type network struct {
+	peerID     peer.ID
 	peerKey    crypto.PrivateKey
 	transports map[string]Transport
 	listeners  []*listener
@@ -127,13 +129,13 @@ func (n *network) Dial(
 	p *peer.ConnectionInfo,
 ) (Connection, error) {
 	logger := log.FromContext(ctx).With(
-		log.String("peer", p.Metadata.Owner.String()),
+		log.String("peer", p.Owner.String()),
 		log.Strings("addresses", p.Addresses),
 	)
 
 	// TODO: Can we dial a peer without an owner/public-key?
 
-	pubKey, err := crypto.PublicKeyFromDID(p.Metadata.Owner)
+	pubKey, err := peer.NewIDFromKey(p.Owner)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get public key from did: %w", err)
 	}

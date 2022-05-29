@@ -6,7 +6,6 @@ import (
 	"nimona.io/internal/connmanager"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 
 	"github.com/stretchr/testify/require"
@@ -50,9 +49,7 @@ func NewTestProvider(
 
 	// return provider and connection info
 	return p, &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: key.PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(key.PublicKey()),
 		Addresses: con.Addresses(),
 	}
 }

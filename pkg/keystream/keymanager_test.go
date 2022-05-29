@@ -11,7 +11,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/networkmock"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
@@ -40,9 +39,7 @@ func TestKeyManager(t *testing.T) {
 
 	net := &networkmock.MockNetworkSimple{
 		ReturnConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: k1.PublicKey().DID(),
-			},
+			Owner: peer.IDFromPublicKey(k1.PublicKey()),
 		},
 	}
 

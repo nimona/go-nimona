@@ -8,8 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/hyperspace"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -97,7 +97,7 @@ func (m *PeerCache) Put(
 	ttl time.Duration,
 ) (updated bool) {
 	// check if we already have a newer announcement
-	pann, ok := m.m.Load(p.ConnectionInfo.Metadata.Owner.String())
+	pann, ok := m.m.Load(p.ConnectionInfo.Owner.String())
 	// if the announcement is already know update it, but return that
 	// updated was false, this is done to renew the created attribute
 	updated = true
@@ -114,7 +114,7 @@ func (m *PeerCache) Put(
 	// increment the incoming peers counter
 	m.promIncPeersGauge.Inc()
 	// and finally store it
-	m.m.Store(p.ConnectionInfo.Metadata.Owner.String(), entry{
+	m.m.Store(p.ConnectionInfo.Owner.String(), entry{
 		ttl:       ttl,
 		createdAt: time.Now(),
 		pr:        p,
@@ -124,7 +124,7 @@ func (m *PeerCache) Put(
 }
 
 // Put -
-func (m *PeerCache) Touch(k did.DID, ttl time.Duration) {
+func (m *PeerCache) Touch(k peer.ID, ttl time.Duration) {
 	v, ok := m.m.Load(k.String())
 	if !ok {
 		return
@@ -138,7 +138,7 @@ func (m *PeerCache) Touch(k did.DID, ttl time.Duration) {
 }
 
 // Get -
-func (m *PeerCache) Get(k did.DID) (*hyperspace.Announcement, error) {
+func (m *PeerCache) Get(k peer.ID) (*hyperspace.Announcement, error) {
 	p, ok := m.m.Load(k.String())
 	if !ok {
 		return nil, fmt.Errorf("peer not found in cache")
@@ -147,7 +147,7 @@ func (m *PeerCache) Get(k did.DID) (*hyperspace.Announcement, error) {
 }
 
 // Remove -
-func (m *PeerCache) Remove(k did.DID) {
+func (m *PeerCache) Remove(k peer.ID) {
 	m.m.Delete(k.String())
 	m.promKnownPeersGauge.Dec()
 }
@@ -163,17 +163,17 @@ func (m *PeerCache) List() []*hyperspace.Announcement {
 }
 
 // Lookup -
-func (m *PeerCache) LookupByDID(o did.DID) []*hyperspace.Announcement {
+func (m *PeerCache) LookupByDID(o peer.ID) []*hyperspace.Announcement {
 	ps := []*hyperspace.Announcement{}
 	m.m.Range(func(_, p interface{}) bool {
 		pe := p.(entry)
 		switch o.IdentityType {
-		case did.IdentityTypeKeyStream:
+		case peer.IdentityTypeKeyStream:
 			if pe.pr.Metadata.Owner.Equals(o) {
 				ps = append(ps, pe.pr)
 			}
-		case did.IdentityTypePeer:
-			if pe.pr.ConnectionInfo.Metadata.Owner.Equals(o) {
+		case peer.IdentityTypePeer:
+			if pe.pr.ConnectionInfo.Owner.Equals(o) {
 				ps = append(ps, pe.pr)
 			}
 		}

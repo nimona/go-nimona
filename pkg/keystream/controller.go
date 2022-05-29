@@ -8,9 +8,9 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/keystore"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/stream"
 	"nimona.io/pkg/tilde"
 )
@@ -66,7 +66,7 @@ func RestoreController(
 }
 
 func NewController(
-	owner did.DID,
+	owner peer.ID,
 	keyStore keystore.KeyStore,
 	streamManager stream.Manager,
 	delegatorSeal *DelegatorSeal,

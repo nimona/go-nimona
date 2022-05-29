@@ -9,6 +9,7 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/sqlobjectstore"
 	"nimona.io/pkg/stream"
 )
@@ -28,7 +29,7 @@ func TestController_New(t *testing.T) {
 	// create a controller with empty stores
 	sMgr, err := stream.NewManager(context.New(), nil, nil, sqlStore)
 	require.NoError(t, err)
-	ctrl, err := NewController(k.PublicKey().DID(), sqlStore, sMgr, nil)
+	ctrl, err := NewController(peer.IDFromPublicKey(k.PublicKey()), sqlStore, sMgr, nil)
 	require.NoError(t, err)
 	require.NotNil(t, ctrl)
 

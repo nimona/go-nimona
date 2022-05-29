@@ -179,7 +179,7 @@ func (p *Provider) handleAnnouncement(
 	}
 	logger := log.FromContext(ctx).With(
 		log.String("method", "provider.handleAnnouncement"),
-		log.String("peer.owner", ann.ConnectionInfo.Metadata.Owner.String()),
+		log.String("peer.owner", ann.ConnectionInfo.Owner.String()),
 		log.Strings("peer.addresses", ann.ConnectionInfo.Addresses),
 	)
 	// TODO check if we've already received this peer, and if not forward it
@@ -236,16 +236,14 @@ func (p *Provider) handlePeerLookupByDigest(
 
 	res := &hyperspace.LookupResponse{
 		Metadata: object.Metadata{
-			Owner: p.peerKey.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(p.peerKey.PublicKey()),
 		},
 		RequestID:     q.RequestID,
 		Announcements: ans,
 	}
 
 	pr := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: s.DID(),
-		},
+		Owner: peer.IDFromPublicKey(s),
 	}
 
 	reso, err := object.Marshal(res)
@@ -316,16 +314,14 @@ func (p *Provider) handlePeerLookupByDID(
 
 	res := &hyperspace.LookupResponse{
 		Metadata: object.Metadata{
-			Owner: p.peerKey.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(p.peerKey.PublicKey()),
 		},
 		RequestID:     q.RequestID,
 		Announcements: ans,
 	}
 
 	pr := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: s.DID(),
-		},
+		Owner: peer.IDFromPublicKey(s),
 	}
 
 	reso, err := object.Marshal(res)
@@ -388,7 +384,7 @@ func (p *Provider) distributeAnnouncement(
 		); err != nil {
 			logger.Error(
 				"error announcing self to other provider",
-				log.String("provider", ci.ConnectionInfo.Metadata.Owner.String()),
+				log.String("provider", ci.ConnectionInfo.Owner.String()),
 				log.Error(err),
 			)
 		}
@@ -412,9 +408,7 @@ func (p *Provider) announceSelf() {
 	ann := &hyperspace.Announcement{
 		Version: announceVersion,
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: p.peerKey.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(p.peerKey.PublicKey()),
 			Version:   p.announcementVersion,
 			Addresses: p.connmanager.Addresses(),
 		},
@@ -448,7 +442,7 @@ func (p *Provider) announceSelf() {
 		); err != nil {
 			logger.Error(
 				"error announcing self to other provider",
-				log.String("provider", ci.ConnectionInfo.Metadata.Owner.String()),
+				log.String("provider", ci.ConnectionInfo.Owner.String()),
 				log.Error(err),
 			)
 		}

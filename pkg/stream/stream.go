@@ -2,9 +2,9 @@ package stream
 
 import (
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -29,7 +29,7 @@ type (
 		GetStreamInfo() Info
 		GetStreamRoot() tilde.Digest
 		GetDigests() ([]tilde.Digest, error)
-		GetSubscribers() ([]did.DID, error)
+		GetSubscribers() ([]peer.ID, error)
 		ContainsDigest(cid tilde.Digest) bool
 		GetReader(context.Context) (object.ReadCloser, error)
 		// Sync(context.Context) error

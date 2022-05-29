@@ -5,7 +5,7 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/did"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -79,7 +79,7 @@ func FilterByHash(hs ...tilde.Digest) FilterOption {
 	}
 }
 
-func FilterByOwner(owners ...did.DID) FilterOption {
+func FilterByOwner(owners ...peer.ID) FilterOption {
 	hs := []string{}
 	for _, owner := range owners {
 		hs = append(hs, owner.String())

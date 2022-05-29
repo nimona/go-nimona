@@ -5,7 +5,7 @@ import (
 
 	"github.com/gobwas/glob"
 
-	"nimona.io/pkg/did"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -54,7 +54,7 @@ func FilterByRootHash(rootHashes ...tilde.Digest) ObjectFilter {
 	}
 }
 
-func FilterByOwner(ownerDID ...did.DID) ObjectFilter {
+func FilterByOwner(ownerDID ...peer.ID) ObjectFilter {
 	return func(o *Object) bool {
 		for _, h := range ownerDID {
 			o := o.Metadata.Owner

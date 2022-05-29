@@ -1,4 +1,4 @@
-package peer
+package peer_test
 
 import (
 	"encoding/json"
@@ -10,17 +10,16 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 )
 
-func TestEncoding(t *testing.T) {
+func TestConnectionInfo_MarshalUnmarshal(t *testing.T) {
 	k, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
-	c := &ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner:     k.PublicKey().DID(),
-			Timestamp: time.Now().Format(time.RFC3339),
-		},
+	c := &peer.ConnectionInfo{
+		Owner:         peer.IDFromPublicKey(k.PublicKey()),
+		Timestamp:     time.Now().Format(time.RFC3339),
 		Version:       1,
 		Addresses:     []string{"foo", "bar"},
 		ObjectFormats: []string{"foobar"},
@@ -36,7 +35,7 @@ func TestEncoding(t *testing.T) {
 
 	fmt.Println(g.Data["addresses"])
 
-	r := &ConnectionInfo{}
+	r := &peer.ConnectionInfo{}
 	err = object.Unmarshal(g, r)
 	require.NoError(t, err)
 

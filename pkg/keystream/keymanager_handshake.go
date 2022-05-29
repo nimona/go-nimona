@@ -103,7 +103,7 @@ func (m *manager) NewDelegationRequest(
 	ci := m.network.GetConnectionInfo()
 	dr := &DelegationRequest{
 		Metadata: object.Metadata{
-			Owner: ck.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(ck.PublicKey()),
 			// Timestamp: time.Now().Format(time.RFC3339),
 		},
 		// Nonce:                   rand.String(16),
@@ -161,7 +161,7 @@ func (m *manager) NewDelegationRequest(
 		// send back the root hash of the keystream
 		ver := &DelegationVerification{
 			Metadata: object.Metadata{
-				Owner: ci.Metadata.Owner,
+				Owner: ci.Owner,
 			},
 			DelegateSeal: DelegateSeal{
 				Root:        ctrl.GetKeyStream().Root,
@@ -226,7 +226,7 @@ func (m *manager) HandleDelegationRequest(
 	err = m.network.Send(
 		ctx,
 		doObj,
-		dr.InitiatorConnectionInfo.Metadata.Owner,
+		dr.InitiatorConnectionInfo.Owner,
 		network.SendWithConnectionInfo(
 			dr.InitiatorConnectionInfo,
 		),

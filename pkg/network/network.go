@@ -23,7 +23,6 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/object"
@@ -82,7 +81,7 @@ type (
 	Resolver interface {
 		LookupByDID(
 			ctx context.Context,
-			id did.DID,
+			id peer.ID,
 		) ([]*peer.ConnectionInfo, error)
 	}
 	// Network interface for mocking
@@ -97,7 +96,7 @@ type (
 		Send(
 			ctx context.Context,
 			object *object.Object,
-			id did.DID,
+			id peer.ID,
 			sendOptions ...SendOption,
 		) error
 		Listen(
@@ -113,6 +112,7 @@ type (
 		GetRelays() []*peer.ConnectionInfo
 		RegisterRelays(...*peer.ConnectionInfo)
 		GetPeerKey() crypto.PrivateKey
+		GetPeerID() peer.ID
 		GetConnectionInfo() *peer.ConnectionInfo
 		Close() error
 	}
@@ -191,6 +191,10 @@ func (w *network) GetPeerKey() crypto.PrivateKey {
 	return w.peerKey
 }
 
+func (w *network) GetPeerID() peer.ID {
+	return peer.IDFromPublicKey(w.peerKey.PublicKey())
+}
+
 type (
 	ListenOption func(c *listenConfig)
 	listenConfig struct {
@@ -224,7 +228,7 @@ func (w *network) RegisterResolver(
 
 func (w *network) lookup(
 	ctx context.Context,
-	id did.DID,
+	id peer.ID,
 ) ([]*peer.ConnectionInfo, error) {
 	resolvers := w.resolvers.List()
 	if len(resolvers) == 0 {
@@ -319,6 +323,7 @@ func (w *network) handleConnection(
 	conn connmanager.Connection,
 ) {
 	remotePeerKey := conn.RemotePeerKey()
+	remotePeerID := conn.RemotePeerID()
 	reader := conn.Read(context.Background())
 	go func() {
 		for {
@@ -357,7 +362,7 @@ func (w *network) handleConnection(
 			)
 
 			w.inboxes.Publish(&Envelope{
-				Sender:  remotePeerKey.DID(),
+				Sender:  remotePeerID,
 				Payload: payload,
 			})
 		}
@@ -451,7 +456,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 					context.WithTimeout(time.Second),
 				),
 				fwd.Payload,
-				fwd.Recipient.DID(),
+				peer.IDFromPublicKey(fwd.Recipient),
 			)
 
 			if err != nil {
@@ -462,7 +467,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 
 			df := &DataForwardResponse{
 				Metadata: object.Metadata{
-					Owner: w.peerKey.PublicKey().DID(),
+					Owner: peer.IDFromPublicKey(w.peerKey.PublicKey()),
 				},
 				RequestID: fwd.RequestID,
 				Success:   err == nil,
@@ -486,7 +491,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 				logger.Warn(
 					"error sending DataForwardResponse",
 					log.String("requestID", fwd.RequestID),
-					log.Error(err),
+					log.Error(resErr),
 				)
 				continue
 			}
@@ -547,7 +552,7 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 			)
 
 			w.inboxes.Publish(&Envelope{
-				Sender:  fwd.Sender.DID(),
+				Sender:  peer.IDFromPublicKey(fwd.Sender),
 				Payload: o,
 			})
 			continue
@@ -555,19 +560,32 @@ func (w *network) handleObjects(sub EnvelopeSubscription) {
 	}
 }
 
+type Resolvable interface {
+	Resolve() (peer.ConnectionInfo, error)
+}
+
+func (w *network) XXX_Send(
+	ctx context.Context,
+	o *object.Object,
+	res Resolvable,
+	opts ...SendOption,
+) error {
+	return nil
+}
+
 // Send an object to the given peer.
 // Before sending, we'll go through the root object as well as any embedded
 func (w *network) Send(
 	ctx context.Context,
 	o *object.Object,
-	id did.DID,
+	id peer.ID,
 	opts ...SendOption,
 ) error {
-	if id.Equals(w.peerKey.PublicKey().DID()) {
+	if id.Equals(peer.IDFromPublicKey(w.peerKey.PublicKey())) {
 		return ErrCannotSendToSelf
 	}
 
-	if id.IdentityType == did.IdentityTypeKeyStream {
+	if id.IdentityType == peer.IdentityTypeKeyStream {
 		cs, err := w.lookup(ctx, id)
 		if err != nil {
 			return fmt.Errorf("error looking up id: %w", err)
@@ -578,7 +596,7 @@ func (w *network) Send(
 		sent := 0
 		var errs error
 		for _, c := range cs {
-			err = w.Send(ctx, o, c.Metadata.Owner, SendWithConnectionInfo(c))
+			err = w.Send(ctx, o, c.Owner, SendWithConnectionInfo(c))
 			if err != nil {
 				errs = multierror.Append(
 					errs,
@@ -660,7 +678,7 @@ func (w *network) Send(
 		err = w.Send(
 			ctx,
 			dfo,
-			relayConnInfo.Metadata.Owner,
+			relayConnInfo.Owner,
 			SendWithConnectionInfo(relayConnInfo),
 		)
 		if err != nil {
@@ -713,16 +731,14 @@ func (w *network) Send(
 		relays = opt.connectionInfo.Relays
 	}
 
-	recipientPublicKey, err := crypto.PublicKeyFromDID(id)
+	recipientPublicKey, err := peer.NewIDFromKey(id)
 
 	// dial with basic connection info if the did is a public key
 	if c == nil && err == nil && recipientPublicKey != nil {
 		c, err = w.connmanager.Dial(
 			ctx,
 			&peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner: id,
-				},
+				Owner: id,
 			},
 		)
 		if err != nil {
@@ -753,7 +769,7 @@ func (w *network) Send(
 		if ci != nil && len(ci.Relays) > 0 {
 			relays = append(relays, ci.Relays...)
 		}
-		recipientPublicKey, err = crypto.PublicKeyFromDID(id)
+		recipientPublicKey, err = peer.NewIDFromKey(id)
 		if err != nil {
 			errs = multierror.Append(
 				errs,
@@ -891,7 +907,7 @@ func (w *network) wrapInDataForward(
 	// create data forward envelope
 	dfe := &DataForwardEnvelope{
 		Metadata: object.Metadata{
-			Owner: ek.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(ek.PublicKey()),
 		},
 		Sender: ek.PublicKey(),
 		Data:   ep,
@@ -907,7 +923,7 @@ func (w *network) wrapInDataForward(
 	// and wrap it in a request
 	dfr := &DataForwardRequest{
 		Metadata: object.Metadata{
-			Owner: ek.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(ek.PublicKey()),
 		},
 		RequestID: rand.String(8),
 		Recipient: recipient,
@@ -940,9 +956,7 @@ func (w *network) RegisterAddresses(addresses ...string) {
 
 func (w *network) GetConnectionInfo() *peer.ConnectionInfo {
 	return &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: w.peerKey.PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(w.peerKey.PublicKey()),
 		Addresses: w.GetAddresses(),
 		Relays:    w.GetRelays(),
 		ObjectFormats: []string{

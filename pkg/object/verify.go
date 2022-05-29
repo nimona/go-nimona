@@ -3,8 +3,8 @@ package object
 import (
 	"fmt"
 
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
+	"nimona.io/pkg/peer"
 )
 
 const (
@@ -24,7 +24,7 @@ func Verify(o *Object) error {
 	own := o.Metadata.Owner
 
 	// if there is no owner and no signature, we're fine
-	if sig.IsEmpty() && own == did.Empty {
+	if sig.IsEmpty() && own == peer.EmptyID {
 		return nil
 	}
 
@@ -54,12 +54,12 @@ func Verify(o *Object) error {
 	}
 
 	// if there is no owner, we're fine
-	if own == did.Empty {
+	if own == peer.EmptyID {
 		return nil
 	}
 
 	// check if the owner matches the signer
-	if own == sig.Key.DID() {
+	if own == peer.IDFromPublicKey(sig.Key) {
 		return nil
 	}
 

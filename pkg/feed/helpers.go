@@ -7,6 +7,7 @@ import (
 
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -60,7 +61,7 @@ func GetFeedHypotheticalRoot(
 	r := &FeedStreamRoot{
 		ObjectType: getTypeForFeed(objectType),
 		Metadata: object.Metadata{
-			Owner: owner.DID(),
+			Owner: peer.IDFromPublicKey(owner),
 		},
 	}
 	return r

@@ -10,9 +10,9 @@ import (
 	"fmt"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -172,9 +172,9 @@ func (inc *Inception) apply(s *State) error {
 	s.Root = o.Hash()
 	if inc.DelegatorSeal != nil {
 		s.DelegatorRoot = inc.DelegatorSeal.Root
-		s.Delegator = did.DID{
-			Method:       did.MethodNimona,
-			IdentityType: did.IdentityTypeKeyStream,
+		s.Delegator = peer.ID{
+			Method:       peer.MethodNimona,
+			IdentityType: peer.IdentityTypeKeyStream,
 			Identity:     string(s.DelegatorRoot),
 		}
 	}
@@ -224,9 +224,9 @@ func (del *DelegationInteraction) apply(s *State) error {
 	}
 
 	s.DelegateRoots = append(s.DelegateRoots, del.DelegateSeal.Root)
-	s.Delegates = append(s.Delegates, did.DID{
-		Method:       did.MethodNimona,
-		IdentityType: did.IdentityTypeKeyStream,
+	s.Delegates = append(s.Delegates, peer.ID{
+		Method:       peer.MethodNimona,
+		IdentityType: peer.IdentityTypeKeyStream,
 		Identity:     string(del.DelegateSeal.Root),
 	})
 
@@ -249,22 +249,22 @@ type (
 		Sequence      uint64
 		// Delegator
 		DelegatorRoot tilde.Digest
-		Delegator     did.DID
+		Delegator     peer.ID
 		// Delegates
 		DelegateRoots []tilde.Digest
-		Delegates     []did.DID
+		Delegates     []peer.ID
 		// Local
 		latestObject tilde.Digest
 	}
 )
 
-func (s State) GetDID() did.DID {
+func (s State) GetDID() peer.ID {
 	if !s.Delegator.IsEmpty() {
 		return s.Delegator
 	}
-	return did.DID{
-		Method:       did.MethodNimona,
-		IdentityType: did.IdentityTypeKeyStream,
+	return peer.ID{
+		Method:       peer.MethodNimona,
+		IdentityType: peer.IdentityTypeKeyStream,
 		Identity:     string(s.Root),
 	}
 }

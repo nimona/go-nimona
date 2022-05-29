@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"nimona.io/internal/fixtures"
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstoremock"
@@ -55,12 +55,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n1.Send(
 		context.Background(),
 		testObj,
-		n2.GetPeerKey().PublicKey().DID(),
+		peer.IDFromPublicKey(n2.GetPeerKey().PublicKey()),
 		SendWithConnectionInfo(
 			&peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner: n2.GetPeerKey().PublicKey().DID(),
-				},
+				Owner:     peer.IDFromPublicKey(n2.GetPeerKey().PublicKey()),
 				Addresses: n2.GetAddresses(),
 			},
 		),
@@ -79,12 +77,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObj,
-		n1.GetPeerKey().PublicKey().DID(),
+		peer.IDFromPublicKey(n1.GetPeerKey().PublicKey()),
 		SendWithConnectionInfo(
 			&peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner: n1.GetPeerKey().PublicKey().DID(),
-				},
+				Owner:     peer.IDFromPublicKey(n1.GetPeerKey().PublicKey()),
 				Addresses: n1.GetAddresses(),
 			},
 		),
@@ -102,9 +98,7 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		c, err := n2.(*network).connmanager.Dial(
 			context.New(),
 			&peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner: n1.GetPeerKey().PublicKey().DID(),
-				},
+				Owner: peer.IDFromPublicKey(n1.GetPeerKey().PublicKey()),
 			},
 		)
 		require.NoError(t, err)
@@ -114,12 +108,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		err = n1.Send(
 			context.Background(),
 			testObj,
-			n2.GetPeerKey().PublicKey().DID(),
+			peer.IDFromPublicKey(n2.GetPeerKey().PublicKey()),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
-					Metadata: object.Metadata{
-						Owner: n2.GetPeerKey().PublicKey().DID(),
-					},
+					Owner:     peer.IDFromPublicKey(n2.GetPeerKey().PublicKey()),
 					Addresses: n2.GetAddresses(),
 				},
 			),
@@ -129,12 +121,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		err = n2.Send(
 			context.Background(),
 			testObj,
-			k1.PublicKey().DID(),
+			peer.IDFromPublicKey(k1.PublicKey()),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
-					Metadata: object.Metadata{
-						Owner: k1.PublicKey().DID(),
-					},
+					Owner:     peer.IDFromPublicKey(k1.PublicKey()),
 					Addresses: n1.GetAddresses(),
 				},
 			),
@@ -164,12 +154,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 			err = n1.Send(
 				context.Background(),
 				reqo,
-				n2.GetPeerKey().PublicKey().DID(),
+				peer.IDFromPublicKey(n2.GetPeerKey().PublicKey()),
 				SendWithConnectionInfo(
 					&peer.ConnectionInfo{
-						Metadata: object.Metadata{
-							Owner: n2.GetPeerKey().PublicKey().DID(),
-						},
+						Owner:     peer.IDFromPublicKey(n2.GetPeerKey().PublicKey()),
 						Addresses: n2.GetAddresses(),
 					},
 				),
@@ -194,12 +182,10 @@ func TestNetwork_SimpleConnection(t *testing.T) {
 		n2.Send(
 			context.Background(),
 			reso,
-			n1.GetPeerKey().PublicKey().DID(),
+			peer.IDFromPublicKey(n1.GetPeerKey().PublicKey()),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
-					Metadata: object.Metadata{
-						Owner: n1.GetPeerKey().PublicKey().DID(),
-					},
+					Owner:     peer.IDFromPublicKey(n1.GetPeerKey().PublicKey()),
 					Addresses: n1.GetAddresses(),
 				},
 			),
@@ -237,16 +223,12 @@ func TestNetwork_Relay(t *testing.T) {
 	defer l0.Close()
 
 	p0 := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: n0.GetPeerKey().PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(n0.GetPeerKey().PublicKey()),
 		Addresses: n0.GetAddresses(),
 	}
 
 	p1 := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: n1.GetPeerKey().PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(n1.GetPeerKey().PublicKey()),
 		Addresses: n1.GetAddresses(),
 		Relays: []*peer.ConnectionInfo{
 			p0,
@@ -254,9 +236,7 @@ func TestNetwork_Relay(t *testing.T) {
 	}
 
 	p2 := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: n2.GetPeerKey().PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(n2.GetPeerKey().PublicKey()),
 		Addresses: n2.GetAddresses(),
 		Relays: []*peer.ConnectionInfo{
 			p0,
@@ -273,7 +253,7 @@ func TestNetwork_Relay(t *testing.T) {
 	testObjFromP1 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner: n1.GetPeerKey().PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(n1.GetPeerKey().PublicKey()),
 		},
 		Data: tilde.Map{
 			"foo": tilde.String("bar"),
@@ -283,7 +263,7 @@ func TestNetwork_Relay(t *testing.T) {
 	testObjFromP2 := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner: n2.GetPeerKey().PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(n2.GetPeerKey().PublicKey()),
 		},
 		Data: tilde.Map{
 			"foo": tilde.String("bar"),
@@ -294,7 +274,7 @@ func TestNetwork_Relay(t *testing.T) {
 	err = n1.Send(
 		context.Background(),
 		testObj,
-		p0.Metadata.Owner,
+		p0.Owner,
 		SendWithConnectionInfo(p0),
 	)
 	require.NoError(t, err)
@@ -304,18 +284,20 @@ func TestNetwork_Relay(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObj,
-		p0.Metadata.Owner,
+		p0.Owner,
 		SendWithConnectionInfo(p0),
 	)
 	require.NoError(t, err)
 	time.Sleep(time.Millisecond * 500)
+
+	fmt.Println("=======")
 
 	// now we should be able to send from p1 to p2
 	sub := n2.Subscribe(FilterByObjectType("foo"))
 	err = n1.Send(
 		context.Background(),
 		testObjFromP1,
-		p2.Metadata.Owner,
+		p2.Owner,
 		SendWithConnectionInfo(p2),
 	)
 	require.NoError(t, err)
@@ -337,7 +319,7 @@ func TestNetwork_Relay(t *testing.T) {
 	err = n2.Send(
 		context.Background(),
 		testObjFromP2,
-		p1.Metadata.Owner,
+		p1.Owner,
 		SendWithConnectionInfo(p1),
 	)
 	require.NoError(t, err)
@@ -357,17 +339,15 @@ func Test_network_lookup(t *testing.T) {
 	require.NoError(t, err)
 
 	fooConnInfo := &peer.ConnectionInfo{
-		Version: 1,
-		Metadata: object.Metadata{
-			Owner: p0.PublicKey().DID(),
-		},
+		Version:   1,
+		Owner:     peer.IDFromPublicKey(p0.PublicKey()),
 		Addresses: []string{"a", "b"},
 	}
 	type fields struct {
 		resolvers []Resolver
 	}
 	type args struct {
-		lookupDID did.DID
+		lookupDID peer.ID
 	}
 	tests := []struct {
 		name    string
@@ -381,7 +361,7 @@ func Test_network_lookup(t *testing.T) {
 			resolvers: []Resolver{
 				&testResolver{
 					peers: map[string][]*peer.ConnectionInfo{
-						p0.PublicKey().DID().String(): {
+						peer.IDFromPublicKey(p0.PublicKey()).String(): {
 							fooConnInfo,
 						},
 					},
@@ -389,7 +369,7 @@ func Test_network_lookup(t *testing.T) {
 			},
 		},
 		args: args{
-			lookupDID: fooConnInfo.Metadata.Owner,
+			lookupDID: fooConnInfo.Owner,
 		},
 		want: []*peer.ConnectionInfo{
 			fooConnInfo,
@@ -403,7 +383,7 @@ func Test_network_lookup(t *testing.T) {
 				},
 				&testResolver{
 					peers: map[string][]*peer.ConnectionInfo{
-						p0.PublicKey().DID().String(): {
+						peer.IDFromPublicKey(p0.PublicKey()).String(): {
 							fooConnInfo,
 						},
 					},
@@ -411,7 +391,7 @@ func Test_network_lookup(t *testing.T) {
 			},
 		},
 		args: args{
-			lookupDID: fooConnInfo.Metadata.Owner,
+			lookupDID: fooConnInfo.Owner,
 		},
 		want: []*peer.ConnectionInfo{
 			fooConnInfo,
@@ -429,7 +409,7 @@ func Test_network_lookup(t *testing.T) {
 			},
 		},
 		args: args{
-			lookupDID: fooConnInfo.Metadata.Owner,
+			lookupDID: fooConnInfo.Owner,
 		},
 		want:    nil,
 		wantErr: true,
@@ -480,12 +460,10 @@ func BenchmarkNetworkSendToSinglePeer(b *testing.B) {
 					"foo": tilde.String("bar"),
 				},
 			},
-			k1.PublicKey().DID(),
+			peer.IDFromPublicKey(k1.PublicKey()),
 			SendWithConnectionInfo(
 				&peer.ConnectionInfo{
-					Metadata: object.Metadata{
-						Owner: k1.PublicKey().DID(),
-					},
+					Owner:     peer.IDFromPublicKey(k1.PublicKey()),
 					Addresses: n1.GetAddresses(),
 				},
 			),
@@ -540,7 +518,7 @@ func TestNetwork_RequestRespond(t *testing.T) {
 			RequestID:  "foo",
 			ObjectHash: testObj.Hash(),
 		}),
-		n1.GetConnectionInfo().Metadata.Owner,
+		n1.GetConnectionInfo().Owner,
 		SendWithConnectionInfo(n1.GetConnectionInfo()),
 		SendWithResponse(res, time.Second),
 	)
@@ -555,7 +533,7 @@ type testResolver struct {
 
 func (r *testResolver) LookupByDID(
 	ctx context.Context,
-	id did.DID,
+	id peer.ID,
 ) ([]*peer.ConnectionInfo, error) {
 	c, ok := r.peers[id.String()]
 	if !ok || c == nil {

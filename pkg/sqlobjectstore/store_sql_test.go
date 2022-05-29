@@ -17,6 +17,7 @@ import (
 	"nimona.io/pkg/errors"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectstore"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -144,7 +145,7 @@ func TestFilter(t *testing.T) {
 			},
 		}
 		if i%2 == 0 {
-			obj.Metadata.Owner = k.PublicKey().DID()
+			obj.Metadata.Owner = peer.IDFromPublicKey(k.PublicKey())
 		}
 		objects = append(objects, obj)
 		err = store.Put(obj)
@@ -165,7 +166,7 @@ func TestFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, len(hashes), len(got))
 	objectReader, err = store.Filter(
-		FilterByOwner(k.PublicKey().DID()),
+		FilterByOwner(peer.IDFromPublicKey(k.PublicKey())),
 	)
 	require.NoError(t, err)
 	got, err = object.ReadAll(objectReader)

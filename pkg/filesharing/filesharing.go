@@ -10,11 +10,11 @@ import (
 	"nimona.io/internal/rand"
 	"nimona.io/pkg/blob"
 	"nimona.io/pkg/context"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/log"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/object"
 	"nimona.io/pkg/objectmanager"
+	"nimona.io/pkg/peer"
 )
 
 var ErrTransferRejected = errors.New("transfer rejected")
@@ -30,7 +30,7 @@ type (
 		RequestTransfer(
 			ctx context.Context,
 			file *File,
-			id did.DID,
+			id peer.ID,
 		) (string, error)
 		RespondTransfer(
 			ctx context.Context,
@@ -52,7 +52,7 @@ type (
 	}
 	Transfer struct {
 		Request TransferRequest
-		ID      did.DID
+		ID      peer.ID
 	}
 )
 
@@ -71,7 +71,7 @@ func New(
 func (fsh *fileSharer) RequestTransfer(
 	ctx context.Context,
 	file *File,
-	id did.DID,
+	id peer.ID,
 ) (string, error) {
 	nonce := rand.String(8)
 	req := &TransferRequest{

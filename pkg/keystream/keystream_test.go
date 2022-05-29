@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/object"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -90,9 +90,9 @@ func Test_FromStream_InceptionRotation(t *testing.T) {
 			Sequence:      1,
 			Root:          object.MustMarshal(t0Inception).Hash(),
 			DelegatorRoot: "delegator-root-hash",
-			Delegator: did.DID{
-				Method:       did.MethodNimona,
-				IdentityType: did.IdentityTypeKeyStream,
+			Delegator: peer.ID{
+				Method:       peer.MethodNimona,
+				IdentityType: peer.IdentityTypeKeyStream,
 				Identity:     "delegator-root-hash",
 			},
 			ActiveKey:     k1.PublicKey(),

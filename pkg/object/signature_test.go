@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"nimona.io/pkg/crypto"
+	"nimona.io/pkg/peer"
 	"nimona.io/pkg/tilde"
 )
 
@@ -20,7 +21,7 @@ func Test_Sign(t *testing.T) {
 		o := &Object{
 			Type: "foo",
 			Metadata: Metadata{
-				Owner: k.PublicKey().DID(),
+				Owner: peer.IDFromPublicKey(k.PublicKey()),
 			},
 			Data: tilde.Map{
 				"foo": tilde.String("bar"),
@@ -47,7 +48,7 @@ func Test_Sign(t *testing.T) {
 		n := &Object{
 			Type: "foo",
 			Metadata: Metadata{
-				Owner: k.PublicKey().DID(),
+				Owner: peer.IDFromPublicKey(k.PublicKey()),
 			},
 			Data: tilde.Map{
 				"foo": tilde.String("bar"),

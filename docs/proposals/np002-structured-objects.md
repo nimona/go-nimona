@@ -33,7 +33,7 @@ The top level of each object consists of three main attributes.
   "@type:s": "type",
   "@metadata:m": {
     "root:r": "bah...",
-    "owner:s": "did:x:y",
+    "owner:s": "nimona:x:y",
     "parents:m": [
       "*:as": ["bah..."],
       "some-type:as": ["bah..."],

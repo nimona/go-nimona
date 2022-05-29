@@ -21,9 +21,7 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	// net0 is our provider
 	net0, k0 := newPeer(context.New(context.WithCorrelationID("prv0")), t)
 	pr0 := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: k0.PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(k0.PublicKey()),
 		Addresses: net0.Addresses(),
 	}
 
@@ -31,12 +29,10 @@ func TestProvider_handleAnnouncement(t *testing.T) {
 	net1, k1 := newPeer(context.New(), t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: k1.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(k1.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: k1.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(k1.PublicKey()),
 			Addresses: net1.Addresses(),
 		},
 		Digests: []tilde.Digest{"foo", "bar"},
@@ -65,18 +61,14 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	// net0 is our provider
 	net0, k0 := newPeer(context.New(context.WithCorrelationID("net0")), t)
 	pr0 := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: k0.PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(k0.PublicKey()),
 		Addresses: net0.Addresses(),
 	}
 
 	// net1 is another provider
 	net1, k1 := newPeer(context.New(context.WithCorrelationID("net1")), t)
 	pr1 := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: k1.PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(k1.PublicKey()),
 		Addresses: net1.Addresses(),
 	}
 
@@ -84,12 +76,10 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 	net2, k2 := newPeer(context.New(context.WithCorrelationID("net2")), t)
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: k2.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(k2.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: k2.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(k2.PublicKey()),
 			Addresses: net2.Addresses(),
 		},
 		Digests:          []tilde.Digest{"foo", "bar"},
@@ -144,7 +134,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 		var existsInPrv1 error
 		for i := 0; i < 10; i++ {
 			_, existsInPrv1 = prv0.peerCache.Get(
-				pr2.ConnectionInfo.Metadata.Owner,
+				pr2.ConnectionInfo.Owner,
 			)
 			if existsInPrv1 != nil {
 				time.Sleep(time.Second)
@@ -156,7 +146,7 @@ func TestProvider_distributeAnnouncement(t *testing.T) {
 		var existsInPrv2 error
 		for i := 0; i < 10; i++ {
 			_, existsInPrv2 = prv1.peerCache.Get(
-				pr2.ConnectionInfo.Metadata.Owner,
+				pr2.ConnectionInfo.Owner,
 			)
 			if existsInPrv2 != nil {
 				time.Sleep(time.Second)
@@ -173,12 +163,10 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	net0, k0 := newPeer(context.New(context.WithCorrelationID("prv0")), t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: k0.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(k0.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: k0.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(k0.PublicKey()),
 			Addresses: net0.Addresses(),
 		},
 	}
@@ -215,9 +203,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	require.NoError(t, err)
 	pr2 := &hyperspace.Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: pr2k.PublicKey().DID(),
-			},
+			Owner: peer.IDFromPublicKey(pr2k.PublicKey()),
 		},
 		Digests: []tilde.Digest{"foo", "bar"},
 	}
@@ -225,9 +211,7 @@ func TestProvider_handlePeerLookup(t *testing.T) {
 	require.NoError(t, err)
 	pr3 := &hyperspace.Announcement{
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: pr3k.PublicKey().DID(),
-			},
+			Owner: peer.IDFromPublicKey(pr3k.PublicKey()),
 		},
 		Digests: []tilde.Digest{"not-foo"},
 	}

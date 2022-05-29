@@ -9,7 +9,6 @@ import (
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
 	"nimona.io/pkg/hyperspace/provider"
-	"nimona.io/pkg/object"
 	"nimona.io/pkg/peer"
 )
 
@@ -52,9 +51,7 @@ func NewTestBootstrapPeer(t *testing.T) *peer.ConnectionInfo {
 	})
 
 	return &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: peerKey.PublicKey().DID(),
-		},
+		Owner:     peer.IDFromPublicKey(peerKey.PublicKey()),
 		Addresses: con.Addresses(),
 	}
 }

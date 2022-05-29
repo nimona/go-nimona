@@ -22,24 +22,20 @@ func TestPeerCache_Lookup(t *testing.T) {
 
 	p1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: opk.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(opk.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: opk.PublicKey().DID(),
-			},
+			Owner: peer.IDFromPublicKey(opk.PublicKey()),
 		},
 		Digests: []tilde.Digest{"foo", "bar"},
 	}
 
 	p2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: opk2.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(opk2.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: opk2.PublicKey().DID(),
-			},
+			Owner: peer.IDFromPublicKey(opk2.PublicKey()),
 		},
 		Digests: []tilde.Digest{"foo", "not-bar"},
 	}
@@ -68,12 +64,10 @@ func TestPeerCache_List(t *testing.T) {
 
 	p1a := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: opk.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(opk.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: opk.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(opk.PublicKey()),
 			Addresses: []string{"foo"},
 		},
 	}
@@ -81,24 +75,20 @@ func TestPeerCache_List(t *testing.T) {
 	p1b := &hyperspace.Announcement{
 		Version: 1,
 		Metadata: object.Metadata{
-			Owner: opk.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(opk.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: opk.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(opk.PublicKey()),
 			Addresses: []string{"bar"},
 		},
 	}
 
 	p2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: opk2.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(opk2.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: opk2.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(opk2.PublicKey()),
 			Addresses: []string{"foo"},
 		},
 	}
@@ -127,20 +117,18 @@ func TestPeerCache_Remove(t *testing.T) {
 	pc.Put(
 		&hyperspace.Announcement{
 			Metadata: object.Metadata{
-				Owner: opk.PublicKey().DID(),
+				Owner: peer.IDFromPublicKey(opk.PublicKey()),
 			},
 			ConnectionInfo: &peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner: opk.PublicKey().DID(),
-				},
+				Owner: peer.IDFromPublicKey(opk.PublicKey()),
 			},
 		},
 		200*time.Millisecond,
 	)
 
-	pc.Remove(opk.PublicKey().DID())
+	pc.Remove(peer.IDFromPublicKey(opk.PublicKey()))
 
-	pr, err := pc.Get(opk.PublicKey().DID())
+	pr, err := pc.Get(peer.IDFromPublicKey(opk.PublicKey()))
 	assert.Error(t, err)
 	assert.Nil(t, pr)
 }
@@ -154,12 +142,10 @@ func TestPeerCache_Touch(t *testing.T) {
 	pc.Put(
 		&hyperspace.Announcement{
 			Metadata: object.Metadata{
-				Owner: opk.PublicKey().DID(),
+				Owner: peer.IDFromPublicKey(opk.PublicKey()),
 			},
 			ConnectionInfo: &peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner: opk.PublicKey().DID(),
-				},
+				Owner: peer.IDFromPublicKey(opk.PublicKey()),
 			},
 		},
 		200*time.Millisecond,
@@ -167,23 +153,23 @@ func TestPeerCache_Touch(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	pc.Touch(opk.PublicKey().DID(), 300*time.Millisecond)
+	pc.Touch(peer.IDFromPublicKey(opk.PublicKey()), 300*time.Millisecond)
 
 	time.Sleep(200 * time.Millisecond)
 
-	pr, err := pc.Get(opk.PublicKey().DID())
+	pr, err := pc.Get(peer.IDFromPublicKey(opk.PublicKey()))
 	assert.NoError(t, err)
-	assert.True(t, opk.PublicKey().DID().Equals(
-		pr.ConnectionInfo.Metadata.Owner,
+	assert.True(t, peer.IDFromPublicKey(opk.PublicKey()).Equals(
+		pr.ConnectionInfo.Owner,
 	))
 
 	time.Sleep(300 * time.Millisecond)
 
-	pr, err = pc.Get(opk.PublicKey().DID())
+	pr, err = pc.Get(peer.IDFromPublicKey(opk.PublicKey()))
 	assert.Error(t, err)
 	assert.Nil(t, pr)
 
-	pc.Touch(opk.PublicKey().DID(), 300*time.Millisecond)
+	pc.Touch(peer.IDFromPublicKey(opk.PublicKey()), 300*time.Millisecond)
 }
 
 func TestPeerCache_TTL(t *testing.T) {
@@ -195,26 +181,24 @@ func TestPeerCache_TTL(t *testing.T) {
 	pc.Put(
 		&hyperspace.Announcement{
 			Metadata: object.Metadata{
-				Owner: opk.PublicKey().DID(),
+				Owner: peer.IDFromPublicKey(opk.PublicKey()),
 			},
 			ConnectionInfo: &peer.ConnectionInfo{
-				Metadata: object.Metadata{
-					Owner: opk.PublicKey().DID(),
-				},
+				Owner: peer.IDFromPublicKey(opk.PublicKey()),
 			},
 		},
 		600*time.Millisecond,
 	)
 
-	pr, err := pc.Get(opk.PublicKey().DID())
+	pr, err := pc.Get(peer.IDFromPublicKey(opk.PublicKey()))
 	assert.NoError(t, err)
-	assert.True(t, opk.PublicKey().DID().Equals(
-		pr.ConnectionInfo.Metadata.Owner,
+	assert.True(t, peer.IDFromPublicKey(opk.PublicKey()).Equals(
+		pr.ConnectionInfo.Owner,
 	))
 
 	time.Sleep(900 * time.Millisecond)
 
-	pr, err = pc.Get(opk.PublicKey().DID())
+	pr, err = pc.Get(peer.IDFromPublicKey(opk.PublicKey()))
 	assert.Error(t, err)
 	assert.Nil(t, pr)
 }

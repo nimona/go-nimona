@@ -36,9 +36,7 @@ func Test_requester_Request(t *testing.T) {
 	}
 
 	peer1 := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: pk.PublicKey().DID(),
-		},
+		Owner: peer.IDFromPublicKey(pk.PublicKey()),
 	}
 
 	type fields struct {
@@ -82,19 +80,19 @@ func Test_requester_Request(t *testing.T) {
 				mobm.EXPECT().Request(
 					gomock.Any(),
 					object.MustMarshal(blob1).Hash(),
-					peer1.Metadata.Owner,
+					peer1.Owner,
 				).Return(object.MustMarshal(blob1), nil).MaxTimes(1)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
 					object.MustMarshal(chunk1).Hash(),
-					peer1.Metadata.Owner,
+					peer1.Owner,
 				).Return(object.MustMarshal(chunk1), nil)
 
 				mobm.EXPECT().Request(
 					gomock.Any(),
 					object.MustMarshal(chunk2).Hash(),
-					peer1.Metadata.Owner,
+					peer1.Owner,
 				).Return(object.MustMarshal(chunk2), nil)
 
 				return mobm

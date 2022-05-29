@@ -170,13 +170,14 @@ func main() {
 	}()
 
 	ping := func(peerKey crypto.PublicKey) error {
+		peerID := peer.IDFromPublicKey(peerKey)
 		sctx := context.New(
 			context.WithParent(ctx),
 			context.WithTimeout(time.Second*5),
 		)
 		recipients, err := res.LookupByDID(
 			sctx,
-			peerKey.DID(),
+			peerID,
 		)
 		if err != nil {
 			return err
@@ -190,17 +191,17 @@ func main() {
 				&object.Object{
 					Type: "ping",
 					Metadata: object.Metadata{
-						Owner: net.GetPeerKey().PublicKey().DID(),
+						Owner: net.GetPeerID(),
 					},
 					Data: tilde.Map{
 						"nonce": tilde.String(rand.String(8)),
 					},
 				},
-				recipient.Metadata.Owner,
+				recipient.Owner,
 			); err != nil {
 				logger.Error(
 					"error sending ping to peer",
-					log.String("publicKey", recipient.Metadata.Owner.String()),
+					log.String("publicKey", recipient.Owner.String()),
 					log.Strings("addresses", recipient.Addresses),
 					log.Error(err),
 				)
@@ -208,7 +209,7 @@ func main() {
 			}
 			fmt.Printf(
 				"%s sent ping to %s\n",
-				recipient.Metadata.Owner.String(),
+				recipient.Owner.String(),
 				net.GetPeerKey().PublicKey().String(),
 			)
 			return nil

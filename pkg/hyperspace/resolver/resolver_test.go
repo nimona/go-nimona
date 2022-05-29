@@ -30,12 +30,10 @@ func TestResolver_Integration(t *testing.T) {
 	k0, n0 := newPeerConnManager(t)
 	pr0 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: k0.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(k0.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: k0.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(k0.PublicKey()),
 			Addresses: n0.Addresses(),
 		},
 		PeerCapabilities: []string{"foo", "bar"},
@@ -45,12 +43,10 @@ func TestResolver_Integration(t *testing.T) {
 	k1, net1 := newPeer(t)
 	pr1 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: k1.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(k1.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: k1.PublicKey().DID(),
-			},
+			Owner:     peer.IDFromPublicKey(k1.PublicKey()),
 			Addresses: net1.GetAddresses(),
 		},
 		PeerCapabilities: []string{"foo"},
@@ -64,7 +60,7 @@ func TestResolver_Integration(t *testing.T) {
 	err = net1.Send(
 		context.New(),
 		object.MustMarshal(pr1),
-		pr0.ConnectionInfo.Metadata.Owner,
+		pr0.ConnectionInfo.Owner,
 		network.SendWithConnectionInfo(pr0.ConnectionInfo),
 	)
 	require.NoError(t, err)
@@ -78,23 +74,19 @@ func TestResolver_Integration(t *testing.T) {
 	// add a couple more random peers to the provider's cache
 	pr2 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: p2.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(p2.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: p2.PublicKey().DID(),
-			},
+			Owner: peer.IDFromPublicKey(p2.PublicKey()),
 		},
 		Digests: []tilde.Digest{"foo", "bar"},
 	}
 	pr3 := &hyperspace.Announcement{
 		Metadata: object.Metadata{
-			Owner: k0.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(k0.PublicKey()),
 		},
 		ConnectionInfo: &peer.ConnectionInfo{
-			Metadata: object.Metadata{
-				Owner: p3.PublicKey().DID(),
-			},
+			Owner: peer.IDFromPublicKey(p3.PublicKey()),
 		},
 		Digests: []tilde.Digest{"foo"},
 	}
@@ -129,7 +121,7 @@ func TestResolver_Integration(t *testing.T) {
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{pr2.ConnectionInfo}, pr)
 
 	// lookup by owner
-	pr, err = res.LookupByDID(context.New(), p2.PublicKey().DID())
+	pr, err = res.LookupByDID(context.New(), peer.IDFromPublicKey(p2.PublicKey()))
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []*peer.ConnectionInfo{
 		pr2.ConnectionInfo,
@@ -154,7 +146,7 @@ func TestResolver_Integration(t *testing.T) {
 		assert.Len(t, pr, 1)
 		assert.Equal(t,
 			pr1.Metadata.Owner.String(),
-			pr[0].Metadata.Owner.String(),
+			pr[0].Owner.String(),
 		)
 	})
 }

@@ -11,7 +11,6 @@ import (
 
 	"nimona.io/pkg/context"
 	"nimona.io/pkg/crypto"
-	"nimona.io/pkg/did"
 	"nimona.io/pkg/network"
 	"nimona.io/pkg/networkmock"
 	"nimona.io/pkg/object"
@@ -26,7 +25,7 @@ import (
 func TestManager_Request(t *testing.T) {
 	testPeerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
-	testDID := testPeerKey.PublicKey().DID()
+	testDID := peer.IDFromPublicKey(testPeerKey.PublicKey())
 	f00 := &object.Object{
 		Type: "foo",
 		Data: tilde.Map{
@@ -40,7 +39,7 @@ func TestManager_Request(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		rootHash tilde.Digest
-		id       did.DID
+		id       peer.ID
 	}
 	tests := []struct {
 		name    string
@@ -110,13 +109,13 @@ func TestManager_handleObjectRequest(t *testing.T) {
 	peerKey, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
+	peerID := peer.IDFromPublicKey(peerKey.PublicKey())
+
 	peer1Key, err := crypto.NewEd25519PrivateKey()
 	require.NoError(t, err)
 
 	peer1 := &peer.ConnectionInfo{
-		Metadata: object.Metadata{
-			Owner: peer1Key.PublicKey().DID(),
-		},
+		Owner: peer.IDFromPublicKey(peer1Key.PublicKey()),
 	}
 
 	f00 := object.MustMarshal(peer1)
@@ -167,7 +166,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					want *object.Object,
 				) network.Network {
 					m := networkmock.NewMockNetwork(gomock.NewController(t))
-					m.EXPECT().GetPeerKey().Return(peerKey)
+					m.EXPECT().GetPeerID().Return(peerID)
 					m.EXPECT().Subscribe(gomock.Any()).Return(
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
@@ -184,7 +183,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							id did.DID,
+							id peer.ID,
 							opts ...network.SendOption,
 						) error {
 							assert.Equal(t, want, obj)
@@ -208,7 +207,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			want: object.MustMarshal(
 				&object.Response{
 					Metadata: object.Metadata{
-						Owner: peerKey.PublicKey().DID(),
+						Owner: peer.IDFromPublicKey(peerKey.PublicKey()),
 					},
 					Object:    f01,
 					RequestID: "8",
@@ -230,7 +229,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 					want *object.Object,
 				) network.Network {
 					m := networkmock.NewMockNetwork(gomock.NewController(t))
-					m.EXPECT().GetPeerKey().Return(peerKey)
+					m.EXPECT().GetPeerID().Return(peerID)
 					m.EXPECT().Subscribe(gomock.Any()).Return(
 						&networkmock.MockSubscriptionSimple{
 							Objects: []*network.Envelope{{
@@ -247,7 +246,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 						DoAndReturn(func(
 							ctx context.Context,
 							obj *object.Object,
-							id did.DID,
+							id peer.ID,
 							opts ...network.SendOption,
 						) error {
 							assert.Equal(t, want, obj)
@@ -271,7 +270,7 @@ func TestManager_handleObjectRequest(t *testing.T) {
 			want: object.MustMarshal(
 				&object.Response{
 					Metadata: object.Metadata{
-						Owner: peerKey.PublicKey().DID(),
+						Owner: peer.IDFromPublicKey(peerKey.PublicKey()),
 					},
 					Object:    nil,
 					RequestID: "8",
@@ -309,7 +308,7 @@ func TestManager_Put(t *testing.T) {
 	testObjectSimple := &object.Object{
 		Type: "foo",
 		Metadata: object.Metadata{
-			Owner: testOwnPublicKey.DID(),
+			Owner: peer.IDFromPublicKey(testOwnPublicKey),
 		},
 		Data: tilde.Map{
 			"foo": tilde.String("bar"),
@@ -437,7 +436,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	o1 := &object.Object{
 		Type: "not-bar",
 		Metadata: object.Metadata{
-			Owner: p.PublicKey().DID(),
+			Owner: peer.IDFromPublicKey(p.PublicKey()),
 		},
 		Data: tilde.Map{
 			"foo": tilde.String("not-bar"),
@@ -467,7 +466,7 @@ func Test_manager_Subscribe(t *testing.T) {
 	}, {
 		name: "subscribe by owner",
 		lookupOptions: []LookupOption{
-			FilterByOwner(p.PublicKey().DID()),
+			FilterByOwner(peer.IDFromPublicKey(p.PublicKey())),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{o1},
@@ -489,7 +488,7 @@ func Test_manager_Subscribe(t *testing.T) {
 		name: "subscribe by stream and owner",
 		lookupOptions: []LookupOption{
 			FilterByStreamHash(tilde.Digest("foo")),
-			FilterByOwner(p.PublicKey().DID()),
+			FilterByOwner(peer.IDFromPublicKey(p.PublicKey())),
 		},
 		publish: []*object.Object{o1, o2},
 		want:    []*object.Object{},
