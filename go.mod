@@ -34,7 +34,7 @@ require (
 	github.com/pyroscope-io/pyroscope v0.13.0
 	github.com/rs/xid v1.4.0
 	github.com/stoewer/go-strcase v1.2.0
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.5
 	github.com/teserakt-io/golang-ed25519 v0.0.0-20210104091850-3888c087a4c8
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/xujiajun/nutsdb v0.7.1
@@ -90,7 +90,7 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
 	modernc.org/cc/v3 v3.35.24 // indirect
 	modernc.org/ccgo/v3 v3.15.17 // indirect
