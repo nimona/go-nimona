@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1648074989030,
+  "lastUpdate": 1665085665308,
   "repoUrl": "https://github.com/nimona/go-nimona",
   "entries": {
     "Benchmark": [
@@ -7128,6 +7128,60 @@ window.BENCHMARK_DATA = {
             "value": 44652,
             "unit": "ns/op",
             "extra": "26912 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "committer": {
+            "email": "george@noodles.gr",
+            "name": "George Antoniadis",
+            "username": "geoah"
+          },
+          "distinct": true,
+          "id": "4f05a42aeb610ca5bbd8a4bc28cc3c2b87b9f3d6",
+          "message": "chore: update readme to mention v1/main",
+          "timestamp": "2022-10-06T20:46:04+01:00",
+          "tree_id": "91a6f8a553072af3d7e3f3265e3323630ac2fc3d",
+          "url": "https://github.com/nimona/go-nimona/commit/4f05a42aeb610ca5bbd8a4bc28cc3c2b87b9f3d6"
+        },
+        "date": 1665085663577,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkNewBlob1",
+            "value": 3588559,
+            "unit": "ns/op",
+            "extra": "342 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob100",
+            "value": 329019386,
+            "unit": "ns/op",
+            "extra": "4 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNewBlob1000",
+            "value": 2904908241,
+            "unit": "ns/op",
+            "extra": "1 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkNetworkSendToSinglePeer",
+            "value": 1675407,
+            "unit": "ns/op",
+            "extra": "619 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkDigest",
+            "value": 44748,
+            "unit": "ns/op",
+            "extra": "27350 times\n2 procs"
           }
         ]
       }
