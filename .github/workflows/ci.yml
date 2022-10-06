@@ -531,7 +531,7 @@ jobs:
         run: |
           echo "NIMONA_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
-      - uses: hashicorp/setup-terraform@v1.3.2
+      - uses: hashicorp/setup-terraform@v2.0.0
         with:
           terraform_version: 0.13.5
 
