@@ -3,36 +3,7 @@
 </h1>
 <h4 align="center">a new internet stack; or something like it.</h4>
 
-
-<p align="center">
-  <a href="https://github.com/nimona/go-nimona/actions">
-    <img src="https://github.com/nimona/go-nimona/workflows/CI/badge.svg?style=flat" alt="Actions Status">
-  </a>
-  <a href="https://codeclimate.com/github/nimona/go-nimona">
-    <img src="https://img.shields.io/codeclimate/coverage/nimona/go-nimona" alt="Coverage">
-  </a>
-  <a href="https://github.com/nimona/go-nimona/commits/main">
-    <img src="https://img.shields.io/github/last-commit/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white"
-alt="GitHub last commit">
-  </a>
-  <a href="https://github.com/nimona/go-nimona/issues">
-    <img src="https://img.shields.io/github/issues-raw/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white"
-alt="GitHub issues">
-  </a>
-  <a href="https://github.com/nimona/go-nimona/pulls">
-    <img src="https://img.shields.io/github/issues-pr-raw/nimona/go-nimona.svg?style=flat&logo=github&logoColor=white" alt="GitHub pull requests">
-  </a>
-  <a href="https://github.com/nimona/go-nimona/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/nimona/go-nimona.svg?style=flat" alt="License Status">
-  </a>
-</p>
-
----
-
-__WARNING__: Nimona is still in its very early stages of design and development
-and will stay like this for a while.  
-Documentation is slowly starting to pop up, but everything is still pretty much
-in flux.
+⚠️ **Note:** Nimona's architecture is getting an ovehaul based on the findings of the first version and more information should be popping up in the `v1/main` branch soon.
 
 ---
 
