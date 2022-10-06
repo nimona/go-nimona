@@ -172,8 +172,8 @@ github.com/gammazero/workerpool v1.1.2 h1:vuioDQbgrz4HoaCi2q1HLlOXdpbap5AET7xu5/
 github.com/gammazero/workerpool v1.1.2/go.mod h1:UelbXcO0zCIGFcufcirHhq2/xtLXJdQ29qZNlXG9OjQ=
 github.com/geoah/genny v1.0.3 h1:LXeBY8OdgDwkIbS4Q6R9t6cB9hPCZAURPLoPawnrJ80=
 github.com/geoah/genny v1.0.3/go.mod h1:Xa40Z5y4m0PEvYcyHrHuz7qzqA/YE1BlsGGtosR2yIQ=
-github.com/geoah/go-pubsub v0.0.1 h1:w6A1KA60NVKus8RwJKpMi/fqQBY5gLw+JhbDDkxXkrE=
-github.com/geoah/go-pubsub v0.0.1/go.mod h1:S6JmM+AQ//ZJyOCJUwLKMvo3Z/j5JDvhK6dnC0bboK8=
+github.com/geoah/go-pubsub v0.0.2 h1:RCDy4tw2yDPcf+V++FfyzvvmHAKA5nzeV37VP1mgjt8=
+github.com/geoah/go-pubsub v0.0.2/go.mod h1:S6JmM+AQ//ZJyOCJUwLKMvo3Z/j5JDvhK6dnC0bboK8=
 github.com/geoah/go-queue v2.0.0+incompatible h1:eLFmhPSYebanEi7t6D80vNBvPv0V6lLGyiMg6TFoEXY=
 github.com/geoah/go-queue v2.0.0+incompatible/go.mod h1:NPL2o6Frb0vYP2U/WlgENrrYsd8kN0fdq946szaCbY4=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
