@@ -3,12 +3,11 @@ package nimona
 import (
 	"bufio"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"sync/atomic"
-
-	"github.com/alphadose/zenq/v2"
 
 	"nimona.io/internal/xsync"
 )
@@ -16,7 +15,7 @@ import (
 type Conn struct {
 	Handler func(seq uint64, data []byte, callback func([]byte) error) error
 
-	writerQueue *zenq.ZenQ[*pendingWrite]
+	writerQueue *xsync.Queue[*pendingWrite]
 
 	requests *xsync.Map[uint64, *pendingRequest]
 	sequence uint64
@@ -38,7 +37,7 @@ type pendingWrite struct {
 
 func NewConn() *Conn {
 	c := &Conn{
-		writerQueue: zenq.New[*pendingWrite](10),
+		writerQueue: xsync.NewQueue[*pendingWrite](10),
 		requests:    xsync.NewMap[uint64, *pendingRequest](),
 	}
 	return c
@@ -102,9 +101,9 @@ func (c *Conn) write(seq uint64, payload []byte, wait bool) error {
 		done: make(chan struct{}),
 	}
 
-	writerDone := c.writerQueue.Write(pw)
-	if writerDone {
-		return fmt.Errorf("writer closed")
+	err := c.writerQueue.Push(pw)
+	if err != nil {
+		return fmt.Errorf("pushing to writer queue: %w", err)
 	}
 
 	if !wait {
@@ -117,17 +116,19 @@ func (c *Conn) write(seq uint64, payload []byte, wait bool) error {
 
 func (c *Conn) writeLoop(conn net.Conn) error {
 	for {
-		// TODO: can pw be not nil but done be true?
-		pw, writerOpen := c.writerQueue.Read()
-		if !writerOpen {
-			return nil
+		pw, err := c.writerQueue.Pop()
+		if err != nil {
+			if errors.Is(err, xsync.ErrQueueClosed) {
+				return nil
+			}
+			return fmt.Errorf("pop from writer queue: %w", err)
 		}
 
 		// TODO: probably too expensive
 		header := []byte{}
 		header = binary.AppendUvarint(header, pw.seq)
 		header = binary.AppendUvarint(header, uint64(len(pw.buf)))
-		_, err := conn.Write(append(header, pw.buf...))
+		_, err = conn.Write(append(header, pw.buf...))
 		if pw.wait {
 			pw.err = err
 			close(pw.done)
