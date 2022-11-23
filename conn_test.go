@@ -16,10 +16,14 @@ func TestConn_E2E(t *testing.T) {
 	go srv.Handle(mc.Server)
 
 	// add a handler for the "server"
-	srv.Handler = func(seq uint64, data []byte, cb func([]byte) error) error {
-		require.Equal(t, "ping", string(data))
-		return cb([]byte("pong"))
-	}
+	go func() {
+		msg, err := srv.Read()
+		require.NoError(t, err)
+		require.Equal(t, "ping", string(msg.Body))
+
+		err = msg.Reply([]byte("pong"))
+		require.NoError(t, err)
+	}()
 
 	// construct a new connection for the "client"
 	cln := NewConn()
@@ -40,24 +44,25 @@ func TestConn_E2E_LongMessage(t *testing.T) {
 	go srv.Handle(mc.Server)
 
 	// create a long message, longer than the buffer size
-	msg := make([]byte, 4096+100)
-	for i := range msg {
-		msg[i] = 'a'
+	body := make([]byte, 4096+100)
+	for i := range body {
+		body[i] = 'a'
 	}
 
 	// add a handler for the "server"
-	srv.Handler = func(seq uint64, data []byte, cb func([]byte) error) error {
-		// require.Equal(t, msg, data)
-		assert.Len(t, data, len(msg))
-		return cb([]byte("ok"))
-	}
+	go func() {
+		msg, err := srv.Read()
+		require.NoError(t, err)
+		assert.Equal(t, body, msg.Body)
+		msg.Reply([]byte("ok"))
+	}()
 
 	// construct a new connection for the "client"
 	cln := NewConn()
 	go cln.Handle(mc.Client)
 
 	// client writes to server
-	res, err := cln.Request(msg)
+	res, err := cln.Request(body)
 	require.NoError(t, err)
 	require.Equal(t, "ok", string(res))
 }

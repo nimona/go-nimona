@@ -13,12 +13,17 @@ import (
 )
 
 type Conn struct {
-	Handler func(seq uint64, data []byte, callback func([]byte) error) error
-
 	writerQueue *xsync.Queue[*pendingWrite]
+	readerQueue *xsync.Queue[*pendingRead]
 
-	requests *xsync.Map[uint64, *pendingRequest]
-	sequence uint64
+	requests   *xsync.Map[uint64, *pendingRequest]
+	requestSeq uint64
+}
+
+type Message struct {
+	Body  []byte
+	Conn  *Conn
+	Reply func([]byte) error
 }
 
 type pendingRequest struct {
@@ -35,9 +40,15 @@ type pendingWrite struct {
 	done chan struct{}
 }
 
+type pendingRead struct {
+	seq  uint64
+	body []byte
+}
+
 func NewConn() *Conn {
 	c := &Conn{
 		writerQueue: xsync.NewQueue[*pendingWrite](10),
+		readerQueue: xsync.NewQueue[*pendingRead](10),
 		requests:    xsync.NewMap[uint64, *pendingRequest](),
 	}
 	return c
@@ -75,13 +86,13 @@ func (c *Conn) Request(payload []byte) ([]byte, error) {
 		done: make(chan struct{}),
 	}
 
-	nextSequence := c.next()
-	c.requests.Store(nextSequence, pr)
+	requestSeq := c.next()
+	c.requests.Store(requestSeq, pr)
 
-	err := c.write(nextSequence, payload, false)
+	err := c.write(requestSeq, payload, false)
 	if err != nil {
 		close(pr.done)
-		c.requests.Delete(nextSequence)
+		c.requests.Delete(requestSeq)
 		return nil, err
 	}
 
@@ -90,7 +101,7 @@ func (c *Conn) Request(payload []byte) ([]byte, error) {
 }
 
 func (c *Conn) next() uint64 {
-	return atomic.AddUint64(&c.sequence, 1)
+	return atomic.AddUint64(&c.requestSeq, 1)
 }
 
 func (c *Conn) write(seq uint64, payload []byte, wait bool) error {
@@ -168,22 +179,40 @@ func (c *Conn) readLoop(conn net.Conn) error {
 		}
 
 		if seq == 0 || !exists {
-			err = c.call(seq, data)
+			err := c.readerQueue.Push(&pendingRead{
+				seq:  seq,
+				body: data,
+			})
 			if err != nil {
+				if errors.Is(err, xsync.ErrQueueClosed) {
+					return nil
+				}
 				return fmt.Errorf("handler encountered an error: %w", err)
 			}
 			continue
 		}
 
-		// TODO: should we copy into dst?
 		pr.dst = data
-
 		close(pr.done)
 	}
 }
 
-func (c *Conn) call(seq uint64, data []byte) error {
-	return c.Handler(seq, data, func(b []byte) error {
-		return c.write(seq, b, false)
-	})
+func (c *Conn) Read() (*Message, error) {
+	pr, err := c.readerQueue.Pop()
+	if err != nil {
+		if errors.Is(err, xsync.ErrQueueClosed) {
+			return nil, io.EOF
+		}
+		return nil, fmt.Errorf("pop from reader queue: %w", err)
+	}
+	return &Message{
+		Body: pr.body,
+		Conn: c,
+		Reply: func(payload []byte) error {
+			if pr.seq == 0 {
+				return fmt.Errorf("message is not a request")
+			}
+			return c.write(pr.seq, payload, true)
+		},
+	}, nil
 }
