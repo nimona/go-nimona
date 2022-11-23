@@ -12,8 +12,7 @@ func TestConn_E2E(t *testing.T) {
 	mc := NewMockConn()
 
 	// construct a new connection for the "server"
-	srv := NewConn()
-	go srv.Handle(mc.Server)
+	srv := NewConn(mc.Server, 10, 10)
 
 	// add a handler for the "server"
 	go func() {
@@ -26,8 +25,7 @@ func TestConn_E2E(t *testing.T) {
 	}()
 
 	// construct a new connection for the "client"
-	cln := NewConn()
-	go cln.Handle(mc.Client)
+	cln := NewConn(mc.Client, 10, 10)
 
 	// client writes to server
 	res, err := cln.Request([]byte("ping"))
@@ -40,8 +38,7 @@ func TestConn_E2E_LongMessage(t *testing.T) {
 	mc := NewMockConn()
 
 	// construct a new connection for the "server"
-	srv := NewConn()
-	go srv.Handle(mc.Server)
+	srv := NewConn(mc.Server, 10, 10)
 
 	// create a long message, longer than the buffer size
 	body := make([]byte, 4096+100)
@@ -58,8 +55,7 @@ func TestConn_E2E_LongMessage(t *testing.T) {
 	}()
 
 	// construct a new connection for the "client"
-	cln := NewConn()
-	go cln.Handle(mc.Client)
+	cln := NewConn(mc.Client, 10, 10)
 
 	// client writes to server
 	res, err := cln.Request(body)

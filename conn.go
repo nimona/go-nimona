@@ -45,40 +45,45 @@ type pendingRead struct {
 	body []byte
 }
 
-func NewConn() *Conn {
+func NewConn(
+	parentConn net.Conn,
+	writeQueueSize uint32,
+	readQueueSize uint32,
+) *Conn {
 	c := &Conn{
-		writerQueue: xsync.NewQueue[*pendingWrite](10),
-		readerQueue: xsync.NewQueue[*pendingRead](10),
+		writerQueue: xsync.NewQueue[*pendingWrite](writeQueueSize),
+		readerQueue: xsync.NewQueue[*pendingRead](readQueueSize),
 		requests:    xsync.NewMap[uint64, *pendingRequest](),
 	}
+	c.handle(parentConn)
 	return c
 }
 
-func (c *Conn) Handle(conn net.Conn) error {
+// TODO: should this method even error?
+func (c *Conn) handle(conn net.Conn) {
 	writerDone := make(chan error)
+	readerDone := make(chan error)
+
 	go func() {
 		writerDone <- c.writeLoop(conn)
 		close(writerDone)
 	}()
 
-	readerDone := make(chan error)
 	go func() {
 		readerDone <- c.readLoop(conn)
 		close(readerDone)
 	}()
 
-	// TODO: needs testing and figuring out edge cases
-	var err error
-	select {
-	case err = <-writerDone:
-		close(readerDone)
-	case err = <-readerDone:
-		close(writerDone)
-	}
-
-	c.writerQueue.Close()
-
-	return err
+	// TODO: should we be handling the errors from the reader and writer?
+	go func() {
+		select {
+		case <-writerDone:
+			close(readerDone)
+		case <-readerDone:
+			close(writerDone)
+		}
+		c.writerQueue.Close()
+	}()
 }
 
 func (c *Conn) Request(payload []byte) ([]byte, error) {
