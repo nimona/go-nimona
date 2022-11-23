@@ -6,20 +6,20 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"sync"
+	"sync/atomic"
 
-	zenq "github.com/alphadose/zenq/v2"
+	"github.com/alphadose/zenq/v2"
+
+	"nimona.io/internal/xsync"
 )
 
 type Conn struct {
 	Handler func(seq uint64, data []byte, callback func([]byte) error) error
 
-	mu sync.Mutex
-
 	writerQueue *zenq.ZenQ[*pendingWrite]
 
-	reqs map[uint64]*pendingRequest
-	seq  uint64
+	requests *xsync.Map[uint64, *pendingRequest]
+	sequence uint64
 }
 
 type pendingRequest struct {
@@ -39,7 +39,7 @@ type pendingWrite struct {
 func NewConn() *Conn {
 	c := &Conn{
 		writerQueue: zenq.New[*pendingWrite](10),
-		reqs:        make(map[uint64]*pendingRequest),
+		requests:    xsync.NewMap[uint64, *pendingRequest](),
 	}
 	return c
 }
@@ -76,19 +76,13 @@ func (c *Conn) Request(payload []byte) ([]byte, error) {
 		done: make(chan struct{}),
 	}
 
-	seq := c.next()
+	nextSequence := c.next()
+	c.requests.Store(nextSequence, pr)
 
-	c.mu.Lock()
-	c.reqs[seq] = pr
-	c.mu.Unlock()
-
-	err := c.write(seq, payload, false)
+	err := c.write(nextSequence, payload, false)
 	if err != nil {
 		close(pr.done)
-
-		c.mu.Lock()
-		delete(c.reqs, seq)
-		c.mu.Unlock()
+		c.requests.Delete(nextSequence)
 		return nil, err
 	}
 
@@ -97,11 +91,7 @@ func (c *Conn) Request(payload []byte) ([]byte, error) {
 }
 
 func (c *Conn) next() uint64 {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.seq++
-	return c.seq
+	return atomic.AddUint64(&c.sequence, 1)
 }
 
 func (c *Conn) write(seq uint64, payload []byte, wait bool) error {
@@ -171,12 +161,10 @@ func (c *Conn) readLoop(conn net.Conn) error {
 			return fmt.Errorf("read data error: %w", io.ErrUnexpectedEOF)
 		}
 
-		c.mu.Lock()
-		pr, exists := c.reqs[seq]
+		pr, exists := c.requests.Load(seq)
 		if exists {
-			delete(c.reqs, seq)
+			c.requests.Delete(seq)
 		}
-		c.mu.Unlock()
 
 		if seq == 0 || !exists {
 			err = c.call(seq, data)
