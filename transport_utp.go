@@ -18,7 +18,7 @@ func (t *TransportUTP) Dial(
 		return nil, ErrTransportUnsupported
 	}
 
-	c, err := utp.DialContext(ctx, addr.String())
+	c, err := utp.DialContext(ctx, addr.Address())
 	if err != nil {
 		return nil, fmt.Errorf("utp: failed to dial: %w", err)
 	}
