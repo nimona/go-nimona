@@ -1,60 +1,62 @@
 package xsync
 
 import (
-	"fmt"
-
-	"github.com/alphadose/zenq/v2"
+	"errors"
+	"sync"
 )
 
-var ErrQueueClosed = fmt.Errorf("queue is closed")
+var ErrQueueClosed = errors.New("queue closed")
 
-// Queue is a wrapper around zenq.ZenQ that provides a more tailored API.
+// Queue is a thread-safe, blocking FIFO queue based on buffered channels
 type Queue[T any] struct {
-	q *zenq.ZenQ[T]
+	maxSize int
+	items   chan T
+	mutex   sync.RWMutex
+	closed  bool
 }
 
-// NewQueue creates a new queue.
-func NewQueue[T any](size uint32) *Queue[T] {
+// NewQueue creates a new Queue with the given maximum size
+func NewQueue[T any](maxSize int) *Queue[T] {
 	return &Queue[T]{
-		q: zenq.New[T](size),
+		maxSize: maxSize,
+		items:   make(chan T, maxSize),
+		mutex:   sync.RWMutex{},
+		closed:  false,
 	}
 }
 
-// Push pushes an item to the queue.
+// Push adds a new item to the queue
 func (q *Queue[T]) Push(item T) error {
-	queueClosedForWrites := q.q.Write(item)
-	if queueClosedForWrites {
+	q.mutex.RLock()
+	if q.closed {
+		q.mutex.RUnlock()
 		return ErrQueueClosed
 	}
+	q.mutex.RUnlock()
+
+	q.items <- item
 	return nil
 }
 
-// Pop pops an item from the queue.
+// Pop retrieves and removes the next item from the queue
+// It blocks until an item is available or the queue is closed
 func (q *Queue[T]) Pop() (T, error) {
-	item, queueOpen := q.q.Read()
-	if !queueOpen {
-		return item, ErrQueueClosed
+	item, ok := <-q.items
+	if !ok {
+		return *new(T), ErrQueueClosed
 	}
 	return item, nil
 }
 
-// Close closes the queue.
+// Close closes the queue and allows Pop to return
 func (q *Queue[T]) Close() {
-	q.q.CloseAsync()
+	q.mutex.Lock()
+	q.closed = true
+	q.mutex.Unlock()
+	close(q.items)
 }
 
-// Select returns a channel that can be used to select on.
+// Select returns a channel that can be used in a select statement
 func (q *Queue[T]) Select() <-chan T {
-	c := make(chan T)
-	go func() {
-		for {
-			item := zenq.Select(q.q)
-			if item == nil {
-				close(c)
-				return
-			}
-			c <- item.(T)
-		}
-	}()
-	return c
+	return q.items
 }

@@ -18,6 +18,9 @@ type Conn struct {
 
 	requests   *xsync.Map[uint64, *pendingRequest]
 	requestSeq uint64
+
+	close     chan struct{}
+	closeDone chan struct{}
 }
 
 type Message struct {
@@ -47,19 +50,18 @@ type pendingRead struct {
 
 func NewConn(
 	parentConn net.Conn,
-	writeQueueSize uint32,
-	readQueueSize uint32,
 ) *Conn {
 	c := &Conn{
-		writerQueue: xsync.NewQueue[*pendingWrite](writeQueueSize),
-		readerQueue: xsync.NewQueue[*pendingRead](readQueueSize),
+		writerQueue: xsync.NewQueue[*pendingWrite](10),
+		readerQueue: xsync.NewQueue[*pendingRead](10),
 		requests:    xsync.NewMap[uint64, *pendingRequest](),
+		close:       make(chan struct{}),
+		closeDone:   make(chan struct{}),
 	}
 	c.handle(parentConn)
 	return c
 }
 
-// TODO: should this method even error?
 func (c *Conn) handle(conn net.Conn) {
 	writerDone := make(chan error)
 	readerDone := make(chan error)
@@ -74,15 +76,21 @@ func (c *Conn) handle(conn net.Conn) {
 		close(readerDone)
 	}()
 
-	// TODO: should we be handling the errors from the reader and writer?
 	go func() {
-		select {
-		case <-writerDone:
-			close(readerDone)
-		case <-readerDone:
-			close(writerDone)
-		}
+		// wait for the close signal
+		<-c.close
+		// close reader and writer
 		c.writerQueue.Close()
+		c.readerQueue.Close()
+		// close the connection
+		conn.Close()
+		// wait for reader and writer to finish
+		<-writerDone
+		// TODO: reader loop is currently not closing
+		// <-readerDone
+		// wrap everything up
+		close(c.close)
+		close(c.closeDone)
 	}()
 }
 
@@ -119,7 +127,10 @@ func (c *Conn) write(seq uint64, payload []byte, wait bool) error {
 
 	err := c.writerQueue.Push(pw)
 	if err != nil {
-		return fmt.Errorf("pushing to writer queue: %w", err)
+		if errors.Is(err, xsync.ErrQueueClosed) {
+			return fmt.Errorf("writer queue closed: %w", io.EOF)
+		}
+		return fmt.Errorf("writer queue error: %w", err)
 	}
 
 	if !wait {
@@ -206,18 +217,23 @@ func (c *Conn) Read() (*Message, error) {
 	pr, err := c.readerQueue.Pop()
 	if err != nil {
 		if errors.Is(err, xsync.ErrQueueClosed) {
-			return nil, io.EOF
+			return nil, fmt.Errorf("reader queue closed: %w", io.EOF)
 		}
-		return nil, fmt.Errorf("pop from reader queue: %w", err)
+		return nil, fmt.Errorf("reader queue error: %w", err)
 	}
 	return &Message{
 		Body: pr.body,
 		Conn: c,
 		Reply: func(payload []byte) error {
 			if pr.seq == 0 {
-				return fmt.Errorf("message is not a request")
+				return fmt.Errorf("not a request")
 			}
 			return c.write(pr.seq, payload, true)
 		},
 	}, nil
+}
+
+func (c *Conn) Close() {
+	c.close <- struct{}{}
+	<-c.closeDone
 }

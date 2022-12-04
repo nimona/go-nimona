@@ -1,6 +1,7 @@
 package nimona
 
 import (
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,7 @@ func TestConn_E2E(t *testing.T) {
 	mc := NewMockConn()
 
 	// construct a new connection for the "server"
-	srv := NewConn(mc.Server, 10, 10)
+	srv := NewConn(mc.Server)
 
 	// add a handler for the "server"
 	go func() {
@@ -25,12 +26,26 @@ func TestConn_E2E(t *testing.T) {
 	}()
 
 	// construct a new connection for the "client"
-	cln := NewConn(mc.Client, 10, 10)
+	cln := NewConn(mc.Client)
 
 	// client writes to server
 	res, err := cln.Request([]byte("ping"))
 	require.NoError(t, err)
 	require.Equal(t, "pong", string(res))
+
+	t.Run("closed connection returns io.EOF", func(t *testing.T) {
+		// close the connections
+		srv.Close()
+		cln.Close()
+
+		// client writes to server errors
+		_, err := cln.Request([]byte("ping"))
+		require.ErrorIs(t, err, io.EOF)
+
+		// server writes to client errors
+		_, err = srv.Request([]byte("ping"))
+		require.ErrorIs(t, err, io.EOF)
+	})
 }
 
 func TestConn_E2E_LongMessage(t *testing.T) {
@@ -38,7 +53,7 @@ func TestConn_E2E_LongMessage(t *testing.T) {
 	mc := NewMockConn()
 
 	// construct a new connection for the "server"
-	srv := NewConn(mc.Server, 10, 10)
+	srv := NewConn(mc.Server)
 
 	// create a long message, longer than the buffer size
 	body := make([]byte, 4096+100)
@@ -55,7 +70,7 @@ func TestConn_E2E_LongMessage(t *testing.T) {
 	}()
 
 	// construct a new connection for the "client"
-	cln := NewConn(mc.Client, 10, 10)
+	cln := NewConn(mc.Client)
 
 	// client writes to server
 	res, err := cln.Request(body)
