@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConn_E2E(t *testing.T) {
+func TestRPC_E2E(t *testing.T) {
 	// construct new mock connection between two nodes
 	mc := NewMockConn()
 
 	// construct a new connection for the "server"
-	srv := NewConn(mc.Server)
+	srv := NewRPC(mc.Server)
 
 	// add a handler for the "server"
 	go func() {
@@ -26,7 +26,7 @@ func TestConn_E2E(t *testing.T) {
 	}()
 
 	// construct a new connection for the "client"
-	cln := NewConn(mc.Client)
+	cln := NewRPC(mc.Client)
 
 	// client writes to server
 	res, err := cln.Request([]byte("ping"))
@@ -48,12 +48,12 @@ func TestConn_E2E(t *testing.T) {
 	})
 }
 
-func TestConn_E2E_LongMessage(t *testing.T) {
+func TestRPC_E2E_LongMessage(t *testing.T) {
 	// construct new mock connection between two nodes
 	mc := NewMockConn()
 
 	// construct a new connection for the "server"
-	srv := NewConn(mc.Server)
+	srv := NewRPC(mc.Server)
 
 	// create a long message, longer than the buffer size
 	body := make([]byte, 4096+100)
@@ -70,7 +70,7 @@ func TestConn_E2E_LongMessage(t *testing.T) {
 	}()
 
 	// construct a new connection for the "client"
-	cln := NewConn(mc.Client)
+	cln := NewRPC(mc.Client)
 
 	// client writes to server
 	res, err := cln.Request(body)

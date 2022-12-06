@@ -12,7 +12,7 @@ import (
 	"nimona.io/internal/xsync"
 )
 
-type Conn struct {
+type RPC struct {
 	writerQueue *xsync.Queue[*pendingWrite]
 	readerQueue *xsync.Queue[*pendingRead]
 
@@ -25,7 +25,7 @@ type Conn struct {
 
 type Message struct {
 	Body  []byte
-	Conn  *Conn
+	Conn  *RPC
 	Reply func([]byte) error
 }
 
@@ -48,21 +48,21 @@ type pendingRead struct {
 	body []byte
 }
 
-func NewConn(
-	parentConn net.Conn,
-) *Conn {
-	c := &Conn{
+func NewRPC(
+	conn net.Conn,
+) *RPC {
+	rpc := &RPC{
 		writerQueue: xsync.NewQueue[*pendingWrite](10),
 		readerQueue: xsync.NewQueue[*pendingRead](10),
 		requests:    xsync.NewMap[uint64, *pendingRequest](),
 		close:       make(chan struct{}),
 		closeDone:   make(chan struct{}),
 	}
-	c.handle(parentConn)
-	return c
+	rpc.handle(conn)
+	return rpc
 }
 
-func (c *Conn) handle(conn net.Conn) {
+func (c *RPC) handle(conn net.Conn) {
 	writerDone := make(chan error)
 	readerDone := make(chan error)
 
@@ -94,7 +94,7 @@ func (c *Conn) handle(conn net.Conn) {
 	}()
 }
 
-func (c *Conn) Request(payload []byte) ([]byte, error) {
+func (c *RPC) Request(payload []byte) ([]byte, error) {
 	pr := &pendingRequest{
 		done: make(chan struct{}),
 	}
@@ -113,11 +113,11 @@ func (c *Conn) Request(payload []byte) ([]byte, error) {
 	return pr.dst, pr.err
 }
 
-func (c *Conn) next() uint64 {
+func (c *RPC) next() uint64 {
 	return atomic.AddUint64(&c.requestSeq, 1)
 }
 
-func (c *Conn) write(seq uint64, payload []byte, wait bool) error {
+func (c *RPC) write(seq uint64, payload []byte, wait bool) error {
 	pw := &pendingWrite{
 		seq:  seq,
 		buf:  payload,
@@ -141,7 +141,7 @@ func (c *Conn) write(seq uint64, payload []byte, wait bool) error {
 	return pw.err
 }
 
-func (c *Conn) writeLoop(conn net.Conn) error {
+func (c *RPC) writeLoop(conn net.Conn) error {
 	for {
 		pw, err := c.writerQueue.Pop()
 		if err != nil {
@@ -166,7 +166,7 @@ func (c *Conn) writeLoop(conn net.Conn) error {
 	}
 }
 
-func (c *Conn) readLoop(conn net.Conn) error {
+func (c *RPC) readLoop(conn net.Conn) error {
 	reader := bufio.NewReader(conn)
 	for {
 		seq, err := binary.ReadUvarint(reader)
@@ -213,7 +213,7 @@ func (c *Conn) readLoop(conn net.Conn) error {
 	}
 }
 
-func (c *Conn) Read() (*Message, error) {
+func (c *RPC) Read() (*Message, error) {
 	pr, err := c.readerQueue.Pop()
 	if err != nil {
 		if errors.Is(err, xsync.ErrQueueClosed) {
@@ -233,7 +233,7 @@ func (c *Conn) Read() (*Message, error) {
 	}, nil
 }
 
-func (c *Conn) Close() {
+func (c *RPC) Close() {
 	c.close <- struct{}{}
 	<-c.closeDone
 }
