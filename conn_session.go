@@ -21,31 +21,24 @@ type Session struct {
 }
 
 // NewSession returns a new Session that wraps the given net.Conn.
-func NewSession(conn net.Conn) (*Session, error) {
+func NewSession(conn net.Conn) *Session {
 	s := &Session{
 		conn: conn,
 	}
-	err := s.DoServer()
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
+	return s
 }
 
 // DoServer performs the server-side of the handshake process.
-// It generates ephemeral keys, writes them to the conn, reads the client's
-// ephemeral keys, and then generates a shared secret via x25519 and blake2b.
+// It uses the provided static key, writes it to the conn, reads the client's
+// static key, and then generates a shared secret via x25519 and blake2b.
 // The shared secret is then used to derive the cipher suite for encrypting
 // and decrypting data.
-func (s *Session) DoServer() error {
-	// Generate ephemeral keys for the server
-	serverEphemeral, serverEphemeralPrivate, err := s.ephemeralKeys()
-	if err != nil {
-		return err
-	}
-
+func (s *Session) DoServer(
+	serverPublicKey ed25519.PublicKey,
+	serverPrivateKey ed25519.PrivateKey,
+) error {
 	// Write the server's ephemeral keys to the connection
-	_, err = s.conn.Write(serverEphemeral[:])
+	_, err := s.conn.Write(serverPublicKey)
 	if err != nil {
 		return err
 	}
@@ -58,7 +51,7 @@ func (s *Session) DoServer() error {
 	}
 
 	// Generate the shared secret using the server's and client's ephemeral keys
-	shared, err := x25519.X25519(serverEphemeralPrivate, clientEphemeral[:])
+	shared, err := s.x25519(serverPrivateKey, clientEphemeral[:])
 	if err != nil {
 		return err
 	}
@@ -78,28 +71,25 @@ func (s *Session) DoServer() error {
 	return nil
 }
 
-func (s *Session) DoClient() error {
-	// Generate ephemeral keys for the client
-	clientEphemeral, clientEphemeralPrivate, err := s.ephemeralKeys()
-	if err != nil {
-		return err
-	}
-
+func (s *Session) DoClient(
+	clientPublicKey ed25519.PublicKey,
+	clientPrivateKey ed25519.PrivateKey,
+) error {
 	// Read the server's ephemeral keys from the connection
 	var serverEphemeral [32]byte
-	_, err = s.conn.Read(serverEphemeral[:])
+	_, err := s.conn.Read(serverEphemeral[:])
 	if err != nil {
 		return err
 	}
 
 	// Write the client's ephemeral keys to the connection
-	_, err = s.conn.Write(clientEphemeral[:])
+	_, err = s.conn.Write(clientPublicKey[:])
 	if err != nil {
 		return err
 	}
 
 	// Generate the shared secret using the server's and client's ephemeral keys
-	shared, err := x25519.X25519(clientEphemeralPrivate, serverEphemeral[:])
+	shared, err := s.x25519(clientPrivateKey, serverEphemeral[:])
 	if err != nil {
 		return err
 	}
@@ -183,20 +173,26 @@ func (s *Session) Write(data []byte) (int, error) {
 	return n, nil
 }
 
-func (s *Session) ephemeralKeys() ([]byte, []byte, error) {
-	publicKey, privateKey, err := ed25519.GenerateKey(nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	ourPub, ok := x25519.EdPublicKeyToX25519(publicKey)
+// x25519 returns the result of the scalar multiplication (scalar * point),
+// according to RFC 7748, Section 5. scalar, point and the return value are
+// slices of 32 bytes.
+func (s *Session) x25519(
+	privateKey ed25519.PrivateKey,
+	publicKey ed25519.PublicKey,
+) ([]byte, error) {
+	publicKeyX, ok := x25519.EdPublicKeyToX25519(publicKey)
 	if !ok {
-		return nil, nil, errors.New("unable to derive ed25519 key to x25519 key")
+		return nil, errors.New("unable to derive ed25519 key to x25519 key")
 	}
 
-	ourPriv := x25519.EdPrivateKeyToX25519(privateKey)
+	privateKeyX := x25519.EdPrivateKeyToX25519(privateKey)
 
-	return ourPub, ourPriv, nil
+	shared, err := x25519.X25519(privateKeyX, publicKeyX[:])
+	if err != nil {
+		return nil, err
+	}
+
+	return shared, nil
 }
 
 func (s *Session) Close() error {

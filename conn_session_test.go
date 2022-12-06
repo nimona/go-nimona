@@ -1,85 +1,69 @@
 package nimona
 
 import (
+	"crypto/rand"
 	"net"
+	"sync"
 	"testing"
+
+	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSession(t *testing.T) {
-	// Create a listener on localhost
-	ln, err := net.Listen("tcp", "localhost:9000")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer ln.Close()
+	messagePing := []byte("ping") // client to server
+	messagePong := []byte("pong") // server to client
 
-	// Start the server in a goroutine
+	// Create a server and a client that are connected to each other
+	server, client := net.Pipe()
+
+	// Generate the server's static keys
+	serverPublicKey, serverPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	// Generate the client's static keys
+	clientPublicKey, clientPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+
+	// Perform the handshake from the server side
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
-		// Accept incoming connections
-		conn, err := ln.Accept()
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		defer conn.Close()
+		serverSession := NewSession(server)
+		err = serverSession.DoServer(serverPublicKey, serverPrivateKey)
+		require.NoError(t, err)
 
-		// Create a new session for the connection
-		session, err := NewSession(conn)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		// Receive the message from the server
+		receivedMessage, err := serverSession.Read()
+		require.NoError(t, err)
 
-		// Read a packet from the connection
-		data, err := session.Read()
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if string(data) != "Hello, server!" {
-			t.Error("Incorrect data received")
-			return
-		}
+		// Check that the received message is the same as the original message
+		require.Equal(t, messagePing, receivedMessage)
 
-		// Write a packet to the connection
-		_, err = session.Write([]byte("Hello, client!"))
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		// Send a message from the server to the client
+		_, err = serverSession.Write(messagePong)
+		require.NoError(t, err)
+
+		// Done
+		wg.Done()
 	}()
 
-	// Connect to the server as a client
-	conn, err := net.Dial("tcp", "localhost:9000")
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	defer conn.Close()
+	// Perform the handshake from the client side
+	clientSession := NewSession(client)
+	err = clientSession.DoClient(clientPublicKey, clientPrivateKey)
+	require.NoError(t, err)
 
-	// Create a new session for the connection
-	session, err := NewSession(conn)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	// Send a message from the client to the server
+	_, err = clientSession.Write(messagePing)
+	require.NoError(t, err)
 
-	// Write a packet to the connection
-	_, err = session.Write([]byte("Hello, server!"))
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	// Read the message from the server
+	receivedMessage, err := clientSession.Read()
+	require.NoError(t, err)
 
-	// Read a packet from the connection
-	data, err := session.Read()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if string(data) != "Hello, client!" {
-		t.Error("Incorrect data received")
-		return
-	}
+	// Check that the received message is the same as the original message
+	require.Equal(t, messagePong, receivedMessage)
+
+	// Wait for the server to finish
+	wg.Wait()
 }
