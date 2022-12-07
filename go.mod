@@ -3,6 +3,7 @@ module nimona.io
 go 1.19
 
 require (
+	github.com/mr-tron/base58 v1.2.0
 	github.com/neilalexander/utp v0.1.0
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20221003100820-41fad3beba17
 	github.com/stretchr/testify v1.8.1

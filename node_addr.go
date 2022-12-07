@@ -3,69 +3,82 @@ package nimona
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/mr-tron/base58"
 )
 
 type NodeAddr struct {
-	host      string
-	port      int
-	transport string
-	extra     string
-}
-
-func (a NodeAddr) Address() string {
-	if a.host == "" || a.port == 0 {
-		return ""
-	}
-	return fmt.Sprintf("%s:%d", a.host, a.port)
-}
-
-func (a NodeAddr) Network() string {
-	return a.transport
-}
-
-func (a NodeAddr) String() string {
-	return fmt.Sprintf("nimona://%s:%s:%d", a.transport, a.host, a.port)
+	Host      string
+	Port      int
+	Transport string
+	PublicKey []byte
 }
 
 func (a *NodeAddr) Parse(addr string) error {
-	if !strings.HasPrefix(addr, "nimona://") {
-		return errors.New("unsupported scheme")
+	regex := regexp.MustCompile(`nimona://(?:([\w\d]+@))?([\w\d]+):([\w\d\.]+):(\d+)`)
+	matches := regex.FindStringSubmatch(addr)
+	if len(matches) != 5 {
+		return errors.New("invalid input string")
 	}
 
-	addr = strings.TrimPrefix(addr, "nimona://")
-
-	transport, addr, ok := strings.Cut(addr, ":")
-	if !ok {
-		return errors.New("invalid address, can't find transport")
-	}
-
-	host, addr, ok := strings.Cut(addr, ":")
-	if !ok {
-		return errors.New("invalid address, can't find host")
-	}
-
-	extra := ""
-	portStr, extra, _ := strings.Cut(addr, "/")
-
-	port, err := strconv.Atoi(portStr)
+	publicKey := matches[1]
+	transport := matches[2]
+	host := matches[3]
+	port, err := strconv.Atoi(matches[4])
 	if err != nil {
-		return errors.New("invalid port")
+		return err
 	}
 
-	a.host = host
-	a.port = port
-	a.transport = transport
-	a.extra = extra
+	var key []byte
+	if publicKey != "" {
+		publicKey = strings.TrimSuffix(publicKey, "@")
+		key, err = base58.Decode(publicKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	a.Host = host
+	a.Port = port
+	a.Transport = transport
+	a.PublicKey = key
 
 	return nil
 }
 
+func (a NodeAddr) Address() string {
+	if a.Host == "" || a.Port == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%s:%d", a.Host, a.Port)
+}
+
+func (a NodeAddr) Network() string {
+	return a.Transport
+}
+
+func (a NodeAddr) String() string {
+	b := strings.Builder{}
+	b.WriteString("nimona://")
+	if a.PublicKey != nil {
+		b.WriteString(base58.Encode(a.PublicKey))
+		b.WriteString("@")
+	}
+	b.WriteString(a.Transport)
+	b.WriteString(":")
+	b.WriteString(a.Host)
+	b.WriteString(":")
+	b.WriteString(strconv.Itoa(a.Port))
+	return b.String()
+}
+
 func NewNodeAddr(transport, host string, port int) NodeAddr {
 	return NodeAddr{
-		host:      host,
-		port:      port,
-		transport: transport,
+		Host:      host,
+		Port:      port,
+		Transport: transport,
 	}
 }
