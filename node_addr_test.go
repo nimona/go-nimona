@@ -17,7 +17,7 @@ func TestNodeAddr(t *testing.T) {
 	t.Run("struct addr to string", func(t *testing.T) {
 		require.Equal(t, "utp", a.Network())
 		require.Equal(t, "localhost:1234", a.Address())
-		require.Equal(t, "nimona://utp:localhost:1234", a.String())
+		require.Equal(t, PeerAddressPrefix+"utp:localhost:1234", a.String())
 	})
 
 	t.Run("string addr to struct", func(t *testing.T) {

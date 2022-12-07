@@ -10,6 +10,12 @@ import (
 	"github.com/mr-tron/base58"
 )
 
+const (
+	PeerAddressPrefix = "nimona://peer:addr:"
+	PeerHandlePrefix  = "nimona://peer:handle:"
+	PeerKeyPrefix     = "nimona://peer:key:"
+)
+
 type NodeAddr struct {
 	Host      string
 	Port      int
@@ -18,7 +24,9 @@ type NodeAddr struct {
 }
 
 func (a *NodeAddr) Parse(addr string) error {
-	regex := regexp.MustCompile(`nimona://(?:([\w\d]+@))?([\w\d]+):([\w\d\.]+):(\d+)`)
+	regex := regexp.MustCompile(
+		PeerAddressPrefix + `(?:([\w\d]+@))?([\w\d]+):([\w\d\.]+):(\d+)`,
+	)
 	matches := regex.FindStringSubmatch(addr)
 	if len(matches) != 5 {
 		return errors.New("invalid input string")
@@ -62,7 +70,7 @@ func (a NodeAddr) Network() string {
 
 func (a NodeAddr) String() string {
 	b := strings.Builder{}
-	b.WriteString("nimona://")
+	b.WriteString(PeerAddressPrefix)
 	if a.PublicKey != nil {
 		b.WriteString(base58.Encode(a.PublicKey))
 		b.WriteString("@")
