@@ -10,7 +10,7 @@ import (
 
 func TestRPC_E2E(t *testing.T) {
 	// construct new mock connection between two nodes
-	mc := NewMockConn()
+	mc := NewMockSession(t)
 
 	// construct a new connection for the "server"
 	srv := NewRPC(mc.Server)
@@ -50,7 +50,7 @@ func TestRPC_E2E(t *testing.T) {
 
 func TestRPC_E2E_LongMessage(t *testing.T) {
 	// construct new mock connection between two nodes
-	mc := NewMockConn()
+	mc := NewMockSession(t)
 
 	// construct a new connection for the "server"
 	srv := NewRPC(mc.Server)

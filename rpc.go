@@ -1,12 +1,11 @@
 package nimona
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"sync/atomic"
 
 	"nimona.io/internal/xsync"
@@ -49,7 +48,7 @@ type pendingRead struct {
 }
 
 func NewRPC(
-	conn net.Conn,
+	sess *Session,
 ) *RPC {
 	rpc := &RPC{
 		writerQueue: xsync.NewQueue[*pendingWrite](10),
@@ -58,21 +57,21 @@ func NewRPC(
 		close:       make(chan struct{}),
 		closeDone:   make(chan struct{}),
 	}
-	rpc.handle(conn)
+	rpc.handle(sess)
 	return rpc
 }
 
-func (c *RPC) handle(conn net.Conn) {
+func (c *RPC) handle(sess *Session) {
 	writerDone := make(chan error)
 	readerDone := make(chan error)
 
 	go func() {
-		writerDone <- c.writeLoop(conn)
+		writerDone <- c.writeLoop(sess)
 		close(writerDone)
 	}()
 
 	go func() {
-		readerDone <- c.readLoop(conn)
+		readerDone <- c.readLoop(sess)
 		close(readerDone)
 	}()
 
@@ -83,7 +82,7 @@ func (c *RPC) handle(conn net.Conn) {
 		c.writerQueue.Close()
 		c.readerQueue.Close()
 		// close the connection
-		conn.Close()
+		sess.Close()
 		// wait for reader and writer to finish
 		<-writerDone
 		// TODO: reader loop is currently not closing
@@ -141,7 +140,7 @@ func (c *RPC) write(seq uint64, payload []byte, wait bool) error {
 	return pw.err
 }
 
-func (c *RPC) writeLoop(conn net.Conn) error {
+func (c *RPC) writeLoop(conn *Session) error {
 	for {
 		pw, err := c.writerQueue.Pop()
 		if err != nil {
@@ -166,9 +165,15 @@ func (c *RPC) writeLoop(conn net.Conn) error {
 	}
 }
 
-func (c *RPC) readLoop(conn net.Conn) error {
-	reader := bufio.NewReader(conn)
+func (c *RPC) readLoop(conn *Session) error {
 	for {
+		message, err := conn.Read()
+		if err != nil {
+			return fmt.Errorf("read error: %w", err)
+		}
+
+		reader := bytes.NewReader(message)
+
 		seq, err := binary.ReadUvarint(reader)
 		if err != nil {
 			return fmt.Errorf("read seq error: %w", err)
@@ -233,7 +238,9 @@ func (c *RPC) Read() (*Message, error) {
 	}, nil
 }
 
-func (c *RPC) Close() {
+func (c *RPC) Close() error {
+	// TODO implement error?
 	c.close <- struct{}{}
 	<-c.closeDone
+	return nil
 }
