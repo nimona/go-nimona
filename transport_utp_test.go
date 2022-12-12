@@ -11,7 +11,7 @@ func TestTransportUTP_E2E(t *testing.T) {
 	ctx := context.Background()
 
 	transport := TransportUTP{}
-	listener, err := transport.Listen("127.0.0.1:0")
+	listener, err := transport.Listen(ctx, "127.0.0.1:0")
 	require.NoError(t, err)
 
 	go func() {

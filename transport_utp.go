@@ -25,7 +25,7 @@ func (t *TransportUTP) Dial(
 	return c, nil
 }
 
-func (t *TransportUTP) Listen(addr string) (Listener, error) {
+func (t *TransportUTP) Listen(ctx context.Context, addr string) (Listener, error) {
 	l, err := utp.Listen(addr)
 	if err != nil {
 		return nil, fmt.Errorf("utp: failed to listen: %w", err)
