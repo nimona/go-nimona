@@ -13,8 +13,10 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-// Session wraps a net.Conn and provides methods for encrypting and decrypting
-// data sent over the connection.
+// Session wraps a net.Conn and provides methods for passing around encrypted
+// chunks of data.
+// Each chunk is prefixed with a uvarint that specifies the length of the
+// chunk.
 type Session struct {
 	conn  net.Conn
 	suite cipher.AEAD
@@ -37,29 +39,29 @@ func (s *Session) DoServer(
 	serverPublicKey ed25519.PublicKey,
 	serverPrivateKey ed25519.PrivateKey,
 ) error {
-	// Write the server's ephemeral keys to the connection
+	// write the server's ephemeral keys to the connection
 	_, err := s.conn.Write(serverPublicKey)
 	if err != nil {
 		return err
 	}
 
-	// Read the client's ephemeral keys from the connection
+	// read the client's ephemeral keys from the connection
 	var clientEphemeral [32]byte
 	_, err = s.conn.Read(clientEphemeral[:])
 	if err != nil {
 		return err
 	}
 
-	// Generate the shared secret using the server's and client's ephemeral keys
+	// generate the shared secret using the server's and client's ephemeral keys
 	shared, err := s.x25519(serverPrivateKey, clientEphemeral[:])
 	if err != nil {
 		return err
 	}
 
-	// Use the shared secret and blake2b to generate the key for the cipher suite
+	// use the shared secret and blake2b to generate the key for the cipher suite
 	key := blake2b.Sum256(shared[:])
 
-	// Derive the cipher suite using the generated key
+	// derive the cipher suite using the generated key
 	block, err := aes.NewCipher(key[:])
 	if err != nil {
 		return err
@@ -68,6 +70,7 @@ func (s *Session) DoServer(
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -113,6 +116,7 @@ func (s *Session) DoClient(
 // Read decrypts a packet of data read from the connection.
 // The packet is prefixed with a uvarint that designates the length of the packet.
 func (s *Session) Read() ([]byte, error) {
+	// TODO Update to use varint
 	// Read the length of the packet from the connection
 	var length uint64
 	err := binary.Read(s.conn, binary.BigEndian, &length)
