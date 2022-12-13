@@ -2,6 +2,7 @@ package nimona
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -93,7 +94,7 @@ func (c *RPC) handle(sess *Session) {
 	}()
 }
 
-func (c *RPC) Request(payload []byte) ([]byte, error) {
+func (c *RPC) Request(ctx context.Context, payload []byte) ([]byte, error) {
 	pr := &pendingRequest{
 		done: make(chan struct{}),
 	}
@@ -108,7 +109,12 @@ func (c *RPC) Request(payload []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	<-pr.done
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-pr.done:
+	}
+
 	return pr.dst, pr.err
 }
 

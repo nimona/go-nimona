@@ -1,6 +1,7 @@
 package nimona
 
 import (
+	"context"
 	"io"
 	"testing"
 
@@ -29,7 +30,7 @@ func TestRPC_E2E(t *testing.T) {
 	cln := NewRPC(mc.Client)
 
 	// client writes to server
-	res, err := cln.Request([]byte("ping"))
+	res, err := cln.Request(context.Background(), []byte("ping"))
 	require.NoError(t, err)
 	require.Equal(t, "pong", string(res))
 
@@ -39,11 +40,11 @@ func TestRPC_E2E(t *testing.T) {
 		cln.Close()
 
 		// client writes to server errors
-		_, err := cln.Request([]byte("ping"))
+		_, err := cln.Request(context.Background(), []byte("ping"))
 		require.ErrorIs(t, err, io.EOF)
 
 		// server writes to client errors
-		_, err = srv.Request([]byte("ping"))
+		_, err = srv.Request(context.Background(), []byte("ping"))
 		require.ErrorIs(t, err, io.EOF)
 	})
 }
@@ -73,7 +74,7 @@ func TestRPC_E2E_LongMessage(t *testing.T) {
 	cln := NewRPC(mc.Client)
 
 	// client writes to server
-	res, err := cln.Request(body)
+	res, err := cln.Request(context.Background(), body)
 	require.NoError(t, err)
 	require.Equal(t, "ok", string(res))
 }

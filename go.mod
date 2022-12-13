@@ -3,6 +3,8 @@ module nimona.io
 go 1.19
 
 require (
+	github.com/fxamacker/cbor v1.5.1
+	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/mr-tron/base58 v1.2.0
 	github.com/neilalexander/utp v0.1.0
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20221003100820-41fad3beba17
@@ -19,6 +21,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/sys v0.2.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
