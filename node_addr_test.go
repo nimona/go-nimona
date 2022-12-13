@@ -8,15 +8,10 @@ import (
 )
 
 func TestNodeAddr(t *testing.T) {
-	a := NodeAddr{
-		Host:      "localhost",
-		Port:      1234,
-		Transport: "utp",
-	}
+	a := NewNodeAddr("utp", "localhost:1234")
 
 	t.Run("struct addr to string", func(t *testing.T) {
 		require.Equal(t, "utp", a.Network())
-		require.Equal(t, "localhost:1234", a.Address())
 		require.Equal(t, PeerAddressPrefix+"utp:localhost:1234", a.String())
 	})
 
@@ -30,7 +25,8 @@ func TestNodeAddr(t *testing.T) {
 	t.Run("string addr to struct with public key", func(t *testing.T) {
 		pub, _, err := ed25519.GenerateKey(nil)
 		require.NoError(t, err)
-		a.PublicKey = pub
+
+		a = NewNodeAddrWithKey("utp", "localhost:1234", pub)
 
 		g := NodeAddr{}
 		err = g.Parse(a.String())

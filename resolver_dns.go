@@ -43,7 +43,7 @@ func (r *ResolverDNS) Resolve(nid string) ([]NodeAddr, error) {
 
 	// sort addresses by hostname
 	sort.Slice(nodeAddrs, func(i, j int) bool {
-		return nodeAddrs[i].Host < nodeAddrs[j].Host
+		return nodeAddrs[i].String() < nodeAddrs[j].String()
 	})
 
 	return nodeAddrs, nil

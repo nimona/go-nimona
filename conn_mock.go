@@ -27,6 +27,19 @@ func NewMockConn() *MockConn {
 	}
 }
 
+type MockAddr struct {
+	network string
+	address string
+}
+
+func (m *MockAddr) Network() string {
+	return m.network
+}
+
+func (m *MockAddr) String() string {
+	return m.address
+}
+
 type MockConnEndpoint struct {
 	Reader io.Reader
 	Writer io.Writer
@@ -45,11 +58,17 @@ func (m *MockConnEndpoint) Close() error {
 }
 
 func (m *MockConnEndpoint) LocalAddr() net.Addr {
-	return nil
+	return &MockAddr{
+		network: "mock",
+		address: "local",
+	}
 }
 
 func (m *MockConnEndpoint) RemoteAddr() net.Addr {
-	return nil
+	return &MockAddr{
+		network: "mock",
+		address: "remote",
+	}
 }
 
 func (m *MockConnEndpoint) SetDeadline(t time.Time) error {

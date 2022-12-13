@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/mr-tron/base58"
+	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 )
 
 const (
@@ -17,10 +17,9 @@ const (
 )
 
 type NodeAddr struct {
-	Host      string
-	Port      int
-	Transport string
-	PublicKey []byte
+	address   string
+	network   string
+	publicKey []byte
 }
 
 func (a *NodeAddr) Parse(addr string) error {
@@ -35,58 +34,59 @@ func (a *NodeAddr) Parse(addr string) error {
 	publicKey := matches[1]
 	transport := matches[2]
 	host := matches[3]
-	port, err := strconv.Atoi(matches[4])
-	if err != nil {
-		return err
-	}
+	port := matches[4]
 
-	var key []byte
 	if publicKey != "" {
 		publicKey = strings.TrimSuffix(publicKey, "@")
-		key, err = base58.Decode(publicKey)
+		key, err := base58.Decode(publicKey)
 		if err != nil {
 			return err
 		}
+		a.publicKey = key
 	}
 
-	a.Host = host
-	a.Port = port
-	a.Transport = transport
-	a.PublicKey = key
+	a.network = transport
+	a.address = fmt.Sprintf("%s:%s", host, port)
 
 	return nil
 }
 
-func (a NodeAddr) Address() string {
-	if a.Host == "" || a.Port == 0 {
-		return ""
-	}
-	return fmt.Sprintf("%s:%d", a.Host, a.Port)
-}
-
 func (a NodeAddr) Network() string {
-	return a.Transport
+	return a.network
 }
 
 func (a NodeAddr) String() string {
 	b := strings.Builder{}
 	b.WriteString(PeerAddressPrefix)
-	if a.PublicKey != nil {
-		b.WriteString(base58.Encode(a.PublicKey))
+	if a.publicKey != nil {
+		b.WriteString(base58.Encode(a.publicKey))
 		b.WriteString("@")
 	}
-	b.WriteString(a.Transport)
+	b.WriteString(a.network)
 	b.WriteString(":")
-	b.WriteString(a.Host)
-	b.WriteString(":")
-	b.WriteString(strconv.Itoa(a.Port))
+	b.WriteString(a.address)
 	return b.String()
 }
 
-func NewNodeAddr(transport, host string, port int) NodeAddr {
+func (a NodeAddr) Address() string {
+	return a.address
+}
+
+func (a NodeAddr) PublicKey() ed25519.PublicKey {
+	return a.publicKey
+}
+
+func NewNodeAddr(transport, address string) NodeAddr {
 	return NodeAddr{
-		Host:      host,
-		Port:      port,
-		Transport: transport,
+		address: address,
+		network: transport,
+	}
+}
+
+func NewNodeAddrWithKey(transport, address string, key []byte) NodeAddr {
+	return NodeAddr{
+		address:   address,
+		network:   transport,
+		publicKey: key,
 	}
 }

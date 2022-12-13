@@ -8,12 +8,11 @@ import (
 	"github.com/neilalexander/utp"
 )
 
+// TransportUTP is a transport that uses uTP, a UDP based protocol
+// for reliable data transfer.
 type TransportUTP struct{}
 
-func (t *TransportUTP) Dial(
-	ctx context.Context,
-	addr NodeAddr,
-) (net.Conn, error) {
+func (t *TransportUTP) Dial(ctx context.Context, addr NodeAddr) (net.Conn, error) {
 	if addr.Network() != "utp" {
 		return nil, ErrTransportUnsupported
 	}

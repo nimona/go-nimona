@@ -20,6 +20,9 @@ import (
 type Session struct {
 	conn  net.Conn
 	suite cipher.AEAD
+	// available after handshake
+	remotePublicKey ed25519.PublicKey
+	remoteNodeAddr  NodeAddr
 }
 
 // NewSession returns a new Session that wraps the given net.Conn.
@@ -71,6 +74,14 @@ func (s *Session) DoServer(
 		return err
 	}
 
+	// store the remote node key and address
+	s.remotePublicKey = ed25519.PublicKey(clientEphemeral[:])
+	s.remoteNodeAddr = NewNodeAddrWithKey(
+		s.conn.RemoteAddr().Network(),
+		s.conn.RemoteAddr().String(),
+		s.remotePublicKey,
+	)
+
 	return nil
 }
 
@@ -109,6 +120,14 @@ func (s *Session) DoClient(
 	if err != nil {
 		return err
 	}
+
+	// store the remote node key and address
+	s.remotePublicKey = ed25519.PublicKey(serverEphemeral[:])
+	s.remoteNodeAddr = NewNodeAddrWithKey(
+		s.conn.RemoteAddr().Network(),
+		s.conn.RemoteAddr().String(),
+		s.remotePublicKey,
+	)
 
 	return nil
 }
@@ -197,6 +216,10 @@ func (s *Session) x25519(
 	}
 
 	return shared, nil
+}
+
+func (s *Session) NodeAddr() NodeAddr {
+	return s.remoteNodeAddr
 }
 
 func (s *Session) Close() error {
