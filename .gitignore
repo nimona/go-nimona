@@ -1,0 +1,44 @@
+# OS Specific
+.DS_Store
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+debug
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+*.txt
+!requirements.txt
+
+# Build directories
+dist/*
+cmd/dist/*
+tools/dist/*
+.vuepress/dist/*
+
+bin/*
+cmd/bin/*
+tools/bin/*
+
+# Vendor
+vendor
+node_modules
+
+# Local testing
+.local
+
+# Infrastructure
+infrastructure/*/.terraform/
+infrastructure/*/ssh/id_rsa
+infrastructure/*/.envrc.local
+infrastructure/*/.pyenv
+
+# Apps
+apps/**/tmp
