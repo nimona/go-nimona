@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/fxamacker/cbor"
+	"github.com/fxamacker/cbor/v2"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 )
@@ -144,10 +144,6 @@ func (cm *ConnectionManager) handleConnections(ctx context.Context) error {
 	return <-errCh
 }
 
-type MessageWrapper struct {
-	Type string `cbor:"$type"`
-}
-
 func (cm *ConnectionManager) handleRPC(rpc *RPC) {
 	for {
 		msg, err := rpc.Read()
@@ -159,7 +155,7 @@ func (cm *ConnectionManager) handleRPC(rpc *RPC) {
 		}
 
 		// assume we're dealing with cbor, and read the type of the message
-		wrapper := &MessageWrapper{}
+		wrapper := &MessageWrapper[struct{}]{}
 		err = cbor.Unmarshal(msg.Body, wrapper)
 		if err != nil {
 			// TODO log error
