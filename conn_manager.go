@@ -15,12 +15,12 @@ type ConnectionManager struct {
 	connCache  *simplelru.LRU[string, *RPC]
 	dialer     Dialer
 	listener   Listener
-	handlers   map[string]HandlerFunc
+	handlers   map[string]RequestHandlerFunc
 	publicKey  ed25519.PublicKey
 	privateKey ed25519.PrivateKey
 }
 
-type HandlerFunc func(context.Context, *Message) error
+type RequestHandlerFunc func(context.Context, *Request) error
 
 func NewConnectionManager(
 	dialer Dialer,
@@ -46,7 +46,7 @@ func NewConnectionManager(
 		listener:   listener,
 		publicKey:  publicKey,
 		privateKey: privateKey,
-		handlers:   map[string]HandlerFunc{},
+		handlers:   map[string]RequestHandlerFunc{},
 	}
 
 	if listener != nil {
@@ -181,7 +181,7 @@ func (cm *ConnectionManager) handleRPC(rpc *RPC) {
 	}
 }
 
-func (cm *ConnectionManager) RegisterHandler(msgType string, handler HandlerFunc) {
+func (cm *ConnectionManager) RegisterHandler(msgType string, handler RequestHandlerFunc) {
 	cm.handlers[msgType] = handler
 }
 

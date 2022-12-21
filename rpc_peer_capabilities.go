@@ -42,9 +42,9 @@ func RequestPeerCapabilities(ctx context.Context, rpc *RPC) (*PeerCapabilitiesRe
 	return &resMsg.Body, nil
 }
 
-func HandlePeerCapabilitiesRequest(ctx context.Context, incMsg *Message) error {
+func HandlePeerCapabilitiesRequest(ctx context.Context, req *Request) error {
 	msg := &MessageWrapper[PeerCapabilitiesRequest]{}
-	err := cbor.Unmarshal(incMsg.Body, msg)
+	err := cbor.Unmarshal(req.Body, msg)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -64,7 +64,7 @@ func HandlePeerCapabilitiesRequest(ctx context.Context, incMsg *Message) error {
 	if err != nil {
 		return fmt.Errorf("error marshaling response: %w", err)
 	}
-	err = incMsg.Reply(resBytes)
+	err = req.Respond(resBytes)
 	if err != nil {
 		return fmt.Errorf("error replying: %w", err)
 	}

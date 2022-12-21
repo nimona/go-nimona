@@ -22,7 +22,7 @@ func TestRPC_E2E(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "ping", string(msg.Body))
 
-		err = msg.Reply([]byte("pong"))
+		err = msg.Respond([]byte("pong"))
 		require.NoError(t, err)
 	}()
 
@@ -67,7 +67,7 @@ func TestRPC_E2E_LongMessage(t *testing.T) {
 		msg, err := srv.Read()
 		require.NoError(t, err)
 		assert.Equal(t, body, msg.Body)
-		msg.Reply([]byte("ok"))
+		msg.Respond([]byte("ok"))
 	}()
 
 	// construct a new connection for the "client"

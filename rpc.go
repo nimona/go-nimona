@@ -23,10 +23,10 @@ type RPC struct {
 	closeDone chan struct{}
 }
 
-type Message struct {
-	Body  []byte
-	Conn  *RPC
-	Reply func([]byte) error
+type Request struct {
+	Body    []byte
+	Conn    *RPC
+	Respond func([]byte) error
 }
 
 type pendingRequest struct {
@@ -224,7 +224,7 @@ func (c *RPC) readLoop(conn *Session) error {
 	}
 }
 
-func (c *RPC) Read() (*Message, error) {
+func (c *RPC) Read() (*Request, error) {
 	pr, err := c.readerQueue.Pop()
 	if err != nil {
 		if errors.Is(err, xsync.ErrQueueClosed) {
@@ -232,10 +232,10 @@ func (c *RPC) Read() (*Message, error) {
 		}
 		return nil, fmt.Errorf("reader queue error: %w", err)
 	}
-	return &Message{
+	return &Request{
 		Body: pr.body,
 		Conn: c,
-		Reply: func(payload []byte) error {
+		Respond: func(payload []byte) error {
 			if pr.seq == 0 {
 				return fmt.Errorf("not a request")
 			}

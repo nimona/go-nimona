@@ -14,14 +14,14 @@ import (
 func TestConnectionManager(t *testing.T) {
 	srv, clt := newTestConnectionManager(t)
 
-	srv.RegisterHandler("ping", func(ctx context.Context, msg *Message) error {
+	srv.RegisterHandler("ping", func(ctx context.Context, msg *Request) error {
 		fmt.Println("Server got message", msg)
 		resBody := &MessageWrapper[struct{}]{
 			Type: "pong",
 		}
 		resBytes, err := cbor.Marshal(resBody)
 		require.NoError(t, err)
-		msg.Reply(resBytes)
+		msg.Respond(resBytes)
 		return nil
 	})
 
