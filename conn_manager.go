@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
-	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/hashicorp/golang-lru/v2/simplelru"
 	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 )
 
 // ConnectionManager manages the dialing and accepting of connections.
 // It maintains a cache of the last 100 connections.
 type ConnectionManager struct {
-	connCache  *lru.Cache[string, *RPC]
+	connCache  *simplelru.LRU[string, *RPC]
 	dialer     Dialer
 	listener   Listener
 	handlers   map[string]HandlerFunc
@@ -28,7 +28,7 @@ func NewConnectionManager(
 	publicKey ed25519.PublicKey,
 	privateKey ed25519.PrivateKey,
 ) (*ConnectionManager, error) {
-	connCache, err := lru.NewWithEvict(100, func(addr string, rpc *RPC) {
+	connCache, err := simplelru.NewLRU(100, func(addr string, rpc *RPC) {
 		err := rpc.Close()
 		if err != nil {
 			// TODO: log error

@@ -3,7 +3,6 @@ module nimona.io
 go 1.19
 
 require (
-	github.com/fxamacker/cbor v1.5.1
 	github.com/fxamacker/cbor/v2 v2.4.0
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/mr-tron/base58 v1.2.0
