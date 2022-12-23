@@ -8,6 +8,8 @@ import (
 	"github.com/neilalexander/utp"
 )
 
+var ErrTransportUnsupported error = fmt.Errorf("transport unsupported")
+
 // TransportUTP is a transport that uses uTP, a UDP based protocol
 // for reliable data transfer.
 type TransportUTP struct{}
