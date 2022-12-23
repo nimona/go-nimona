@@ -2,7 +2,6 @@ package nimona
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,9 +10,12 @@ import (
 func TestRPCNetworkCapabilities(t *testing.T) {
 	srv, clt := newTestConnectionManager(t)
 
+	hnd := &HandlerPeerCapabilities{
+		Capabilities: []string{"core/peer/capabilities"},
+	}
 	srv.RegisterHandler(
 		"core/peer/capabilities.request",
-		HandlePeerCapabilitiesRequest,
+		hnd.HandlePeerCapabilitiesRequest,
 	)
 
 	// dial the server
@@ -25,5 +27,4 @@ func TestRPCNetworkCapabilities(t *testing.T) {
 	res, err := RequestPeerCapabilities(ctx, rpc)
 	require.NoError(t, err)
 	require.Equal(t, []string{"core/peer/capabilities"}, res.Capabilities)
-	fmt.Println("Client got response", res)
 }

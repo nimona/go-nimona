@@ -16,6 +16,10 @@ type (
 	}
 )
 
+type HandlerPeerCapabilities struct {
+	Capabilities []string
+}
+
 func RequestPeerCapabilities(ctx context.Context, rpc *RPC) (*PeerCapabilitiesResponse, error) {
 	msg := &MessageWrapper[PeerCapabilitiesRequest]{
 		Type: "core/peer/capabilities.request",
@@ -42,7 +46,10 @@ func RequestPeerCapabilities(ctx context.Context, rpc *RPC) (*PeerCapabilitiesRe
 	return &resMsg.Body, nil
 }
 
-func HandlePeerCapabilitiesRequest(ctx context.Context, req *Request) error {
+func (h *HandlerPeerCapabilities) HandlePeerCapabilitiesRequest(
+	ctx context.Context,
+	req *Request,
+) error {
 	msg := &MessageWrapper[PeerCapabilitiesRequest]{}
 	err := cbor.Unmarshal(req.Body, msg)
 	if err != nil {
@@ -55,9 +62,7 @@ func HandlePeerCapabilitiesRequest(ctx context.Context, req *Request) error {
 	resBody := &MessageWrapper[PeerCapabilitiesResponse]{
 		Type: "core/peer/capabilities.response",
 		Body: PeerCapabilitiesResponse{
-			Capabilities: []string{
-				"core/peer/capabilities",
-			},
+			Capabilities: h.Capabilities,
 		},
 	}
 	resBytes, err := cbor.Marshal(resBody)
