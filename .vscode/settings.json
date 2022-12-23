@@ -1,0 +1,39 @@
+{
+    // General
+    "files.eol": "\n",
+    "files.trimTrailingWhitespace": true,
+    "[go][json][yaml][html][javascript][css][markdown]": {
+        "files.insertFinalNewline": true,
+    },
+
+    // Go Language Server
+    "gopls": {
+        "ui.diagnostic.staticcheck": true,
+        "formatting.gofumpt": true,
+        "formatting.local": "nimona.io",
+        // NOTE: This is a workaround for a bug in the Go language server
+        // https://github.com/golang/go/issues/29202
+        "buildFlags": ["-tags=integration"],
+    },
+
+    // Golang linter
+    "go.lintTool":"golangci-lint",
+    "go.lintFlags": [
+      "--fast"
+    ],
+
+    // File nesting
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.patterns": {
+        "*.go": "${capture}_test.go,${capture}_mock.go",
+        "go.mod": "go.sum",
+    },
+    "files.exclude": {
+        ".vscode": true,
+        ".gitignore": true,
+        ".devbox": true,
+        "devbox.json": true,
+    },
+    "explorer.sortOrder": "type",
+}
