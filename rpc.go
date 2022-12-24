@@ -23,12 +23,6 @@ type RPC struct {
 	closeDone chan struct{}
 }
 
-type Request struct {
-	Body    []byte
-	Conn    *RPC
-	Respond func([]byte) error
-}
-
 type pendingRequest struct {
 	dst  []byte
 	err  error
@@ -224,23 +218,19 @@ func (c *RPC) readLoop(conn *Session) error {
 	}
 }
 
-func (c *RPC) Read() (*Request, error) {
+func (c *RPC) Read() ([]byte, func([]byte) error, error) {
 	pr, err := c.readerQueue.Pop()
 	if err != nil {
 		if errors.Is(err, xsync.ErrQueueClosed) {
-			return nil, fmt.Errorf("reader queue closed: %w", io.EOF)
+			return nil, nil, fmt.Errorf("reader queue closed: %w", io.EOF)
 		}
-		return nil, fmt.Errorf("reader queue error: %w", err)
+		return nil, nil, fmt.Errorf("reader queue error: %w", err)
 	}
-	return &Request{
-		Body: pr.body,
-		Conn: c,
-		Respond: func(payload []byte) error {
-			if pr.seq == 0 {
-				return fmt.Errorf("not a request")
-			}
-			return c.write(pr.seq, payload, true)
-		},
+	return pr.body, func(payload []byte) error {
+		if pr.seq == 0 {
+			return fmt.Errorf("not a request")
+		}
+		return c.write(pr.seq, payload, true)
 	}, nil
 }
 

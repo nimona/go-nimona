@@ -18,11 +18,11 @@ func TestRPC_E2E(t *testing.T) {
 
 	// add a handler for the "server"
 	go func() {
-		msg, err := srv.Read()
+		msg, cb, err := srv.Read()
 		require.NoError(t, err)
-		require.Equal(t, "ping", string(msg.Body))
+		require.Equal(t, "ping", string(msg))
 
-		err = msg.Respond([]byte("pong"))
+		err = cb([]byte("pong"))
 		require.NoError(t, err)
 	}()
 
@@ -64,10 +64,10 @@ func TestRPC_E2E_LongMessage(t *testing.T) {
 
 	// add a handler for the "server"
 	go func() {
-		msg, err := srv.Read()
+		msg, cb, err := srv.Read()
 		require.NoError(t, err)
-		assert.Equal(t, body, msg.Body)
-		msg.Respond([]byte("ok"))
+		assert.Equal(t, body, msg)
+		cb([]byte("ok"))
 	}()
 
 	// construct a new connection for the "client"

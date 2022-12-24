@@ -249,7 +249,7 @@ type MessageRequest struct {
 
 func (s *Session) Read() (*MessageRequest, error) {
 	// Read the message from the connection
-	req, err := s.rpc.Read()
+	req, cb, err := s.rpc.Read()
 	if err != nil {
 		return nil, fmt.Errorf("unable to read message: %w", err)
 	}
@@ -264,7 +264,7 @@ func (s *Session) Read() (*MessageRequest, error) {
 			}
 
 			// Send the response
-			err = req.Respond(resBytes)
+			err = cb(resBytes)
 			if err != nil {
 				return fmt.Errorf("unable to send response: %w", err)
 			}
@@ -273,7 +273,7 @@ func (s *Session) Read() (*MessageRequest, error) {
 		},
 	}
 
-	err = s.codec.Decode(req.Body, &msgReq.Body)
+	err = s.codec.Decode(req, &msgReq.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode message: %w", err)
 	}
