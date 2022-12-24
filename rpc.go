@@ -71,13 +71,12 @@ func (c *RPC) handle(sess *Session) {
 	}()
 
 	go func() {
+		// Note: do NOT close the session, it is owned by the caller
 		// wait for the close signal
 		<-c.close
 		// close reader and writer
 		c.writerQueue.Close()
 		c.readerQueue.Close()
-		// close the connection
-		sess.Close()
 		// wait for reader and writer to finish
 		<-writerDone
 		// TODO: reader loop is currently not closing

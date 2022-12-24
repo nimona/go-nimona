@@ -313,5 +313,8 @@ func (s *Session) PublicKey() ed25519.PublicKey {
 
 // Close both the connection and the rpc.
 func (s *Session) Close() error {
+	if s.rpc != nil {
+		s.rpc.Close()
+	}
 	return s.conn.Close()
 }
