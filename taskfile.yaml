@@ -1,0 +1,97 @@
+version: "3"
+
+vars:
+  # Directories
+  BIN: bin
+  # Tool Versions
+  GO_ACC_VERSION: v0.2.6
+  GO_MOD_UPGRADE_VERSION: v0.6.1
+  GOLANGCI_LINT_VERSION: v1.49.0
+  GOTESTSUM_VERSION: v1.8.1
+  MOCKGEN_VERSION: v1.7.0-rc.1
+  WWHRD_VERSION: v0.3.0
+
+env:
+  GOBIN: "{{.PWD}}/{{.BIN}}"
+
+tasks:
+
+  init-bin:
+    run: once
+    status:
+      - "test -d {{.BIN}}"
+    cmds:
+      - mkdir -p {{.BIN}}
+
+  install-test-tools:
+    run: once
+    deps:
+      - init-bin
+    status:
+      - go version -m {{.BIN}}/gotestsum | grep gotest.tools/gotestsum | grep {{.GOTESTSUM_VERSION}}
+    cmds:
+      - go install gotest.tools/gotestsum@{{.GOTESTSUM_VERSION}}
+
+  install-cover-tools:
+    run: once
+    deps:
+      - init-bin
+    status:
+      - go version -m {{.BIN}}/go-acc | grep github.com/ory/go-acc | grep {{.GO_ACC_VERSION}}
+    cmds:
+      - go install github.com/ory/go-acc@{{.GO_ACC_VERSION}}
+
+  install-mock-tools:
+    run: once
+    deps:
+      - init-bin
+    status:
+      - go version -m {{.BIN}}/mockgen | grep github.com/golang/mock | grep {{.MOCKGEN_VERSION}}
+    cmds:
+      - go install github.com/golang/mock/mockgen@{{.MOCKGEN_VERSION}}
+
+  install-certificate-tools:
+    run: once
+    deps:
+      - init-bin
+    status:
+      - go version -m {{.BIN}}/mkcert | grep github.com/FiloSottile/mkcert | grep {{.}}
+    cmds:
+      - go install github.com/FiloSottile/mkcert@{{.}}
+
+  install-license-tools:
+    run: once
+    deps:
+      - init-bin
+    status:
+      - go version -m {{.BIN}}/wwhrd | grep github.com/frapposelli/wwhrd | grep {{.WWHRD_VERSION}}
+    cmds:
+      - go install github.com/frapposelli/wwhrd@{{.WWHRD_VERSION}}
+
+  install-go-linting-tools:
+    run: once
+    deps:
+      - init-bin
+    status:
+      - go version -m {{.BIN}}/golangci-lint | grep github.com/golangci/golangci-lint | grep {{.GOLANGCI_LINT_VERSION}}
+    cmds:
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+
+  install-deps-tools:
+    run: once
+    deps:
+      - init-bin
+    status:
+      - go version -m {{.BIN}}/go-mod-upgrade | grep github.com/oligot/go-mod-upgrade | grep {{.GO_MOD_UPGRADE_VERSION}}
+    cmds:
+      - go install github.com/oligot/go-mod-upgrade@{{.GO_MOD_UPGRADE_VERSION}}
+
+  mocks:
+    deps:
+      - install-mock-tools
+    sources:
+      - "**/*.go"
+    generates:
+      - "**/*_mock.go"
+    cmds:
+      - go generate ./...
