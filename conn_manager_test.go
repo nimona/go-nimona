@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 	"github.com/stretchr/testify/require"
 )
@@ -14,29 +13,31 @@ import (
 func TestConnectionManager(t *testing.T) {
 	srv, clt := newTestConnectionManager(t)
 
-	srv.RegisterHandler("ping", func(ctx context.Context, msg *Request) error {
+	res := &MessageWrapper[struct{}]{
+		Type: "pong",
+	}
+	handler := func(ctx context.Context, msg *MessageRequest) error {
 		fmt.Println("Server got message", msg)
-		resBody := &MessageWrapper[struct{}]{
-			Type: "pong",
-		}
-		resBytes, err := cbor.Marshal(resBody)
+		err := msg.Respond(res.ToAny())
 		require.NoError(t, err)
-		msg.Respond(resBytes)
 		return nil
-	})
+	}
+	srv.RegisterHandler("ping", handler)
 
-	msg := &MessageWrapper[struct{}]{
+	msg := &MessageWrapper[any]{
 		Type: "ping",
 	}
-	msgBytes, err := cbor.Marshal(msg)
-	require.NoError(t, err)
 
 	// dial the server
 	rpc, err := clt.Dial(context.Background(), srv.NodeAddr())
 	require.NoError(t, err)
 
 	// send a message
-	res, err := rpc.Request(context.Background(), msgBytes)
+	gotResAny, err := rpc.Request(context.Background(), msg.ToAny())
+	require.NoError(t, err)
+	require.NotNil(t, res)
+	gotRes := &MessageWrapper[struct{}]{}
+	err = gotRes.FromAny(*gotResAny)
 	require.NoError(t, err)
 	fmt.Println("Client got response", res)
 }

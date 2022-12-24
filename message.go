@@ -5,11 +5,36 @@ import (
 	"reflect"
 
 	"github.com/fxamacker/cbor/v2"
+	"github.com/mitchellh/mapstructure"
 )
 
 type MessageWrapper[Wrapped any] struct {
 	Type string
 	Body Wrapped
+}
+
+func (w *MessageWrapper[Wrapped]) FromAny(in MessageWrapper[any]) error {
+	dec, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		TagName: "cbor",
+		Result:  &w.Body,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating decoder: %w", err)
+	}
+	err = dec.Decode(in.Body)
+	if err != nil {
+		return fmt.Errorf("error decoding body: %w", err)
+	}
+
+	w.Type = in.Type
+	return nil
+}
+
+func (w MessageWrapper[Wrapped]) ToAny() MessageWrapper[any] {
+	return MessageWrapper[any]{
+		Type: w.Type,
+		Body: w.Body,
+	}
 }
 
 func (w MessageWrapper[Wrapped]) MarshalCBOR() ([]byte, error) {
@@ -22,6 +47,10 @@ func (w MessageWrapper[Wrapped]) MarshalCBOR() ([]byte, error) {
 	// we only do this on the first level of the struct, it's up to body's
 	// MarshalCBOR method to handle nested structs.
 	v := reflect.ValueOf(w.Body)
+	// if the wrapped struct is nil or zero, return
+	if !v.IsValid() {
+		return cbor.Marshal(m)
+	}
 	t := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		field := t.Field(i)

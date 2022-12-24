@@ -19,12 +19,12 @@ func TestRPCNetworkCapabilities(t *testing.T) {
 	)
 
 	// dial the server
-	rpc, err := clt.Dial(context.Background(), srv.NodeAddr())
+	ses, err := clt.Dial(context.Background(), srv.NodeAddr())
 	require.NoError(t, err)
 
 	// ask for capabilities
 	ctx := context.Background()
-	res, err := RequestPeerCapabilities(ctx, rpc)
+	res, err := RequestPeerCapabilities(ctx, ses)
 	require.NoError(t, err)
 	require.Equal(t, []string{"core/peer/capabilities"}, res.Capabilities)
 }

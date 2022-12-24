@@ -4,7 +4,9 @@ go 1.19
 
 require (
 	github.com/fxamacker/cbor/v2 v2.4.0
+	github.com/golang/mock v1.7.0-rc.1
 	github.com/hashicorp/golang-lru/v2 v2.0.1
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/neilalexander/utp v0.1.0
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20221003100820-41fad3beba17

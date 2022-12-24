@@ -1,11 +1,13 @@
 package nimona
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
@@ -23,12 +25,17 @@ type Session struct {
 	// available after handshake
 	remotePublicKey ed25519.PublicKey
 	remoteNodeAddr  NodeAddr
+	codec           Codec
+	rpc             *RPC
+	// for testing
+	skipRPC bool
 }
 
 // NewSession returns a new Session that wraps the given net.Conn.
 func NewSession(conn net.Conn) *Session {
 	s := &Session{
-		conn: conn,
+		conn:  conn,
+		codec: &CodecCBOR{},
 	}
 	return s
 }
@@ -82,6 +89,11 @@ func (s *Session) DoServer(
 		s.remotePublicKey,
 	)
 
+	// create the rpc
+	if !s.skipRPC {
+		s.rpc = NewRPC(s)
+	}
+
 	return nil
 }
 
@@ -129,12 +141,17 @@ func (s *Session) DoClient(
 		s.remotePublicKey,
 	)
 
+	// create the rpc
+	if !s.skipRPC {
+		s.rpc = NewRPC(s)
+	}
+
 	return nil
 }
 
-// Read decrypts a packet of data read from the connection.
+// read decrypts a packet of data read from the connection.
 // The packet is prefixed with a uvarint that designates the length of the packet.
-func (s *Session) Read() ([]byte, error) {
+func (s *Session) read() ([]byte, error) {
 	// TODO Update to use varint
 	// Read the length of the packet from the connection
 	var length uint64
@@ -164,9 +181,9 @@ func (s *Session) Read() ([]byte, error) {
 	return data, nil
 }
 
-// Write encrypts a packet of data and writes it to the connection.
+// write encrypts a packet of data and writes it to the connection.
 // The packet is prefixed with a uvarint that designates the length of the packet.
-func (s *Session) Write(data []byte) (int, error) {
+func (s *Session) write(data []byte) (int, error) {
 	// Encrypt the data using the cipher suite
 	nonce := make([]byte, s.suite.NonceSize())
 	_, err := rand.Read(nonce)
@@ -176,6 +193,7 @@ func (s *Session) Write(data []byte) (int, error) {
 	packet := s.suite.Seal(nil, nonce, data, nil)
 
 	// Write the length of the packet to the connection
+	// TODO Update to use varint
 	err = binary.Write(s.conn, binary.BigEndian, uint64(len(packet)))
 	if err != nil {
 		return 0, err
@@ -194,6 +212,73 @@ func (s *Session) Write(data []byte) (int, error) {
 	}
 
 	return n, nil
+}
+
+func (s *Session) Request(
+	ctx context.Context,
+	req MessageWrapper[any],
+) (*MessageWrapper[any], error) {
+	// Encode the request
+	reqBytes, err := s.codec.Encode(req)
+	if err != nil {
+		return nil, fmt.Errorf("unable to encode request: %w", err)
+	}
+
+	// Send the request
+	resBytes, err := s.rpc.Request(ctx, reqBytes)
+	if err != nil {
+		return nil, fmt.Errorf("unable to send request: %w", err)
+	}
+
+	// Decode the response
+	res := &MessageWrapper[any]{
+		Body: map[string]any{},
+	}
+	err = s.codec.Decode(resBytes, res)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode response: %w", err)
+	}
+
+	return res, nil
+}
+
+type MessageRequest struct {
+	Body    MessageWrapper[any]
+	Respond func(MessageWrapper[any]) error
+}
+
+func (s *Session) Read() (*MessageRequest, error) {
+	// Read the message from the connection
+	req, err := s.rpc.Read()
+	if err != nil {
+		return nil, fmt.Errorf("unable to read message: %w", err)
+	}
+
+	msgReq := &MessageRequest{
+		Body: MessageWrapper[any]{},
+		Respond: func(res MessageWrapper[any]) error {
+			// Encode the response
+			resBytes, err := s.codec.Encode(res)
+			if err != nil {
+				return fmt.Errorf("unable to encode response: %w", err)
+			}
+
+			// Send the response
+			err = req.Respond(resBytes)
+			if err != nil {
+				return fmt.Errorf("unable to send response: %w", err)
+			}
+
+			return nil
+		},
+	}
+
+	err = s.codec.Decode(req.Body, &msgReq.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode message: %w", err)
+	}
+
+	return msgReq, nil
 }
 
 // x25519 returns the result of the scalar multiplication (scalar * point),
@@ -222,6 +307,11 @@ func (s *Session) NodeAddr() NodeAddr {
 	return s.remoteNodeAddr
 }
 
+func (s *Session) PublicKey() ed25519.PublicKey {
+	return s.remotePublicKey
+}
+
+// Close both the connection and the rpc.
 func (s *Session) Close() error {
 	return s.conn.Close()
 }

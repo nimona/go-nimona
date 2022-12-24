@@ -160,7 +160,7 @@ func (c *RPC) writeLoop(conn *Session) error {
 		header := []byte{}
 		header = binary.AppendUvarint(header, pw.seq)
 		header = binary.AppendUvarint(header, uint64(len(pw.buf)))
-		_, err = conn.Write(append(header, pw.buf...))
+		_, err = conn.write(append(header, pw.buf...))
 		if pw.wait {
 			pw.err = err
 			close(pw.done)
@@ -173,7 +173,7 @@ func (c *RPC) writeLoop(conn *Session) error {
 
 func (c *RPC) readLoop(conn *Session) error {
 	for {
-		message, err := conn.Read()
+		message, err := conn.read()
 		if err != nil {
 			return fmt.Errorf("read error: %w", err)
 		}

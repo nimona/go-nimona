@@ -13,7 +13,7 @@ type MockSession struct {
 	Client *Session
 }
 
-func NewMockSession(t *testing.T) *MockSession {
+func NewMockSession(t *testing.T, skipRPC bool) *MockSession {
 	t.Helper()
 
 	sr, cw := io.Pipe()
@@ -33,6 +33,9 @@ func NewMockSession(t *testing.T) *MockSession {
 		Server: NewSession(clientConn),
 		Client: NewSession(serverConn),
 	}
+
+	m.Server.skipRPC = skipRPC
+	m.Client.skipRPC = skipRPC
 
 	serverPublic, serverPrivate, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
