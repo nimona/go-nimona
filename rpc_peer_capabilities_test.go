@@ -8,7 +8,7 @@ import (
 )
 
 func TestRPCNetworkCapabilities(t *testing.T) {
-	srv, clt := newTestConnectionManager(t)
+	srv, clt := newTestSessionManager(t)
 
 	hnd := &HandlerPeerCapabilities{
 		Capabilities: []string{"core/peer/capabilities"},

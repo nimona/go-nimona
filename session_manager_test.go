@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Test for ConnectionManager
-func TestConnectionManager(t *testing.T) {
-	srv, clt := newTestConnectionManager(t)
+// Test for SessionManager
+func TestSessionManager(t *testing.T) {
+	srv, clt := newTestSessionManager(t)
 
 	res := &MessageWrapper[struct{}]{
 		Type: "pong",
@@ -42,25 +42,25 @@ func TestConnectionManager(t *testing.T) {
 	fmt.Println("Client got response", res)
 }
 
-func newTestConnectionManager(t *testing.T) (srv *ConnectionManager, clt *ConnectionManager) {
+func newTestSessionManager(t *testing.T) (srv *SessionManager, clt *SessionManager) {
 	t.Helper()
 
-	// create a new ConnectionManager for the server
+	// create a new SessionManager for the server
 	srvPub, srvPrv, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
 	srvTransport := &TransportUTP{}
 	srvListener, err := srvTransport.Listen(context.Background(), "127.0.0.1:0")
 	require.NoError(t, err)
-	srv, err = NewConnectionManager(srvTransport, srvListener, srvPub, srvPrv)
+	srv, err = NewSessionManager(srvTransport, srvListener, srvPub, srvPrv)
 	require.NoError(t, err)
 
-	// create a new ConnectionManager for the client
+	// create a new SessionManager for the client
 	cltPub, cltPrv, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
 	cltTransport := &TransportUTP{}
 	cltListener, err := cltTransport.Listen(context.Background(), "127.0.0.1:0")
 	require.NoError(t, err)
-	clt, err = NewConnectionManager(cltTransport, cltListener, cltPub, cltPrv)
+	clt, err = NewSessionManager(cltTransport, cltListener, cltPub, cltPrv)
 	require.NoError(t, err)
 
 	return srv, clt

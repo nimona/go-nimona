@@ -8,9 +8,9 @@ import (
 	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 )
 
-// ConnectionManager manages the dialing and accepting of connections.
+// SessionManager manages the dialing and accepting of connections.
 // It maintains a cache of the last 100 connections.
-type ConnectionManager struct {
+type SessionManager struct {
 	connCache  *simplelru.LRU[connCacheKey, *Session]
 	dialer     Dialer
 	listener   Listener
@@ -25,12 +25,12 @@ type connCacheKey struct {
 	publicKeyInHex string
 }
 
-func NewConnectionManager(
+func NewSessionManager(
 	dialer Dialer,
 	listener Listener,
 	publicKey ed25519.PublicKey,
 	privateKey ed25519.PrivateKey,
-) (*ConnectionManager, error) {
+) (*SessionManager, error) {
 	connCache, err := simplelru.NewLRU(100, func(_ connCacheKey, ses *Session) {
 		err := ses.Close()
 		if err != nil {
@@ -43,7 +43,7 @@ func NewConnectionManager(
 		return nil, fmt.Errorf("error creating connection cache: %w", err)
 	}
 
-	c := &ConnectionManager{
+	c := &SessionManager{
 		connCache:  connCache,
 		dialer:     dialer,
 		listener:   listener,
@@ -64,7 +64,7 @@ func NewConnectionManager(
 
 // Dial dials the given address and returns a connection if successful. If the
 // address is already in the cache, the cached connection is returned.
-func (cm *ConnectionManager) Dial(
+func (cm *SessionManager) Dial(
 	ctx context.Context,
 	addr NodeAddr,
 ) (*Session, error) {
@@ -98,13 +98,13 @@ func (cm *ConnectionManager) Dial(
 	return ses, nil
 }
 
-func (cm *ConnectionManager) connCacheKey(k ed25519.PublicKey) connCacheKey {
+func (cm *SessionManager) connCacheKey(k ed25519.PublicKey) connCacheKey {
 	return connCacheKey{
 		publicKeyInHex: fmt.Sprintf("%x", k),
 	}
 }
 
-func (cm *ConnectionManager) Request(
+func (cm *SessionManager) Request(
 	ctx context.Context,
 	addr NodeAddr,
 	req MessageWrapper[any],
@@ -117,7 +117,7 @@ func (cm *ConnectionManager) Request(
 	return ses.Request(ctx, req)
 }
 
-func (cm *ConnectionManager) handleConnections(ctx context.Context) error {
+func (cm *SessionManager) handleConnections(ctx context.Context) error {
 	errCh := make(chan error)
 	// accept inbound connections.
 	// if a connection with the same remote address already exists in the cache,
@@ -163,7 +163,7 @@ func (cm *ConnectionManager) handleConnections(ctx context.Context) error {
 	return <-errCh
 }
 
-func (cm *ConnectionManager) handleSession(ses *Session) {
+func (cm *SessionManager) handleSession(ses *Session) {
 	for {
 		req, err := ses.Read()
 		if err != nil {
@@ -191,14 +191,14 @@ func (cm *ConnectionManager) handleSession(ses *Session) {
 	}
 }
 
-func (cm *ConnectionManager) RegisterHandler(
+func (cm *SessionManager) RegisterHandler(
 	msgType string,
 	handler RequestHandlerFunc,
 ) {
 	cm.handlers[msgType] = handler
 }
 
-func (cm *ConnectionManager) NodeAddr() NodeAddr {
+func (cm *SessionManager) NodeAddr() NodeAddr {
 	return NewNodeAddrWithKey(
 		cm.listener.NodeAddr().Network(),
 		cm.listener.NodeAddr().Address(),
@@ -207,7 +207,7 @@ func (cm *ConnectionManager) NodeAddr() NodeAddr {
 }
 
 // Close closes all connections in the connection cache.
-func (cm *ConnectionManager) Close() error {
+func (cm *SessionManager) Close() error {
 	// purge will close all connections in the cache
 	cm.connCache.Purge()
 	return nil
