@@ -5,30 +5,23 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-
-	"github.com/mr-tron/base58"
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
-)
-
-const (
-	PeerAddressPrefix = "nimona://peer:addr:"
-	PeerHandlePrefix  = "nimona://peer:handle:"
-	PeerKeyPrefix     = "nimona://peer:key:"
 )
 
 type NodeAddr struct {
-	address   string
-	network   string
-	publicKey []byte
+	_         string `cborgen:"$type,const=core/node.address"`
+	Address   string `cborgen:"address"`
+	Network   string `cborgen:"network"`
+	PublicKey []byte `cborgen:"publicKey"`
 }
 
-func (a *NodeAddr) Parse(addr string) error {
+func ParseNodeAddr(addr string) (*NodeAddr, error) {
 	regex := regexp.MustCompile(
-		PeerAddressPrefix + `(?:([\w\d]+@))?([\w\d]+):([\w\d\.]+):(\d+)`,
+		ResourceTypePeerAddress.String() +
+			`(?:([\w\d]+@))?([\w\d]+):([\w\d\.]+):(\d+)`,
 	)
 	matches := regex.FindStringSubmatch(addr)
 	if len(matches) != 5 {
-		return errors.New("invalid input string")
+		return nil, errors.New("invalid input string")
 	}
 
 	publicKey := matches[1]
@@ -36,57 +29,31 @@ func (a *NodeAddr) Parse(addr string) error {
 	host := matches[3]
 	port := matches[4]
 
+	a := &NodeAddr{}
 	if publicKey != "" {
 		publicKey = strings.TrimSuffix(publicKey, "@")
-		key, err := base58.Decode(publicKey)
+		key, err := PublicKeyFromBase58(publicKey)
 		if err != nil {
-			return err
+			return nil, fmt.Errorf("invalid public key, %w", err)
 		}
-		a.publicKey = key
+		a.PublicKey = key
 	}
 
-	a.network = transport
-	a.address = fmt.Sprintf("%s:%s", host, port)
+	a.Network = transport
+	a.Address = fmt.Sprintf("%s:%s", host, port)
 
-	return nil
-}
-
-func (a NodeAddr) Network() string {
-	return a.network
+	return a, nil
 }
 
 func (a NodeAddr) String() string {
 	b := strings.Builder{}
-	b.WriteString(PeerAddressPrefix)
-	if a.publicKey != nil {
-		b.WriteString(base58.Encode(a.publicKey))
+	b.WriteString(ResourceTypePeerAddress.String())
+	if a.PublicKey != nil {
+		b.WriteString(PublicKeyToBase58(a.PublicKey))
 		b.WriteString("@")
 	}
-	b.WriteString(a.network)
+	b.WriteString(a.Network)
 	b.WriteString(":")
-	b.WriteString(a.address)
+	b.WriteString(a.Address)
 	return b.String()
-}
-
-func (a NodeAddr) Address() string {
-	return a.address
-}
-
-func (a NodeAddr) PublicKey() ed25519.PublicKey {
-	return a.publicKey
-}
-
-func NewNodeAddr(transport, address string) NodeAddr {
-	return NodeAddr{
-		address: address,
-		network: transport,
-	}
-}
-
-func NewNodeAddrWithKey(transport, address string, key []byte) NodeAddr {
-	return NodeAddr{
-		address:   address,
-		network:   transport,
-		publicKey: key,
-	}
 }

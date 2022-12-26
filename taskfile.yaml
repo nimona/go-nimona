@@ -86,7 +86,7 @@ tasks:
     cmds:
       - go install github.com/oligot/go-mod-upgrade@{{.GO_MOD_UPGRADE_VERSION}}
 
-  mocks:
+  generate:
     deps:
       - install-mock-tools
     sources:
@@ -95,3 +95,4 @@ tasks:
       - "**/*_mock.go"
     cmds:
       - go generate ./...
+      - go run cmd/cborgen/main.go

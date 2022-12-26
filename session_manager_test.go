@@ -13,19 +13,19 @@ import (
 func TestSessionManager(t *testing.T) {
 	srv, clt := newTestSessionManager(t)
 
-	res := &MessageWrapper[struct{}]{
-		Type: "pong",
+	expRes := &Pong{
+		Nonce: "bar",
 	}
 	handler := func(ctx context.Context, msg *MessageRequest) error {
 		fmt.Println("Server got message", msg)
-		err := msg.Respond(res.ToAny())
+		err := msg.Respond(expRes)
 		require.NoError(t, err)
 		return nil
 	}
-	srv.RegisterHandler("ping", handler)
+	srv.RegisterHandler("test/ping", handler)
 
-	msg := &MessageWrapper[any]{
-		Type: "ping",
+	req := &Ping{
+		Nonce: "foo",
 	}
 
 	// dial the server
@@ -33,13 +33,14 @@ func TestSessionManager(t *testing.T) {
 	require.NoError(t, err)
 
 	// send a message
-	gotResAny, err := rpc.Request(context.Background(), msg.ToAny())
+	gotResMsg, err := rpc.Request(context.Background(), req)
 	require.NoError(t, err)
-	require.NotNil(t, res)
-	gotRes := &MessageWrapper[struct{}]{}
-	err = gotRes.FromAny(*gotResAny)
+	require.NotNil(t, gotResMsg)
+
+	res := &Pong{}
+	err = gotResMsg.UnmarsalInto(res)
 	require.NoError(t, err)
-	fmt.Println("Client got response", res)
+	require.Equal(t, expRes, res)
 }
 
 func newTestSessionManager(t *testing.T) (srv *SessionManager, clt *SessionManager) {

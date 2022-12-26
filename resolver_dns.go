@@ -11,18 +11,11 @@ var ErrResolverUnsupported = errors.New("resolver unsupported")
 
 type ResolverDNS struct{}
 
-func (r *ResolverDNS) Resolve(nid string) ([]NodeAddr, error) {
-	// check if the nid can be resolved by this resolver
-	if !strings.HasPrefix(nid, PeerHandlePrefix) {
-		return nil, ErrResolverUnsupported
-	}
-
-	// remove the prefix from the nid
-	hostname := strings.TrimPrefix(nid, PeerHandlePrefix)
-
+// TODO add context
+func (r *ResolverDNS) Resolve(nID NetworkID) ([]NodeAddr, error) {
 	// look up all the TXT DNS entries for the given hostname
 	nodeAddrs := []NodeAddr{}
-	entries, err := net.LookupTXT(hostname)
+	entries, err := net.LookupTXT(nID.Hostname)
 	if err != nil {
 		// return an empty slice if there was an error looking up the entries
 		return nodeAddrs, nil
@@ -32,12 +25,11 @@ func (r *ResolverDNS) Resolve(nid string) ([]NodeAddr, error) {
 	for _, entry := range entries {
 		if strings.HasPrefix(entry, "nimona.node.addr=") {
 			entry = strings.TrimPrefix(entry, "nimona=")
-			nodeAddr := NodeAddr{}
-			err := nodeAddr.Parse(entry)
+			nodeAddr, err := ParseNodeAddr(entry)
 			if err != nil {
 				continue
 			}
-			nodeAddrs = append(nodeAddrs, nodeAddr)
+			nodeAddrs = append(nodeAddrs, *nodeAddr)
 		}
 	}
 

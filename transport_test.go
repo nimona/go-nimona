@@ -16,7 +16,10 @@ func TestWrapListener(t *testing.T) {
 	wrapped := wrapListener(ln, "dummy")
 
 	// Check that the wrapped listener has the correct NodeAddr
-	expectedAddr := NewNodeAddr("dummy", ln.Addr().String())
+	expectedAddr := NodeAddr{
+		Network: "dummy",
+		Address: ln.Addr().String(),
+	}
 	require.Equal(t, expectedAddr, wrapped.NodeAddr())
 
 	// Check that the wrapped listener can be closed

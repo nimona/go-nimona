@@ -26,7 +26,7 @@
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.expand": false,
     "explorer.fileNesting.patterns": {
-        "*.go": "${capture}_test.go,${capture}_mock.go",
+        "*.go": "${capture}_test.go,${capture}_mock.go,${capture}_gen.go",
         "go.mod": "go.sum",
     },
     "files.exclude": {

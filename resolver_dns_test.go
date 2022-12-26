@@ -7,20 +7,30 @@ import (
 )
 
 func TestResolverDNS_E2E(t *testing.T) {
-	exp := []NodeAddr{{}, {}}
-	exp[0].Parse(
+	exp0, err := ParseNodeAddr(
 		`nimona://peer:addr:` +
 			`2XxFa8qpbW4yV42XxFa8qpbW4yV4hEBwFYCyfsqQ21AupRBtXzWTzYaiNz` +
 			`@utp:banks.testing.reamde.dev:1013`,
 	)
-	exp[1].Parse(
+	require.NoError(t, err)
+
+	exp1, err := ParseNodeAddr(
 		`nimona://peer:addr:` +
 			`2XxFa8qpbW4yV4CYKa9qa42h5Nakx3Y5brfCqZZGZzMxvhzVG7YwyAfcY6` +
 			`@utp:asimov.testing.reamde.dev:1013`,
 	)
+	require.NoError(t, err)
+
+	exp := []NodeAddr{
+		*exp0,
+		*exp1,
+	}
+
+	nID, err := ParseNetworkID("nimona://network:handle:testing.reamde.dev")
+	require.NoError(t, err)
 
 	res := ResolverDNS{}
-	addrs, err := res.Resolve("nimona://peer:handle:testing.reamde.dev")
+	addrs, err := res.Resolve(nID)
 	require.NoError(t, err)
 	require.Len(t, addrs, 2)
 	require.Equal(t, exp, addrs)

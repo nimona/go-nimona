@@ -41,7 +41,10 @@ func (l *listener) Close() error {
 }
 
 func (l *listener) NodeAddr() NodeAddr {
-	return NewNodeAddr(l.transport, l.Listener.Addr().String())
+	return NodeAddr{
+		Network: l.transport,
+		Address: l.Listener.Addr().String(),
+	}
 }
 
 func wrapListener(l net.Listener, transport string) Listener {

@@ -10,8 +10,9 @@ import (
 func TestRPCNetworkCapabilities(t *testing.T) {
 	srv, clt := newTestSessionManager(t)
 
+	caps := []string{"core/peer/capabilities"}
 	hnd := &HandlerPeerCapabilities{
-		Capabilities: []string{"core/peer/capabilities"},
+		Capabilities: caps,
 	}
 	srv.RegisterHandler(
 		"core/peer/capabilities.request",
@@ -26,5 +27,5 @@ func TestRPCNetworkCapabilities(t *testing.T) {
 	ctx := context.Background()
 	res, err := RequestPeerCapabilities(ctx, ses)
 	require.NoError(t, err)
-	require.Equal(t, []string{"core/peer/capabilities"}, res.Capabilities)
+	require.Equal(t, caps, res.Capabilities)
 }

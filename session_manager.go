@@ -69,7 +69,7 @@ func (cm *SessionManager) Dial(
 	addr NodeAddr,
 ) (*Session, error) {
 	// check the cache
-	existingConn, ok := cm.connCache.Get(cm.connCacheKey(addr.PublicKey()))
+	existingConn, ok := cm.connCache.Get(cm.connCacheKey(addr.PublicKey))
 	if ok {
 		return existingConn, nil
 	}
@@ -107,8 +107,8 @@ func (cm *SessionManager) connCacheKey(k ed25519.PublicKey) connCacheKey {
 func (cm *SessionManager) Request(
 	ctx context.Context,
 	addr NodeAddr,
-	req MessageWrapper[any],
-) (*MessageWrapper[any], error) {
+	req Cborer,
+) (*MessageResponse, error) {
 	ses, err := cm.Dial(ctx, addr)
 	if err != nil {
 		return nil, fmt.Errorf("error dialing %s: %w", addr, err)
@@ -174,10 +174,10 @@ func (cm *SessionManager) handleSession(ses *Session) {
 		}
 
 		// get the handler for the message type
-		handler, ok := cm.handlers[req.Body.Type]
+		handler, ok := cm.handlers[req.Type]
 		if !ok {
 			// TODO log error
-			fmt.Println("no handler for message type:", req.Body.Type)
+			fmt.Println("no handler for message type:", req.Type)
 			continue
 		}
 
@@ -199,11 +199,11 @@ func (cm *SessionManager) RegisterHandler(
 }
 
 func (cm *SessionManager) NodeAddr() NodeAddr {
-	return NewNodeAddrWithKey(
-		cm.listener.NodeAddr().Network(),
-		cm.listener.NodeAddr().Address(),
-		cm.publicKey,
-	)
+	return NodeAddr{
+		Network:   cm.listener.NodeAddr().Network,
+		Address:   cm.listener.NodeAddr().Address,
+		PublicKey: cm.publicKey,
+	}
 }
 
 // Close closes all connections in the connection cache.

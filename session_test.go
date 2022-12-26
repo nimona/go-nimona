@@ -74,23 +74,11 @@ func TestSession_E2E_Pipe(t *testing.T) {
 func TestSession_E2E_RPC(t *testing.T) {
 	ctx := context.Background()
 
-	type messagePingStruct struct {
-		Test string `cbor:"test"`
+	messagePing := &Ping{ // client to server
+		Nonce: "foo",
 	}
-	type messagePongStruct struct {
-		Test string `cbor:"test"`
-	}
-	messagePing := MessageWrapper[messagePingStruct]{ // client to server
-		Type: "ping",
-		Body: messagePingStruct{
-			Test: "ping",
-		},
-	}
-	messagePong := MessageWrapper[messagePongStruct]{ // server to client
-		Type: "pong",
-		Body: messagePongStruct{
-			Test: "pong",
-		},
+	messagePong := &Pong{ // server to client
+		Nonce: "bar",
 	}
 
 	// construct new mock connection between two nodes
@@ -101,28 +89,27 @@ func TestSession_E2E_RPC(t *testing.T) {
 
 	// add a handler for the "server"
 	go func() {
-		msg, err := srv.Read()
+		req, err := srv.Read()
 		require.NoError(t, err)
 
-		reqAny := msg.Body
-		req := MessageWrapper[messagePingStruct]{}
-		err = req.FromAny(reqAny)
+		msg := &Ping{}
+		err = req.UnmarsalInto(msg)
 		require.NoError(t, err)
-		require.EqualValues(t, messagePing, req)
+		require.EqualValues(t, messagePing, msg)
 
-		err = msg.Respond(messagePong.ToAny())
+		err = req.Respond(messagePong)
 		require.NoError(t, err)
 	}()
 
 	// client writes to server
-	resAny, err := cln.Request(ctx, messagePing.ToAny())
+	res, err := cln.Request(ctx, messagePing)
 	require.NoError(t, err)
-	require.NotNil(t, resAny)
+	require.NotNil(t, res)
 
-	res := MessageWrapper[messagePongStruct]{}
-	err = res.FromAny(*resAny)
+	msg := &Pong{}
+	err = res.UnmarsalInto(msg)
 	require.NoError(t, err)
-	require.EqualValues(t, messagePong, res)
+	require.EqualValues(t, messagePong, msg)
 
 	// close the connections
 	srv.Close()

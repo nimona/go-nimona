@@ -1,6 +1,7 @@
 package nimona
 
 import (
+	"bytes"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -8,6 +9,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 
 	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
@@ -25,7 +27,6 @@ type Session struct {
 	// available after handshake
 	remotePublicKey ed25519.PublicKey
 	remoteNodeAddr  NodeAddr
-	codec           Codec
 	rpc             *RPC
 	// for testing
 	skipRPC bool
@@ -34,8 +35,7 @@ type Session struct {
 // NewSession returns a new Session that wraps the given net.Conn.
 func NewSession(conn net.Conn) *Session {
 	s := &Session{
-		conn:  conn,
-		codec: &CodecCBOR{},
+		conn: conn,
 	}
 	return s
 }
@@ -83,11 +83,11 @@ func (s *Session) DoServer(
 
 	// store the remote node key and address
 	s.remotePublicKey = ed25519.PublicKey(clientEphemeral[:])
-	s.remoteNodeAddr = NewNodeAddrWithKey(
-		s.conn.RemoteAddr().Network(),
-		s.conn.RemoteAddr().String(),
-		s.remotePublicKey,
-	)
+	s.remoteNodeAddr = NodeAddr{
+		Network:   s.conn.RemoteAddr().Network(),
+		Address:   s.conn.RemoteAddr().String(),
+		PublicKey: s.remotePublicKey,
+	}
 
 	// create the rpc
 	if !s.skipRPC {
@@ -135,11 +135,11 @@ func (s *Session) DoClient(
 
 	// store the remote node key and address
 	s.remotePublicKey = ed25519.PublicKey(serverEphemeral[:])
-	s.remoteNodeAddr = NewNodeAddrWithKey(
-		s.conn.RemoteAddr().Network(),
-		s.conn.RemoteAddr().String(),
-		s.remotePublicKey,
-	)
+	s.remoteNodeAddr = NodeAddr{
+		Network:   s.conn.RemoteAddr().Network(),
+		Address:   s.conn.RemoteAddr().String(),
+		PublicKey: s.remotePublicKey,
+	}
 
 	// create the rpc
 	if !s.skipRPC {
@@ -216,25 +216,24 @@ func (s *Session) write(data []byte) (int, error) {
 
 func (s *Session) Request(
 	ctx context.Context,
-	req MessageWrapper[any],
-) (*MessageWrapper[any], error) {
+	req Cborer,
+) (*MessageResponse, error) {
 	// Encode the request
-	reqBytes, err := s.codec.Encode(req)
+	w := bytes.NewBuffer(nil)
+	err := req.MarshalCBOR(w)
 	if err != nil {
 		return nil, fmt.Errorf("unable to encode request: %w", err)
 	}
 
 	// Send the request
-	resBytes, err := s.rpc.Request(ctx, reqBytes)
+	resBytes, err := s.rpc.Request(ctx, w.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf("unable to send request: %w", err)
 	}
 
 	// Decode the response
-	res := &MessageWrapper[any]{
-		Body: map[string]any{},
-	}
-	err = s.codec.Decode(resBytes, res)
+	res := &MessageResponse{}
+	err = res.UnmarshalCBOR(bytes.NewReader(resBytes))
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode response: %w", err)
 	}
@@ -243,8 +242,14 @@ func (s *Session) Request(
 }
 
 type MessageRequest struct {
-	Body    MessageWrapper[any]
-	Respond func(MessageWrapper[any]) error
+	Type    string `cborgen:"$type"`
+	Body    io.Reader
+	Respond func(Cborer) error
+}
+
+type MessageResponse struct {
+	Type string `cborgen:"$type"`
+	Body io.Reader
 }
 
 func (s *Session) Read() (*MessageRequest, error) {
@@ -254,28 +259,27 @@ func (s *Session) Read() (*MessageRequest, error) {
 		return nil, fmt.Errorf("unable to read message: %w", err)
 	}
 
-	msgReq := &MessageRequest{
-		Body: MessageWrapper[any]{},
-		Respond: func(res MessageWrapper[any]) error {
-			// Encode the response
-			resBytes, err := s.codec.Encode(res)
-			if err != nil {
-				return fmt.Errorf("unable to encode response: %w", err)
-			}
-
-			// Send the response
-			err = cb(resBytes)
-			if err != nil {
-				return fmt.Errorf("unable to send response: %w", err)
-			}
-
-			return nil
-		},
-	}
-
-	err = s.codec.Decode(req, &msgReq.Body)
+	msgReq := &MessageRequest{}
+	err = msgReq.UnmarshalCBOR(bytes.NewReader(req))
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode message: %w", err)
+	}
+
+	msgReq.Respond = func(res Cborer) error {
+		// Encode the response
+		w := bytes.NewBuffer(nil)
+		err := res.MarshalCBOR(w)
+		if err != nil {
+			return fmt.Errorf("unable to encode response: %w", err)
+		}
+
+		// Send the response
+		err = cb(w.Bytes())
+		if err != nil {
+			return fmt.Errorf("unable to send response: %w", err)
+		}
+
+		return nil
 	}
 
 	return msgReq, nil
@@ -317,4 +321,50 @@ func (s *Session) Close() error {
 		s.rpc.Close()
 	}
 	return s.conn.Close()
+}
+
+func (m MessageRequest) UnmarsalInto(v Cborer) error {
+	return v.UnmarshalCBOR(m.Body)
+}
+
+func (m *MessageRequest) UnmarshalCBOR(r io.Reader) error {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("error reading reader: %w", err)
+	}
+
+	// unmarshal the type into a temporary struct
+	mw := &MessageWrapper{}
+	err = mw.UnmarshalCBOR(bytes.NewReader(b))
+	if err != nil {
+		return fmt.Errorf("error unmarshaling type: %w", err)
+	}
+
+	m.Type = mw.Type
+	m.Body = bytes.NewReader(b)
+
+	return nil
+}
+
+func (m MessageResponse) UnmarsalInto(v Cborer) error {
+	return v.UnmarshalCBOR(m.Body)
+}
+
+func (m *MessageResponse) UnmarshalCBOR(r io.Reader) error {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("error reading reader: %w", err)
+	}
+
+	// unmarshal the type into a temporary struct
+	mw := &MessageWrapper{}
+	err = mw.UnmarshalCBOR(bytes.NewReader(b))
+	if err != nil {
+		return fmt.Errorf("error unmarshaling type: %w", err)
+	}
+
+	m.Type = mw.Type
+	m.Body = bytes.NewReader(b)
+
+	return nil
 }
