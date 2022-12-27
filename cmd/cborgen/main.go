@@ -46,6 +46,19 @@ var mappings = []mapping{{
 		nimona.PeerCapabilitiesRequest{},
 		nimona.PeerCapabilitiesResponse{},
 	},
+}, {
+	file: "handler_network_gen.go",
+	pkg:  "nimona",
+	types: []any{
+		nimona.NetworkInfoRequest{},
+		nimona.NetworkInfo{},
+	},
+}, {
+	file: "identifier_network_gen.go",
+	pkg:  "nimona",
+	types: []any{
+		nimona.NetworkID{},
+	},
 }}
 
 func main() {
