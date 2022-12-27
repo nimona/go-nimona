@@ -5,15 +5,9 @@ import (
 	"strings"
 )
 
-type (
-	NetworkID struct {
-		Hostname string
-	}
-	NetworkInfo struct {
-		NetworkID      NetworkID
-		BootstrapNodes []NodeAddr
-	}
-)
+type NetworkID struct {
+	Hostname string
+}
 
 func (n NetworkID) String() string {
 	return string(ResourceTypeNetworkHandle) + n.Hostname
