@@ -14,7 +14,7 @@ var ErrTransportUnsupported error = fmt.Errorf("transport unsupported")
 // for reliable data transfer.
 type TransportUTP struct{}
 
-func (t *TransportUTP) Dial(ctx context.Context, addr NodeAddr) (net.Conn, error) {
+func (t *TransportUTP) Dial(ctx context.Context, addr PeerAddr) (net.Conn, error) {
 	if addr.Network != "utp" {
 		return nil, ErrTransportUnsupported
 	}

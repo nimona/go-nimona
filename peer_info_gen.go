@@ -18,7 +18,7 @@ var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
 
-func (t *NodeInfo) MarshalCBOR(w io.Writer) error {
+func (t *PeerInfo) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
 		return err
@@ -49,7 +49,7 @@ func (t *NodeInfo) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.Addresses ([]nimona.NodeAddr) (slice)
+	// t.Addresses ([]nimona.PeerAddr) (slice)
 	if len("addresses") > cbg.MaxLength {
 		return xerrors.Errorf("Value in field \"addresses\" was too long")
 	}
@@ -76,8 +76,8 @@ func (t *NodeInfo) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
-func (t *NodeInfo) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = NodeInfo{}
+func (t *PeerInfo) UnmarshalCBOR(r io.Reader) (err error) {
+	*t = PeerInfo{}
 
 	cr := cbg.NewCborReader(r)
 
@@ -96,7 +96,7 @@ func (t *NodeInfo) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	if extra > cbg.MaxLength {
-		return fmt.Errorf("NodeInfo: map struct too large (%d)", extra)
+		return fmt.Errorf("PeerInfo: map struct too large (%d)", extra)
 	}
 
 	var name string
@@ -115,7 +115,7 @@ func (t *NodeInfo) UnmarshalCBOR(r io.Reader) (err error) {
 
 		switch name {
 		// t._ (string) (string) - ignored
-		// t.Addresses ([]nimona.NodeAddr) (slice)
+		// t.Addresses ([]nimona.PeerAddr) (slice)
 		case "addresses":
 
 			maj, extra, err = cr.ReadHeader()
@@ -132,12 +132,12 @@ func (t *NodeInfo) UnmarshalCBOR(r io.Reader) (err error) {
 			}
 
 			if extra > 0 {
-				t.Addresses = make([]NodeAddr, extra)
+				t.Addresses = make([]PeerAddr, extra)
 			}
 
 			for i := 0; i < int(extra); i++ {
 
-				var v NodeAddr
+				var v PeerAddr
 				if err := v.UnmarshalCBOR(cr); err != nil {
 					return err
 				}

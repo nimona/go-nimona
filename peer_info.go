@@ -1,6 +1,6 @@
 package nimona
 
-type NodeInfo struct {
+type PeerInfo struct {
 	_         string     `cborgen:"$type,const=core/node.info"`
-	Addresses []NodeAddr `cborgen:"addresses"`
+	Addresses []PeerAddr `cborgen:"addresses"`
 }

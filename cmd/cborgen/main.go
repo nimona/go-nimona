@@ -15,16 +15,16 @@ type mapping struct {
 }
 
 var mappings = []mapping{{
-	file: "node_addr_gen.go",
+	file: "peer_addr_gen.go",
 	pkg:  "nimona",
 	types: []any{
-		nimona.NodeAddr{},
+		nimona.PeerAddr{},
 	},
 }, {
-	file: "node_info_gen.go",
+	file: "peer_info_gen.go",
 	pkg:  "nimona",
 	types: []any{
-		nimona.NodeInfo{},
+		nimona.PeerInfo{},
 	},
 }, {
 	file: "message_wrapper_gen.go",

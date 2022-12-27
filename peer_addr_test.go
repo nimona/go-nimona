@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNodeAddr(t *testing.T) {
-	a := &NodeAddr{
+func TestPeerAddr(t *testing.T) {
+	a := &PeerAddr{
 		Network: "utp",
 		Address: "localhost:1234",
 	}
@@ -20,7 +20,7 @@ func TestNodeAddr(t *testing.T) {
 	})
 
 	t.Run("string addr to struct", func(t *testing.T) {
-		g, err := ParseNodeAddr(a.String())
+		g, err := ParsePeerAddr(a.String())
 		require.NoError(t, err)
 		require.Equal(t, a, g)
 	})
@@ -29,23 +29,23 @@ func TestNodeAddr(t *testing.T) {
 		pub, _, err := ed25519.GenerateKey(nil)
 		require.NoError(t, err)
 
-		a = &NodeAddr{
+		a = &PeerAddr{
 			Network:   "utp",
 			Address:   "localhost:1234",
 			PublicKey: pub,
 		}
 
-		g, err := ParseNodeAddr(a.String())
+		g, err := ParsePeerAddr(a.String())
 		require.NoError(t, err)
 		require.Equal(t, a, g)
 	})
 }
 
-func TestNodeAddr_Marshal(t *testing.T) {
+func TestPeerAddr_Marshal(t *testing.T) {
 	pk, _, err := ed25519.GenerateKey(nil)
 	require.NoError(t, err)
 
-	na := &NodeAddr{
+	na := &PeerAddr{
 		Network:   "utp",
 		Address:   "localhost:1234",
 		PublicKey: pk,
@@ -57,7 +57,7 @@ func TestNodeAddr_Marshal(t *testing.T) {
 
 	fmt.Printf("%x\n", cb.Bytes())
 
-	ga := &NodeAddr{}
+	ga := &PeerAddr{}
 	err = ga.UnmarshalCBOR(cb)
 	require.NoError(t, err)
 

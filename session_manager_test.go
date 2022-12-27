@@ -29,7 +29,7 @@ func TestSessionManager(t *testing.T) {
 	}
 
 	// dial the server
-	rpc, err := clt.Dial(context.Background(), srv.NodeAddr())
+	rpc, err := clt.Dial(context.Background(), srv.PeerAddr())
 	require.NoError(t, err)
 
 	// send a message

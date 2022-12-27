@@ -24,11 +24,11 @@ func TestTransportUTP_E2E(t *testing.T) {
 	}()
 
 	t.Run("check wrapped listener", func(t *testing.T) {
-		require.Equal(t, "utp", listener.NodeAddr().Network)
+		require.Equal(t, "utp", listener.PeerAddr().Network)
 	})
 
 	t.Run("check dial", func(t *testing.T) {
-		conn, err := transport.Dial(ctx, listener.NodeAddr())
+		conn, err := transport.Dial(ctx, listener.PeerAddr())
 		require.NoError(t, err)
 		defer conn.Close()
 

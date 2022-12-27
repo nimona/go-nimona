@@ -34,10 +34,10 @@ func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 }
 
 // Resolve mocks base method.
-func (m *MockResolver) Resolve(arg0 NetworkID) ([]NodeAddr, error) {
+func (m *MockResolver) Resolve(arg0 NetworkID) ([]PeerAddr, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Resolve", arg0)
-	ret0, _ := ret[0].([]NodeAddr)
+	ret0, _ := ret[0].([]PeerAddr)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

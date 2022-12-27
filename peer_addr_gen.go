@@ -18,7 +18,7 @@ var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
 
-func (t *NodeAddr) MarshalCBOR(w io.Writer) error {
+func (t *PeerAddr) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
 		return err
@@ -121,8 +121,8 @@ func (t *NodeAddr) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
-func (t *NodeAddr) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = NodeAddr{}
+func (t *PeerAddr) UnmarshalCBOR(r io.Reader) (err error) {
+	*t = PeerAddr{}
 
 	cr := cbg.NewCborReader(r)
 
@@ -141,7 +141,7 @@ func (t *NodeAddr) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	if extra > cbg.MaxLength {
-		return fmt.Errorf("NodeAddr: map struct too large (%d)", extra)
+		return fmt.Errorf("PeerAddr: map struct too large (%d)", extra)
 	}
 
 	var name string

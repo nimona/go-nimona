@@ -66,7 +66,7 @@ func NewSessionManager(
 // address is already in the cache, the cached connection is returned.
 func (cm *SessionManager) Dial(
 	ctx context.Context,
-	addr NodeAddr,
+	addr PeerAddr,
 ) (*Session, error) {
 	// check the cache
 	existingConn, ok := cm.connCache.Get(cm.connCacheKey(addr.PublicKey))
@@ -106,7 +106,7 @@ func (cm *SessionManager) connCacheKey(k ed25519.PublicKey) connCacheKey {
 
 func (cm *SessionManager) Request(
 	ctx context.Context,
-	addr NodeAddr,
+	addr PeerAddr,
 	req Cborer,
 ) (*MessageResponse, error) {
 	ses, err := cm.Dial(ctx, addr)
@@ -198,10 +198,10 @@ func (cm *SessionManager) RegisterHandler(
 	cm.handlers[msgType] = handler
 }
 
-func (cm *SessionManager) NodeAddr() NodeAddr {
-	return NodeAddr{
-		Network:   cm.listener.NodeAddr().Network,
-		Address:   cm.listener.NodeAddr().Address,
+func (cm *SessionManager) PeerAddr() PeerAddr {
+	return PeerAddr{
+		Network:   cm.listener.PeerAddr().Network,
+		Address:   cm.listener.PeerAddr().Address,
 		PublicKey: cm.publicKey,
 	}
 }

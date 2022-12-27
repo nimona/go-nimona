@@ -26,7 +26,7 @@ type Session struct {
 	suite cipher.AEAD
 	// available after handshake
 	remotePublicKey ed25519.PublicKey
-	remoteNodeAddr  NodeAddr
+	remotePeerAddr  PeerAddr
 	rpc             *RPC
 	// for testing
 	skipRPC bool
@@ -83,7 +83,7 @@ func (s *Session) DoServer(
 
 	// store the remote node key and address
 	s.remotePublicKey = ed25519.PublicKey(clientEphemeral[:])
-	s.remoteNodeAddr = NodeAddr{
+	s.remotePeerAddr = PeerAddr{
 		Network:   s.conn.RemoteAddr().Network(),
 		Address:   s.conn.RemoteAddr().String(),
 		PublicKey: s.remotePublicKey,
@@ -135,7 +135,7 @@ func (s *Session) DoClient(
 
 	// store the remote node key and address
 	s.remotePublicKey = ed25519.PublicKey(serverEphemeral[:])
-	s.remoteNodeAddr = NodeAddr{
+	s.remotePeerAddr = PeerAddr{
 		Network:   s.conn.RemoteAddr().Network(),
 		Address:   s.conn.RemoteAddr().String(),
 		PublicKey: s.remotePublicKey,
@@ -307,8 +307,8 @@ func (s *Session) x25519(
 	return shared, nil
 }
 
-func (s *Session) NodeAddr() NodeAddr {
-	return s.remoteNodeAddr
+func (s *Session) PeerAddr() PeerAddr {
+	return s.remotePeerAddr
 }
 
 func (s *Session) PublicKey() ed25519.PublicKey {

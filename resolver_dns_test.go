@@ -7,21 +7,21 @@ import (
 )
 
 func TestResolverDNS_E2E(t *testing.T) {
-	exp0, err := ParseNodeAddr(
+	exp0, err := ParsePeerAddr(
 		`nimona://peer:addr:` +
 			`2XxFa8qpbW4yV42XxFa8qpbW4yV4hEBwFYCyfsqQ21AupRBtXzWTzYaiNz` +
 			`@utp:banks.testing.reamde.dev:1013`,
 	)
 	require.NoError(t, err)
 
-	exp1, err := ParseNodeAddr(
+	exp1, err := ParsePeerAddr(
 		`nimona://peer:addr:` +
 			`2XxFa8qpbW4yV4CYKa9qa42h5Nakx3Y5brfCqZZGZzMxvhzVG7YwyAfcY6` +
 			`@utp:asimov.testing.reamde.dev:1013`,
 	)
 	require.NoError(t, err)
 
-	exp := []NodeAddr{
+	exp := []PeerAddr{
 		*exp0,
 		*exp1,
 	}

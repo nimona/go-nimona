@@ -13,13 +13,13 @@ type (
 	}
 	// Dialer is an interface for dialing a connection
 	Dialer interface {
-		Dial(context.Context, NodeAddr) (net.Conn, error)
+		Dial(context.Context, PeerAddr) (net.Conn, error)
 	}
 	// Listener is an interface for listening for connections
 	Listener interface {
 		Accept() (net.Conn, error)
 		Close() error
-		NodeAddr() NodeAddr
+		PeerAddr() PeerAddr
 	}
 )
 
@@ -40,8 +40,8 @@ func (l *listener) Close() error {
 	return l.Listener.Close()
 }
 
-func (l *listener) NodeAddr() NodeAddr {
-	return NodeAddr{
+func (l *listener) PeerAddr() PeerAddr {
+	return PeerAddr{
 		Network: l.transport,
 		Address: l.Listener.Addr().String(),
 	}

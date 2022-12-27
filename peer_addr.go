@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-type NodeAddr struct {
+type PeerAddr struct {
 	_         string `cborgen:"$type,const=core/node.address"`
 	Address   string `cborgen:"address"`
 	Network   string `cborgen:"network"`
 	PublicKey []byte `cborgen:"publicKey"`
 }
 
-func ParseNodeAddr(addr string) (*NodeAddr, error) {
+func ParsePeerAddr(addr string) (*PeerAddr, error) {
 	regex := regexp.MustCompile(
 		ResourceTypePeerAddress.String() +
 			`(?:([\w\d]+@))?([\w\d]+):([\w\d\.]+):(\d+)`,
@@ -29,7 +29,7 @@ func ParseNodeAddr(addr string) (*NodeAddr, error) {
 	host := matches[3]
 	port := matches[4]
 
-	a := &NodeAddr{}
+	a := &PeerAddr{}
 	if publicKey != "" {
 		publicKey = strings.TrimSuffix(publicKey, "@")
 		key, err := PublicKeyFromBase58(publicKey)
@@ -45,7 +45,7 @@ func ParseNodeAddr(addr string) (*NodeAddr, error) {
 	return a, nil
 }
 
-func (a NodeAddr) String() string {
+func (a PeerAddr) String() string {
 	b := strings.Builder{}
 	b.WriteString(ResourceTypePeerAddress.String())
 	if a.PublicKey != nil {
