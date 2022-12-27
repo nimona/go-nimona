@@ -20,7 +20,7 @@ func TestRPCNetworkCapabilities(t *testing.T) {
 	)
 
 	// dial the server
-	ses, err := clt.Dial(context.Background(), srv.NodeAddr())
+	ses, err := clt.Dial(context.Background(), srv.PeerAddr())
 	require.NoError(t, err)
 
 	// ask for capabilities

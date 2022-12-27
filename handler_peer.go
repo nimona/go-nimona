@@ -24,17 +24,10 @@ func RequestPeerCapabilities(
 	ses *Session,
 ) (*PeerCapabilitiesResponse, error) {
 	req := &PeerCapabilitiesRequest{}
-	resMsg, err := ses.Request(ctx, req)
+	res := &PeerCapabilitiesResponse{}
+	err := ses.Request(ctx, req, res)
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
-	}
-	res := &PeerCapabilitiesResponse{}
-	err = resMsg.UnmarsalInto(res)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling response: %w", err)
-	}
-	if res.Type != "core/peer/capabilities.response" {
-		return nil, fmt.Errorf("invalid response type: %s", res.Type)
 	}
 	return res, nil
 }

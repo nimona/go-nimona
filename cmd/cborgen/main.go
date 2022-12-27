@@ -40,7 +40,7 @@ var mappings = []mapping{{
 		nimona.Pong{},
 	},
 }, {
-	file: "rpc_peer_capabilities_gen.go",
+	file: "handler_peer_gen.go",
 	pkg:  "nimona",
 	types: []any{
 		nimona.PeerCapabilitiesRequest{},
