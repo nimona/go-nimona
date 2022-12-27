@@ -102,14 +102,10 @@ func TestSession_E2E_RPC(t *testing.T) {
 	}()
 
 	// client writes to server
-	res, err := cln.Request(ctx, messagePing)
+	res := &Pong{}
+	err := cln.Request(ctx, messagePing, res)
 	require.NoError(t, err)
-	require.NotNil(t, res)
-
-	msg := &Pong{}
-	err = res.UnmarsalInto(msg)
-	require.NoError(t, err)
-	require.EqualValues(t, messagePong, msg)
+	require.EqualValues(t, messagePong, res)
 
 	// close the connections
 	srv.Close()

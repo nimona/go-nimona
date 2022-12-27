@@ -217,39 +217,34 @@ func (s *Session) write(data []byte) (int, error) {
 func (s *Session) Request(
 	ctx context.Context,
 	req Cborer,
-) (*MessageResponse, error) {
+	res Cborer,
+) error {
 	// Encode the request
 	w := bytes.NewBuffer(nil)
 	err := req.MarshalCBOR(w)
 	if err != nil {
-		return nil, fmt.Errorf("unable to encode request: %w", err)
+		return fmt.Errorf("unable to encode request: %w", err)
 	}
 
 	// Send the request
 	resBytes, err := s.rpc.Request(ctx, w.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("unable to send request: %w", err)
+		return fmt.Errorf("unable to send request: %w", err)
 	}
 
 	// Decode the response
-	res := &MessageResponse{}
 	err = res.UnmarshalCBOR(bytes.NewReader(resBytes))
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode response: %w", err)
+		return fmt.Errorf("unable to decode response: %w", err)
 	}
 
-	return res, nil
+	return nil
 }
 
 type MessageRequest struct {
 	Type    string `cborgen:"$type"`
 	Body    io.Reader
 	Respond func(Cborer) error
-}
-
-type MessageResponse struct {
-	Type string `cborgen:"$type"`
-	Body io.Reader
 }
 
 func (s *Session) Read() (*MessageRequest, error) {
@@ -328,29 +323,6 @@ func (m MessageRequest) UnmarsalInto(v Cborer) error {
 }
 
 func (m *MessageRequest) UnmarshalCBOR(r io.Reader) error {
-	b, err := io.ReadAll(r)
-	if err != nil {
-		return fmt.Errorf("error reading reader: %w", err)
-	}
-
-	// unmarshal the type into a temporary struct
-	mw := &MessageWrapper{}
-	err = mw.UnmarshalCBOR(bytes.NewReader(b))
-	if err != nil {
-		return fmt.Errorf("error unmarshaling type: %w", err)
-	}
-
-	m.Type = mw.Type
-	m.Body = bytes.NewReader(b)
-
-	return nil
-}
-
-func (m MessageResponse) UnmarsalInto(v Cborer) error {
-	return v.UnmarshalCBOR(m.Body)
-}
-
-func (m *MessageResponse) UnmarshalCBOR(r io.Reader) error {
 	b, err := io.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("error reading reader: %w", err)

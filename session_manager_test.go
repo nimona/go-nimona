@@ -33,12 +33,8 @@ func TestSessionManager(t *testing.T) {
 	require.NoError(t, err)
 
 	// send a message
-	gotResMsg, err := rpc.Request(context.Background(), req)
-	require.NoError(t, err)
-	require.NotNil(t, gotResMsg)
-
 	res := &Pong{}
-	err = gotResMsg.UnmarsalInto(res)
+	err = rpc.Request(context.Background(), req, res)
 	require.NoError(t, err)
 	require.Equal(t, expRes, res)
 }

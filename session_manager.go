@@ -108,13 +108,14 @@ func (cm *SessionManager) Request(
 	ctx context.Context,
 	addr PeerAddr,
 	req Cborer,
-) (*MessageResponse, error) {
+	res Cborer,
+) error {
 	ses, err := cm.Dial(ctx, addr)
 	if err != nil {
-		return nil, fmt.Errorf("error dialing %s: %w", addr, err)
+		return fmt.Errorf("error dialing %s: %w", addr, err)
 	}
 
-	return ses.Request(ctx, req)
+	return ses.Request(ctx, req, res)
 }
 
 func (cm *SessionManager) handleConnections(ctx context.Context) error {
