@@ -3,6 +3,7 @@
 package nimona
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"math"
@@ -13,10 +14,20 @@ import (
 	xerrors "golang.org/x/xerrors"
 )
 
+var _ = bytes.Compare
 var _ = xerrors.Errorf
 var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
+
+func (t *PeerAddr) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
 
 func (t *PeerAddr) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -121,6 +132,10 @@ func (t *PeerAddr) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
+func (t *PeerAddr) UnmarshalCBORBytes(b []byte) (err error) {
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
 func (t *PeerAddr) UnmarshalCBOR(r io.Reader) (err error) {
 	*t = PeerAddr{}
 
@@ -160,6 +175,7 @@ func (t *PeerAddr) UnmarshalCBOR(r io.Reader) (err error) {
 
 		switch name {
 		// t._ (string) (string) - ignored
+
 		// t.Address (string) (string)
 		case "address":
 

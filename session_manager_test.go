@@ -2,7 +2,6 @@ package nimona
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
@@ -17,7 +16,6 @@ func TestSessionManager(t *testing.T) {
 		Nonce: "bar",
 	}
 	handler := func(ctx context.Context, msg *MessageRequest) error {
-		fmt.Println("Server got message", msg)
 		err := msg.Respond(expRes)
 		require.NoError(t, err)
 		return nil
@@ -33,10 +31,12 @@ func TestSessionManager(t *testing.T) {
 	require.NoError(t, err)
 
 	// send a message
-	res := &Pong{}
-	err = rpc.Request(context.Background(), req, res)
+	msg := &Pong{}
+	res, err := rpc.Request(context.Background(), req)
 	require.NoError(t, err)
-	require.Equal(t, expRes, res)
+	err = res.Decode(msg)
+	require.NoError(t, err)
+	require.Equal(t, expRes, msg)
 }
 
 func newTestSessionManager(t *testing.T) (srv *SessionManager, clt *SessionManager) {

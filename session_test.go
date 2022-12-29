@@ -93,7 +93,7 @@ func TestSession_E2E_RPC(t *testing.T) {
 		require.NoError(t, err)
 
 		msg := &Ping{}
-		err = req.UnmarsalInto(msg)
+		err = req.Decode(msg)
 		require.NoError(t, err)
 		require.EqualValues(t, messagePing, msg)
 
@@ -102,10 +102,12 @@ func TestSession_E2E_RPC(t *testing.T) {
 	}()
 
 	// client writes to server
-	res := &Pong{}
-	err := cln.Request(ctx, messagePing, res)
+	msg := &Pong{}
+	res, err := cln.Request(ctx, messagePing)
 	require.NoError(t, err)
-	require.EqualValues(t, messagePong, res)
+	err = res.Decode(msg)
+	require.NoError(t, err)
+	require.EqualValues(t, messagePong, msg)
 
 	// close the connections
 	srv.Close()

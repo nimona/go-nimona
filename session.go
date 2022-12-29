@@ -1,7 +1,6 @@
 package nimona
 
 import (
-	"bytes"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -9,7 +8,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 
 	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
@@ -28,6 +26,7 @@ type Session struct {
 	remotePublicKey ed25519.PublicKey
 	remotePeerAddr  PeerAddr
 	rpc             *RPC
+	codec           Codec
 	// for testing
 	skipRPC bool
 }
@@ -35,7 +34,8 @@ type Session struct {
 // NewSession returns a new Session that wraps the given net.Conn.
 func NewSession(conn net.Conn) *Session {
 	s := &Session{
-		conn: conn,
+		codec: &CodecCBOR{},
+		conn:  conn,
 	}
 	return s
 }
@@ -217,34 +217,38 @@ func (s *Session) write(data []byte) (int, error) {
 func (s *Session) Request(
 	ctx context.Context,
 	req Cborer,
-	res Cborer,
-) error {
+) (*MessageResponse, error) {
 	// Encode the request
-	w := bytes.NewBuffer(nil)
-	err := req.MarshalCBOR(w)
+	b, err := s.codec.Encode(req)
 	if err != nil {
-		return fmt.Errorf("unable to encode request: %w", err)
+		return nil, fmt.Errorf("unable to encode request: %w", err)
 	}
 
 	// Send the request
-	resBytes, err := s.rpc.Request(ctx, w.Bytes())
+	resBytes, err := s.rpc.Request(ctx, b)
 	if err != nil {
-		return fmt.Errorf("unable to send request: %w", err)
+		return nil, fmt.Errorf("unable to send request: %w", err)
 	}
 
 	// Decode the response
-	err = res.UnmarshalCBOR(bytes.NewReader(resBytes))
+	codec := s.codec
+	res := &MessageResponse{}
+	err = codec.Decode(resBytes, res)
 	if err != nil {
-		return fmt.Errorf("unable to decode response: %w", err)
+		return nil, fmt.Errorf("unable to decode response: %w", err)
 	}
 
-	return nil
+	res.Body = resBytes
+	res.Codec = codec
+	res.Decode = messageDecoder(codec, resBytes)
+
+	return res, nil
 }
 
-type MessageRequest struct {
-	Type    string `cborgen:"$type"`
-	Body    io.Reader
-	Respond func(Cborer) error
+func messageDecoder(c Codec, b []byte) func(Cborer) error {
+	return func(v Cborer) error {
+		return c.Decode(b, v)
+	}
 }
 
 func (s *Session) Read() (*MessageRequest, error) {
@@ -254,22 +258,25 @@ func (s *Session) Read() (*MessageRequest, error) {
 		return nil, fmt.Errorf("unable to read message: %w", err)
 	}
 
+	codec := s.codec
 	msgReq := &MessageRequest{}
-	err = msgReq.UnmarshalCBOR(bytes.NewReader(req))
+	err = codec.Decode(req, msgReq)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode message: %w", err)
 	}
 
+	msgReq.Body = req
+	msgReq.Codec = codec
+	msgReq.Decode = messageDecoder(codec, req)
 	msgReq.Respond = func(res Cborer) error {
 		// Encode the response
-		w := bytes.NewBuffer(nil)
-		err := res.MarshalCBOR(w)
+		b, err := codec.Encode(res)
 		if err != nil {
 			return fmt.Errorf("unable to encode response: %w", err)
 		}
 
 		// Send the response
-		err = cb(w.Bytes())
+		err = cb(b)
 		if err != nil {
 			return fmt.Errorf("unable to send response: %w", err)
 		}
@@ -316,27 +323,4 @@ func (s *Session) Close() error {
 		s.rpc.Close()
 	}
 	return s.conn.Close()
-}
-
-func (m MessageRequest) UnmarsalInto(v Cborer) error {
-	return v.UnmarshalCBOR(m.Body)
-}
-
-func (m *MessageRequest) UnmarshalCBOR(r io.Reader) error {
-	b, err := io.ReadAll(r)
-	if err != nil {
-		return fmt.Errorf("error reading reader: %w", err)
-	}
-
-	// unmarshal the type into a temporary struct
-	mw := &MessageWrapper{}
-	err = mw.UnmarshalCBOR(bytes.NewReader(b))
-	if err != nil {
-		return fmt.Errorf("error unmarshaling type: %w", err)
-	}
-
-	m.Type = mw.Type
-	m.Body = bytes.NewReader(b)
-
-	return nil
 }

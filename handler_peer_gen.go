@@ -3,6 +3,7 @@
 package nimona
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"math"
@@ -13,10 +14,20 @@ import (
 	xerrors "golang.org/x/xerrors"
 )
 
+var _ = bytes.Compare
 var _ = xerrors.Errorf
 var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
+
+func (t *PeerCapabilitiesRequest) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
 
 func (t *PeerCapabilitiesRequest) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -49,6 +60,10 @@ func (t *PeerCapabilitiesRequest) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
+}
+
+func (t *PeerCapabilitiesRequest) UnmarshalCBORBytes(b []byte) (err error) {
+	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PeerCapabilitiesRequest) UnmarshalCBOR(r io.Reader) (err error) {
@@ -109,6 +124,16 @@ func (t *PeerCapabilitiesRequest) UnmarshalCBOR(r io.Reader) (err error) {
 
 	return nil
 }
+
+func (t *PeerCapabilitiesResponse) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
 func (t *PeerCapabilitiesResponse) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -172,6 +197,10 @@ func (t *PeerCapabilitiesResponse) MarshalCBOR(w io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func (t *PeerCapabilitiesResponse) UnmarshalCBORBytes(b []byte) (err error) {
+	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PeerCapabilitiesResponse) UnmarshalCBOR(r io.Reader) (err error) {

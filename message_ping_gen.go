@@ -3,6 +3,7 @@
 package nimona
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"math"
@@ -13,10 +14,20 @@ import (
 	xerrors "golang.org/x/xerrors"
 )
 
+var _ = bytes.Compare
 var _ = xerrors.Errorf
 var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
+
+func (t *Ping) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
 
 func (t *Ping) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -74,6 +85,10 @@ func (t *Ping) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
+func (t *Ping) UnmarshalCBORBytes(b []byte) (err error) {
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
 func (t *Ping) UnmarshalCBOR(r io.Reader) (err error) {
 	*t = Ping{}
 
@@ -113,6 +128,7 @@ func (t *Ping) UnmarshalCBOR(r io.Reader) (err error) {
 
 		switch name {
 		// t._ (string) (string) - ignored
+
 		// t.Nonce (string) (string)
 		case "nonce":
 
@@ -133,6 +149,16 @@ func (t *Ping) UnmarshalCBOR(r io.Reader) (err error) {
 
 	return nil
 }
+
+func (t *Pong) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
 func (t *Pong) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -189,6 +215,10 @@ func (t *Pong) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
+func (t *Pong) UnmarshalCBORBytes(b []byte) (err error) {
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
 func (t *Pong) UnmarshalCBOR(r io.Reader) (err error) {
 	*t = Pong{}
 
@@ -228,6 +258,7 @@ func (t *Pong) UnmarshalCBOR(r io.Reader) (err error) {
 
 		switch name {
 		// t._ (string) (string) - ignored
+
 		// t.Nonce (string) (string)
 		case "nonce":
 

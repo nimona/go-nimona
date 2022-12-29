@@ -27,9 +27,13 @@ func RequestNetworkInfo(
 ) (*NetworkInfo, error) {
 	req := &NetworkInfoRequest{}
 	res := &NetworkInfo{}
-	err := ses.Request(ctx, req, res)
+	msgRes, err := ses.Request(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
+	}
+	err = msgRes.Decode(res)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
 	return res, nil
 }
@@ -39,7 +43,7 @@ func (h *HandlerNetwork) HandleNetworkInfoRequest(
 	msg *MessageRequest,
 ) error {
 	req := &NetworkInfoRequest{}
-	err := msg.UnmarsalInto(req)
+	err := msg.Decode(req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}

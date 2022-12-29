@@ -3,6 +3,7 @@
 package nimona
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"math"
@@ -13,10 +14,20 @@ import (
 	xerrors "golang.org/x/xerrors"
 )
 
+var _ = bytes.Compare
 var _ = xerrors.Errorf
 var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
+
+func (t *MessageWrapper) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
 
 func (t *MessageWrapper) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -53,6 +64,10 @@ func (t *MessageWrapper) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
+}
+
+func (t *MessageWrapper) UnmarshalCBORBytes(b []byte) (err error) {
+	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *MessageWrapper) UnmarshalCBOR(r io.Reader) (err error) {
