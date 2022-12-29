@@ -217,7 +217,7 @@ func (s *Session) write(data []byte) (int, error) {
 func (s *Session) Request(
 	ctx context.Context,
 	req Cborer,
-) (*MessageResponse, error) {
+) (*Response, error) {
 	// Encode the request
 	b, err := s.codec.Encode(req)
 	if err != nil {
@@ -232,7 +232,7 @@ func (s *Session) Request(
 
 	// Decode the response
 	codec := s.codec
-	res := &MessageResponse{}
+	res := &Response{}
 	err = codec.Decode(resBytes, res)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode response: %w", err)
@@ -251,7 +251,7 @@ func messageDecoder(c Codec, b []byte) func(Cborer) error {
 	}
 }
 
-func (s *Session) Read() (*MessageRequest, error) {
+func (s *Session) Read() (*Request, error) {
 	// Read the message from the connection
 	req, cb, err := s.rpc.Read()
 	if err != nil {
@@ -259,7 +259,7 @@ func (s *Session) Read() (*MessageRequest, error) {
 	}
 
 	codec := s.codec
-	msgReq := &MessageRequest{}
+	msgReq := &Request{}
 	err = codec.Decode(req, msgReq)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode message: %w", err)

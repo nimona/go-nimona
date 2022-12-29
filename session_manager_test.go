@@ -15,7 +15,7 @@ func TestSessionManager(t *testing.T) {
 	expRes := &Pong{
 		Nonce: "bar",
 	}
-	handler := func(ctx context.Context, msg *MessageRequest) error {
+	handler := func(ctx context.Context, msg *Request) error {
 		err := msg.Respond(expRes)
 		require.NoError(t, err)
 		return nil

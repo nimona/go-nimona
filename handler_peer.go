@@ -38,7 +38,7 @@ func RequestPeerCapabilities(
 
 func (h *HandlerPeerCapabilities) HandlePeerCapabilitiesRequest(
 	ctx context.Context,
-	msg *MessageRequest,
+	msg *Request,
 ) error {
 	req := &PeerCapabilitiesRequest{}
 	err := msg.Decode(req)

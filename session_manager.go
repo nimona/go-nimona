@@ -19,7 +19,7 @@ type SessionManager struct {
 	privateKey ed25519.PrivateKey
 }
 
-type RequestHandlerFunc func(context.Context, *MessageRequest) error
+type RequestHandlerFunc func(context.Context, *Request) error
 
 type connCacheKey struct {
 	publicKeyInHex string
@@ -108,7 +108,7 @@ func (cm *SessionManager) Request(
 	ctx context.Context,
 	addr PeerAddr,
 	req Cborer,
-) (*MessageResponse, error) {
+) (*Response, error) {
 	ses, err := cm.Dial(ctx, addr)
 	if err != nil {
 		return nil, fmt.Errorf("error dialing %s: %w", addr, err)

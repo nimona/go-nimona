@@ -40,7 +40,7 @@ func RequestNetworkInfo(
 
 func (h *HandlerNetwork) HandleNetworkInfoRequest(
 	ctx context.Context,
-	msg *MessageRequest,
+	msg *Request,
 ) error {
 	req := &NetworkInfoRequest{}
 	err := msg.Decode(req)
