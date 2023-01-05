@@ -10,6 +10,7 @@ import (
 	"sort"
 
 	cid "github.com/ipfs/go-cid"
+	zero "github.com/vikyd/zero"
 	cbg "github.com/whyrusleeping/cbor-gen"
 	xerrors "golang.org/x/xerrors"
 )
@@ -19,6 +20,7 @@ var _ = xerrors.Errorf
 var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
+var _ = zero.IsZeroVal
 
 func (t *PeerAddr) MarshalCBORBytes() ([]byte, error) {
 	w := bytes.NewBuffer(nil)
