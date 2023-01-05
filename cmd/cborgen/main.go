@@ -63,7 +63,7 @@ var mappings = []mapping{{
 		nimona.NetworkID{},
 	},
 }, {
-	file: "metadata_gen.go",
+	file: "message_metadata_gen.go",
 	types: []any{
 		nimona.Signature{},
 		nimona.Metadata{},
