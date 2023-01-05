@@ -14,7 +14,12 @@ type mapping struct {
 	pkg   string
 }
 
-var mappings = []mapping{{
+var mapEncoders = []mapping{{
+	file: "fixtures_cbor.go",
+	types: []any{
+		nimona.CborFixture{},
+	},
+}, {
 	file: "session_request_gen.go",
 	types: []any{
 		nimona.Request{},
@@ -78,7 +83,7 @@ var mappings = []mapping{{
 }}
 
 func main() {
-	for _, m := range mappings {
+	for _, m := range mapEncoders {
 		if m.pkg == "" {
 			m.pkg = "nimona"
 		}
