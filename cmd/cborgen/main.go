@@ -15,7 +15,7 @@ type mapping struct {
 }
 
 var mapEncoders = []mapping{{
-	file: "fixtures_cbor.go",
+	file: "fixtures_cbor_gen.go",
 	types: []any{
 		nimona.CborFixture{},
 	},

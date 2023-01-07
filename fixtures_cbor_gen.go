@@ -38,7 +38,7 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 11
+	fieldCount := 12
 
 	if zero.IsZeroVal(t.String) {
 		fieldCount--
@@ -84,6 +84,10 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 		fieldCount--
 	}
 
+	if zero.IsZeroVal(t.EphemeralString) {
+		fieldCount--
+	}
+
 	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
 		return err
 	}
@@ -91,14 +95,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.String (string) (string)
 	if !zero.IsZeroVal(t.String) {
 
-		if len("String") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"String\" was too long")
+		if len("string") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"string\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("String"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("string"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("String")); err != nil {
+		if _, err := io.WriteString(w, string("string")); err != nil {
 			return err
 		}
 
@@ -117,14 +121,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.Uint64 (uint64) (uint64)
 	if !zero.IsZeroVal(t.Uint64) {
 
-		if len("Uint64") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"Uint64\" was too long")
+		if len("uint64") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"uint64\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Uint64"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("uint64"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("Uint64")); err != nil {
+		if _, err := io.WriteString(w, string("uint64")); err != nil {
 			return err
 		}
 
@@ -137,14 +141,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.Int64 (int64) (int64)
 	if !zero.IsZeroVal(t.Int64) {
 
-		if len("Int64") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"Int64\" was too long")
+		if len("int64") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"int64\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Int64"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("int64"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("Int64")); err != nil {
+		if _, err := io.WriteString(w, string("int64")); err != nil {
 			return err
 		}
 
@@ -162,14 +166,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.Bytes ([]uint8) (slice)
 	if !zero.IsZeroVal(t.Bytes) {
 
-		if len("Bytes") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"Bytes\" was too long")
+		if len("bytes") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"bytes\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Bytes"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("bytes"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("Bytes")); err != nil {
+		if _, err := io.WriteString(w, string("bytes")); err != nil {
 			return err
 		}
 
@@ -189,14 +193,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.Bool (bool) (bool)
 	if !zero.IsZeroVal(t.Bool) {
 
-		if len("Bool") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"Bool\" was too long")
+		if len("bool") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"bool\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Bool"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("bool"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("Bool")); err != nil {
+		if _, err := io.WriteString(w, string("bool")); err != nil {
 			return err
 		}
 
@@ -208,14 +212,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.Map (nimona.CborFixture) (struct)
 	if t.Map != nil {
 
-		if len("Map") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"Map\" was too long")
+		if len("map") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"map\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Map"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("map"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("Map")); err != nil {
+		if _, err := io.WriteString(w, string("map")); err != nil {
 			return err
 		}
 
@@ -227,14 +231,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.RepeatedString ([]string) (slice)
 	if !zero.IsZeroVal(t.RepeatedString) {
 
-		if len("RepeatedString") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"RepeatedString\" was too long")
+		if len("repeatedstring") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"repeatedstring\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RepeatedString"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("repeatedstring"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("RepeatedString")); err != nil {
+		if _, err := io.WriteString(w, string("repeatedstring")); err != nil {
 			return err
 		}
 
@@ -262,14 +266,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.RepeatedUint64 ([]uint64) (slice)
 	if !zero.IsZeroVal(t.RepeatedUint64) {
 
-		if len("RepeatedUint64") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"RepeatedUint64\" was too long")
+		if len("repeateduint64") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"repeateduint64\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RepeatedUint64"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("repeateduint64"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("RepeatedUint64")); err != nil {
+		if _, err := io.WriteString(w, string("repeateduint64")); err != nil {
 			return err
 		}
 
@@ -290,14 +294,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.RepeatedInt64 ([]int64) (slice)
 	if !zero.IsZeroVal(t.RepeatedInt64) {
 
-		if len("RepeatedInt64") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"RepeatedInt64\" was too long")
+		if len("repeatedint64") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"repeatedint64\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RepeatedInt64"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("repeatedint64"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("RepeatedInt64")); err != nil {
+		if _, err := io.WriteString(w, string("repeatedint64")); err != nil {
 			return err
 		}
 
@@ -324,14 +328,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.RepeatedBytes ([][]uint8) (slice)
 	if !zero.IsZeroVal(t.RepeatedBytes) {
 
-		if len("RepeatedBytes") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"RepeatedBytes\" was too long")
+		if len("repeatedbytes") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"repeatedbytes\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RepeatedBytes"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("repeatedbytes"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("RepeatedBytes")); err != nil {
+		if _, err := io.WriteString(w, string("repeatedbytes")); err != nil {
 			return err
 		}
 
@@ -360,14 +364,14 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	// t.RepeatedMap ([]*nimona.CborFixture) (slice)
 	if !zero.IsZeroVal(t.RepeatedMap) {
 
-		if len("RepeatedMap") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"RepeatedMap\" was too long")
+		if len("repeatedmap") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"repeatedmap\" was too long")
 		}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RepeatedMap"))); err != nil {
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("repeatedmap"))); err != nil {
 			return err
 		}
-		if _, err := io.WriteString(w, string("RepeatedMap")); err != nil {
+		if _, err := io.WriteString(w, string("repeatedmap")); err != nil {
 			return err
 		}
 
@@ -382,6 +386,32 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 			if err := v.MarshalCBOR(cw); err != nil {
 				return err
 			}
+		}
+	}
+
+	// t.EphemeralString (string) (string)
+	if !zero.IsZeroVal(t.EphemeralString) {
+
+		if len("_ephemeralString") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"_ephemeralString\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("_ephemeralString"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("_ephemeralString")); err != nil {
+			return err
+		}
+
+		if len(t.EphemeralString) > cbg.MaxLength {
+			return xerrors.Errorf("Value in field t.EphemeralString was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.EphemeralString))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string(t.EphemeralString)); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -430,7 +460,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 
 		switch name {
 		// t.String (string) (string)
-		case "String":
+		case "string":
 
 			{
 				sval, err := cbg.ReadString(cr)
@@ -441,7 +471,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 				t.String = string(sval)
 			}
 			// t.Uint64 (uint64) (uint64)
-		case "Uint64":
+		case "uint64":
 
 			{
 
@@ -456,7 +486,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 
 			}
 			// t.Int64 (int64) (int64)
-		case "Int64":
+		case "int64":
 			{
 				maj, extra, err := cr.ReadHeader()
 				var extraI int64
@@ -482,7 +512,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 				t.Int64 = int64(extraI)
 			}
 			// t.Bytes ([]uint8) (slice)
-		case "Bytes":
+		case "bytes":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -504,7 +534,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 				return err
 			}
 			// t.Bool (bool) (bool)
-		case "Bool":
+		case "bool":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -522,7 +552,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
 			}
 			// t.Map (nimona.CborFixture) (struct)
-		case "Map":
+		case "map":
 
 			{
 
@@ -542,7 +572,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 
 			}
 			// t.RepeatedString ([]string) (slice)
-		case "RepeatedString":
+		case "repeatedstring":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -574,7 +604,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 			}
 
 			// t.RepeatedUint64 ([]uint64) (slice)
-		case "RepeatedUint64":
+		case "repeateduint64":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -608,7 +638,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 			}
 
 			// t.RepeatedInt64 ([]int64) (slice)
-		case "RepeatedInt64":
+		case "repeatedint64":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -655,7 +685,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 			}
 
 			// t.RepeatedBytes ([][]uint8) (slice)
-		case "RepeatedBytes":
+		case "repeatedbytes":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -703,7 +733,7 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 			}
 
 			// t.RepeatedMap ([]*nimona.CborFixture) (slice)
-		case "RepeatedMap":
+		case "repeatedmap":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -730,6 +760,18 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 				}
 
 				t.RepeatedMap[i] = &v
+			}
+
+			// t.EphemeralString (string) (string)
+		case "_ephemeralString":
+
+			{
+				sval, err := cbg.ReadString(cr)
+				if err != nil {
+					return err
+				}
+
+				t.EphemeralString = string(sval)
 			}
 
 		default:

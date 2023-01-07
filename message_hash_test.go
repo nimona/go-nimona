@@ -28,7 +28,7 @@ func TestMessageHash_Ping(t *testing.T) {
 		}},
 	}
 
-	exp := "G2EADnKZjoB4NuLX9woYE9AzXF6bBdnX6pjmRiBdcDdc"
+	exp := "ANYEibdUhncK5kumasnV7Q3FsF4PBpL1GbyiZd3QN1XA"
 
 	t.Run("test marshaling", func(t *testing.T) {
 		b, err := m.MarshalCBORBytes()
