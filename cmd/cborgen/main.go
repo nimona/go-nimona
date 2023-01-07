@@ -80,6 +80,12 @@ var mapEncoders = []mapping{{
 		nimona.KeyStreamDelegatorSeal{},
 		nimona.KeyStream{},
 	},
+}, {
+	file: "stream_gen.go",
+	types: []any{
+		nimona.StreamOperation{},
+		nimona.StreamPatch{},
+	},
 }}
 
 func main() {
