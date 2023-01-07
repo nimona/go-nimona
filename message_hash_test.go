@@ -65,4 +65,11 @@ func TestMessageHash_Ping(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
+
+	t.Run("ephemeral fields should not affect hash", func(t *testing.T) {
+		m.EphemeralString = "foo"
+		h, err := MessageHash(m)
+		require.NoError(t, err)
+		require.Equal(t, exp, h.String())
+	})
 }

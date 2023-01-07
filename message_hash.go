@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/mr-tron/base58"
 	cbg "github.com/whyrusleeping/cbor-gen"
@@ -85,10 +86,16 @@ func (h byKHash) Less(i, j int) bool {
 func messageHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	e := byKHash{}
 	for i := uint64(0); i < extra; i++ {
+		// read the key
 		key, err := cbg.ReadString(r)
 		if err != nil {
 			return h, err
 		}
+		// skip ephemeral fields
+		if strings.HasPrefix(key, "_") {
+			continue
+		}
+		// read the value
 		valMaj, extra, err := r.ReadHeader()
 		if err != nil {
 			return h, fmt.Errorf("error reading value header: %s", err)
