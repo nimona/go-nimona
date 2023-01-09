@@ -96,8 +96,13 @@ func (t *DocumentID) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	// t._ (string) (string)
-	// - ignored
 
+	{
+		_, err := cbg.ReadString(cr)
+		if err != nil {
+			return err
+		}
+	}
 	// t.DocumentHash (nimona.Hash) (array)
 
 	maj, extra, err = cr.ReadHeader()

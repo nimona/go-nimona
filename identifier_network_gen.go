@@ -95,8 +95,13 @@ func (t *NetworkID) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	// t._ (string) (string)
-	// - ignored
 
+	{
+		_, err := cbg.ReadString(cr)
+		if err != nil {
+			return err
+		}
+	}
 	// t.Hostname (string) (string)
 
 	{

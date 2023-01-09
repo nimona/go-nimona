@@ -96,8 +96,13 @@ func (t *PeerID) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	// t._ (string) (string)
-	// - ignored
 
+	{
+		_, err := cbg.ReadString(cr)
+		if err != nil {
+			return err
+		}
+	}
 	// t.PublicKey (ed25519.PublicKey) (slice)
 
 	maj, extra, err = cr.ReadHeader()
