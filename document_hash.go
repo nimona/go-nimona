@@ -56,10 +56,10 @@ func NewDocumentHash(c Cborer) (h Hash, err error) {
 		return h, err
 	}
 
-	return DocumentHashFromCBOR(b)
+	return NewDocumentHashFromCBOR(b)
 }
 
-func DocumentHashFromCBOR(b []byte) (h Hash, err error) {
+func NewDocumentHashFromCBOR(b []byte) (h Hash, err error) {
 	r := cbg.NewCborReader(bytes.NewReader(b))
 	maj, n, err := r.ReadHeader()
 	if err != nil {

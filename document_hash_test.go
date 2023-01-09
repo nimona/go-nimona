@@ -46,7 +46,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("from cbor", func(t *testing.T) {
-		h, err := DocumentHashFromCBOR(b)
+		h, err := NewDocumentHashFromCBOR(b)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
