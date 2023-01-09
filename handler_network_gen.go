@@ -43,7 +43,7 @@ func (t *NetworkInfoRequest) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.Type (string) (string)
+	// t._ (string) (string)
 	if len("$type") > cbg.MaxLength {
 		return xerrors.Errorf("Value in field \"$type\" was too long")
 	}
@@ -106,17 +106,7 @@ func (t *NetworkInfoRequest) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 
 		switch name {
-		// t.Type (string) (string)
-		case "$type":
-
-			{
-				sval, err := cbg.ReadString(cr)
-				if err != nil {
-					return err
-				}
-
-				t.Type = string(sval)
-			}
+		// t._ (string) (string) - ignored
 
 		default:
 			// Field doesn't exist on this type, so ignore it
@@ -144,11 +134,11 @@ func (t *NetworkInfo) MarshalCBOR(w io.Writer) error {
 
 	cw := cbg.NewCborWriter(w)
 
-	if _, err := cw.Write([]byte{163}); err != nil {
+	if _, err := cw.Write([]byte{165}); err != nil {
 		return err
 	}
 
-	// t.Type (string) (string)
+	// t._ (string) (string)
 	if len("$type") > cbg.MaxLength {
 		return xerrors.Errorf("Value in field \"$type\" was too long")
 	}
@@ -164,6 +154,22 @@ func (t *NetworkInfo) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	if _, err := io.WriteString(w, string("core/network/info")); err != nil {
+		return err
+	}
+
+	// t.Metadata (nimona.Metadata) (struct)
+	if len("metadata") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"metadata\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("metadata"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("metadata")); err != nil {
+		return err
+	}
+
+	if err := t.Metadata.MarshalCBOR(cw); err != nil {
 		return err
 	}
 
@@ -206,6 +212,30 @@ func (t *NetworkInfo) MarshalCBOR(w io.Writer) error {
 		if err := v.MarshalCBOR(cw); err != nil {
 			return err
 		}
+	}
+
+	// t.RawBytes ([]uint8) (slice)
+	if len("rawBytes") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"rawBytes\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("rawBytes"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("rawBytes")); err != nil {
+		return err
+	}
+
+	if len(t.RawBytes) > cbg.ByteArrayMaxLen {
+		return xerrors.Errorf("Byte array in field t.RawBytes was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajByteString, uint64(len(t.RawBytes))); err != nil {
+		return err
+	}
+
+	if _, err := cw.Write(t.RawBytes[:]); err != nil {
+		return err
 	}
 	return nil
 }
@@ -252,16 +282,17 @@ func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 
 		switch name {
-		// t.Type (string) (string)
-		case "$type":
+		// t._ (string) (string) - ignored
+
+		// t.Metadata (nimona.Metadata) (struct)
+		case "metadata":
 
 			{
-				sval, err := cbg.ReadString(cr)
-				if err != nil {
-					return err
+
+				if err := t.Metadata.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.Metadata: %w", err)
 				}
 
-				t.Type = string(sval)
 			}
 			// t.NetworkID (nimona.NetworkID) (struct)
 		case "networkID":
@@ -301,6 +332,29 @@ func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
 				}
 
 				t.PeerAddresses[i] = v
+			}
+
+			// t.RawBytes ([]uint8) (slice)
+		case "rawBytes":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+
+			if extra > cbg.ByteArrayMaxLen {
+				return fmt.Errorf("t.RawBytes: byte array too large (%d)", extra)
+			}
+			if maj != cbg.MajByteString {
+				return fmt.Errorf("expected byte array")
+			}
+
+			if extra > 0 {
+				t.RawBytes = make([]uint8, extra)
+			}
+
+			if _, err := io.ReadFull(cr, t.RawBytes[:]); err != nil {
+				return err
 			}
 
 		default:

@@ -7,12 +7,14 @@ import (
 
 type (
 	NetworkInfoRequest struct {
-		Type string `cborgen:"$type,const=core/network/info.request"`
+		_ string `cborgen:"$type,const=core/network/info.request"`
 	}
 	NetworkInfo struct {
-		Type          string     `cborgen:"$type,const=core/network/info"`
+		_             string     `cborgen:"$type,const=core/network/info"`
+		Metadata      Metadata   `cborgen:"metadata"`
 		NetworkID     NetworkID  `cborgen:"networkID"`
 		PeerAddresses []PeerAddr `cborgen:"peerAddresses"`
+		RawBytes      []byte     `cborgen:"rawBytes"`
 	}
 )
 
