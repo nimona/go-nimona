@@ -63,11 +63,6 @@ var mapEncoders = []mapping{{
 		nimona.NetworkInfo{},
 	},
 }, {
-	file: "identifier_network_gen.go",
-	types: []any{
-		nimona.NetworkID{},
-	},
-}, {
 	file: "message_metadata_gen.go",
 	types: []any{
 		nimona.Signature{},
@@ -88,12 +83,44 @@ var mapEncoders = []mapping{{
 	},
 }}
 
+var tupleEncoders = []mapping{{
+	file: "identifier_document_gen.go",
+	types: []any{
+		nimona.DocumentID{},
+	},
+}, {
+	file: "identifier_network_gen.go",
+	types: []any{
+		nimona.NetworkID{},
+	},
+}, {
+	file: "identifier_peer_gen.go",
+	types: []any{
+		nimona.PeerID{},
+	},
+}}
+
 func main() {
 	for _, m := range mapEncoders {
 		if m.pkg == "" {
 			m.pkg = "nimona"
 		}
 		err := cbg.WriteMapEncodersToFile(
+			m.file,
+			m.pkg,
+			m.types...,
+		)
+		if err != nil {
+			panic(
+				fmt.Sprintf("error writing %s, err: %s", m.file, err),
+			)
+		}
+	}
+	for _, m := range tupleEncoders {
+		if m.pkg == "" {
+			m.pkg = "nimona"
+		}
+		err := cbg.WriteTupleEncodersToFile(
 			m.file,
 			m.pkg,
 			m.types...,
