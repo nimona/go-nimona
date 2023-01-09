@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMessageHash_Ping(t *testing.T) {
+func TestDocumentHash_Ping(t *testing.T) {
 	m := &CborFixture{
 		String: "foo",
 		Uint64: 42,
@@ -46,13 +46,13 @@ func TestMessageHash_Ping(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("from cbor", func(t *testing.T) {
-		h, err := MessageHashFromCBOR(b)
+		h, err := DocumentHashFromCBOR(b)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("from cborer", func(t *testing.T) {
-		h, err := NewMessageHash(m)
+		h, err := NewDocumentHash(m)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
@@ -62,20 +62,20 @@ func TestMessageHash_Ping(t *testing.T) {
 		err = g.UnmarshalCBORBytes(b)
 		require.NoError(t, err)
 
-		h, err := NewMessageHash(g)
+		h, err := NewDocumentHash(g)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("ephemeral fields should not affect hash", func(t *testing.T) {
 		m.EphemeralString = "foo"
-		h, err := NewMessageHash(m)
+		h, err := NewDocumentHash(m)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
 }
 
-func TestMessageHash_NewRandomHash(t *testing.T) {
+func TestDocumentHash_NewRandomHash(t *testing.T) {
 	t.Run("test random hash", func(t *testing.T) {
 		h1 := NewRandomHash(t)
 		h2 := NewRandomHash(t)
@@ -91,7 +91,7 @@ func NewRandomHash(t *testing.T) Hash {
 		String: uuid.New().String(),
 	}
 
-	hash, err := NewMessageHash(doc)
+	hash, err := NewDocumentHash(doc)
 	require.NoError(t, err)
 
 	return hash

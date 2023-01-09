@@ -34,8 +34,8 @@ func HashFromBase58(s string) (Hash, error) {
 	return h, nil
 }
 
-// messageHashRaw hash the given value using sha256, prepending the given type
-func messageHashRaw(t string, b []byte) [hashLength]byte {
+// documentHashRaw hash the given value using sha256, prepending the given type
+func documentHashRaw(t string, b []byte) [hashLength]byte {
 	if !slices.Contains([]string{
 		"s", "i", "u", "b", "d", "a", "m",
 	}, t) {
@@ -50,16 +50,16 @@ func messageHashRaw(t string, b []byte) [hashLength]byte {
 	return r
 }
 
-func NewMessageHash(c Cborer) (h Hash, err error) {
+func NewDocumentHash(c Cborer) (h Hash, err error) {
 	b, err := c.MarshalCBORBytes()
 	if err != nil {
 		return h, err
 	}
 
-	return MessageHashFromCBOR(b)
+	return DocumentHashFromCBOR(b)
 }
 
-func MessageHashFromCBOR(b []byte) (h Hash, err error) {
+func DocumentHashFromCBOR(b []byte) (h Hash, err error) {
 	r := cbg.NewCborReader(bytes.NewReader(b))
 	maj, n, err := r.ReadHeader()
 	if err != nil {
@@ -70,15 +70,15 @@ func MessageHashFromCBOR(b []byte) (h Hash, err error) {
 		return h, fmt.Errorf("cannot hash non maps")
 	}
 
-	return messageHashMap(r, n)
+	return documentHashMap(r, n)
 }
 
-type MessageHashEntry struct {
+type DocumentHashEntry struct {
 	khash [hashLength]byte
 	vhash [hashLength]byte
 }
 
-type byKHash []MessageHashEntry
+type byKHash []DocumentHashEntry
 
 func (h byKHash) Len() int      { return len(h) }
 func (h byKHash) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
@@ -87,7 +87,7 @@ func (h byKHash) Less(i, j int) bool {
 		h[j].khash[:]) < 0
 }
 
-func messageHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	e := byKHash{}
 	for i := uint64(0); i < extra; i++ {
 		// read the key
@@ -107,29 +107,29 @@ func messageHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err er
 		var hh [hashLength]byte
 		switch valMaj {
 		case cbg.MajMap:
-			hh, err = messageHashMap(r, extra)
+			hh, err = documentHashMap(r, extra)
 		case cbg.MajUnsignedInt:
-			hh, err = messageHashUInt(r, extra)
+			hh, err = documentHashUInt(r, extra)
 		case cbg.MajNegativeInt:
-			hh, err = messageHashInt(r, extra)
+			hh, err = documentHashInt(r, extra)
 		case cbg.MajByteString:
-			hh, err = messageHashByteString(r, extra)
+			hh, err = documentHashByteString(r, extra)
 		case cbg.MajTextString:
-			hh, err = messageHashTextString(r, extra)
+			hh, err = documentHashTextString(r, extra)
 		case cbg.MajArray:
-			hh, err = messageHashArray(r, extra)
+			hh, err = documentHashArray(r, extra)
 		// case cbg.MajTag:
-		// 	hh, err = messageHashTag(r, extra)
+		// 	hh, err = documentHashTag(r, extra)
 		case cbg.MajOther: // bool
-			hh, err = messageHashOther(r, extra)
+			hh, err = documentHashOther(r, extra)
 		default:
 			panic(fmt.Errorf("unhandled major type: %d", valMaj))
 		}
 		if err != nil {
 			return h, err
 		}
-		e = append(e, MessageHashEntry{
-			khash: messageHashRaw("s", []byte(key)),
+		e = append(e, DocumentHashEntry{
+			khash: documentHashRaw("s", []byte(key)),
 			vhash: hh,
 		})
 	}
@@ -140,45 +140,45 @@ func messageHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err er
 		hr.Write(ee.khash[:])
 		hr.Write(ee.vhash[:])
 	}
-	return messageHashRaw("m", hr.Bytes()), nil
+	return documentHashRaw("m", hr.Bytes()), nil
 }
 
-func messageHashUInt(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashUInt(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	extraI := int64(extra)
 	if extraI < 0 {
 		return h, fmt.Errorf("int64 positive overflow")
 	}
-	return messageHashRaw("u", []byte(fmt.Sprintf("%d", extraI))), nil
+	return documentHashRaw("u", []byte(fmt.Sprintf("%d", extraI))), nil
 }
 
-func messageHashInt(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashInt(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	extraI := int64(extra)
 	if extraI < 0 {
 		return h, fmt.Errorf("int64 negative oveflow")
 	}
 	extraI = -1 - extraI
-	return messageHashRaw("i", []byte(fmt.Sprintf("%d", extraI))), nil
+	return documentHashRaw("i", []byte(fmt.Sprintf("%d", extraI))), nil
 }
 
-func messageHashByteString(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashByteString(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	b := make([]byte, extra)
 	_, err = r.Read(b)
 	if err != nil {
 		return h, err
 	}
-	return messageHashRaw("d", b), nil
+	return documentHashRaw("d", b), nil
 }
 
-func messageHashTextString(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashTextString(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	b := make([]byte, extra)
 	_, err = r.Read(b)
 	if err != nil {
 		return h, err
 	}
-	return messageHashRaw("s", b), nil
+	return documentHashRaw("s", b), nil
 }
 
-func messageHashArray(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashArray(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	hr := new(bytes.Buffer)
 	for i := uint64(0); i < extra; i++ {
 		valMaj, extra, err := r.ReadHeader()
@@ -188,21 +188,21 @@ func messageHashArray(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err 
 		var hh [hashLength]byte
 		switch valMaj {
 		case cbg.MajMap:
-			hh, err = messageHashMap(r, extra)
+			hh, err = documentHashMap(r, extra)
 		case cbg.MajUnsignedInt:
-			hh, err = messageHashUInt(r, extra)
+			hh, err = documentHashUInt(r, extra)
 		case cbg.MajNegativeInt:
-			hh, err = messageHashInt(r, extra)
+			hh, err = documentHashInt(r, extra)
 		case cbg.MajByteString:
-			hh, err = messageHashByteString(r, extra)
+			hh, err = documentHashByteString(r, extra)
 		case cbg.MajTextString:
-			hh, err = messageHashTextString(r, extra)
+			hh, err = documentHashTextString(r, extra)
 		// case cbg.MajArray:
-		// 	hh, err = messageHashArray(r, extra)
+		// 	hh, err = documentHashArray(r, extra)
 		// case cbg.MajTag:
-		// 	hh, err = messageHashTag(r, extra)
+		// 	hh, err = documentHashTag(r, extra)
 		// case cbg.MajOther: // bool
-		// 	hh, err = messageHashOther(r, extra)
+		// 	hh, err = documentHashOther(r, extra)
 		default:
 			panic("unhandled major type, " + fmt.Sprintf("%d", valMaj))
 		}
@@ -211,21 +211,21 @@ func messageHashArray(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err 
 		}
 		hr.Write(hh[:])
 	}
-	return messageHashRaw("a", hr.Bytes()), nil
+	return documentHashRaw("a", hr.Bytes()), nil
 }
 
-func messageHashTag(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
-	panic("messageHashTag not implemented")
+func documentHashTag(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+	panic("documentHashTag not implemented")
 }
 
-func messageHashOther(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashOther(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	switch extra {
 	case 20: // false
-		return messageHashRaw("b", []byte{0}), nil
+		return documentHashRaw("b", []byte{0}), nil
 	case 21: // true
-		return messageHashRaw("b", []byte{1}), nil
+		return documentHashRaw("b", []byte{1}), nil
 	case 22: // null
-		return messageHashRaw("b", []byte{0}), nil
+		return documentHashRaw("b", []byte{0}), nil
 	default:
 		return h, fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
 	}
