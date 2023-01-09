@@ -53,7 +53,7 @@ func (t *DocumentID) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.DocumentHash ([]uint8) (slice)
+	// t.DocumentHash (nimona.Hash) (array)
 	if len(t.DocumentHash) > cbg.ByteArrayMaxLen {
 		return xerrors.Errorf("Byte array in field t.DocumentHash was too long")
 	}
@@ -98,7 +98,7 @@ func (t *DocumentID) UnmarshalCBOR(r io.Reader) (err error) {
 	// t._ (string) (string)
 	// - ignored
 
-	// t.DocumentHash ([]uint8) (slice)
+	// t.DocumentHash (nimona.Hash) (array)
 
 	maj, extra, err = cr.ReadHeader()
 	if err != nil {
@@ -112,9 +112,11 @@ func (t *DocumentID) UnmarshalCBOR(r io.Reader) (err error) {
 		return fmt.Errorf("expected byte array")
 	}
 
-	if extra > 0 {
-		t.DocumentHash = make([]uint8, extra)
+	if extra != 32 {
+		return fmt.Errorf("expected array to have 32 elements")
 	}
+
+	t.DocumentHash = [32]uint8{}
 
 	if _, err := io.ReadFull(cr, t.DocumentHash[:]); err != nil {
 		return err
