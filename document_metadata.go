@@ -6,11 +6,12 @@ import (
 
 type (
 	Metadata struct {
-		Owner     string       `cborgen:"owner"`
-		Timestamp cbg.CborTime `cborgen:"timestamp"`
-		Signature Signature    `cborgen:"_signature"`
+		Owner     string       `cborgen:"owner,omitempty"`
+		Timestamp cbg.CborTime `cborgen:"timestamp,omitempty"`
+		Signature Signature    `cborgen:"_signature,omitempty"`
 	}
 	Signature struct {
-		X []byte `cborgen:"x"`
+		Signer PeerID `cborgen:"signer"`
+		X      []byte `cborgen:"x"`
 	}
 )
