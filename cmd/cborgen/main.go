@@ -63,7 +63,7 @@ var mapEncoders = []mapping{{
 		nimona.NetworkInfo{},
 	},
 }, {
-	file: "message_metadata_gen.go",
+	file: "document_metadata_gen.go",
 	types: []any{
 		nimona.Signature{},
 		nimona.Metadata{},
