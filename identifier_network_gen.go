@@ -22,6 +22,8 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
+var lengthBufNetworkID = []byte{130}
+
 func (t *NetworkID) MarshalCBORBytes() ([]byte, error) {
 	w := bytes.NewBuffer(nil)
 	err := t.MarshalCBOR(w)
@@ -39,22 +41,19 @@ func (t *NetworkID) MarshalCBOR(w io.Writer) error {
 
 	cw := cbg.NewCborWriter(w)
 
-	if _, err := cw.Write([]byte{161}); err != nil {
+	if _, err := cw.Write(lengthBufNetworkID); err != nil {
+		return err
+	}
+
+	// t._ (string) (string)
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("nimona://net"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("nimona://net")); err != nil {
 		return err
 	}
 
 	// t.Hostname (string) (string)
-	if len("Hostname") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"Hostname\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Hostname"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("Hostname")); err != nil {
-		return err
-	}
-
 	if len(t.Hostname) > cbg.MaxLength {
 		return xerrors.Errorf("Value in field t.Hostname was too long")
 	}
@@ -87,46 +86,26 @@ func (t *NetworkID) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 	}()
 
-	if maj != cbg.MajMap {
-		return fmt.Errorf("cbor input should be of type map")
+	if maj != cbg.MajArray {
+		return fmt.Errorf("cbor input should be of type array")
 	}
 
-	if extra > cbg.MaxLength {
-		return fmt.Errorf("NetworkID: map struct too large (%d)", extra)
+	if extra != 2 {
+		return fmt.Errorf("cbor input had wrong number of fields")
 	}
 
-	var name string
-	n := extra
+	// t._ (string) (string)
+	// - ignored
 
-	for i := uint64(0); i < n; i++ {
+	// t.Hostname (string) (string)
 
-		{
-			sval, err := cbg.ReadString(cr)
-			if err != nil {
-				return err
-			}
-
-			name = string(sval)
+	{
+		sval, err := cbg.ReadString(cr)
+		if err != nil {
+			return err
 		}
 
-		switch name {
-		// t.Hostname (string) (string)
-		case "Hostname":
-
-			{
-				sval, err := cbg.ReadString(cr)
-				if err != nil {
-					return err
-				}
-
-				t.Hostname = string(sval)
-			}
-
-		default:
-			// Field doesn't exist on this type, so ignore it
-			cbg.ScanForLinks(r, func(cid.Cid) {})
-		}
+		t.Hostname = string(sval)
 	}
-
 	return nil
 }
