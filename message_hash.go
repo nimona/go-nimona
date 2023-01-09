@@ -20,6 +20,10 @@ func (h Hash) String() string {
 	return base58.Encode(h[:])
 }
 
+func (h Hash) IsEqual(other Hash) bool {
+	return bytes.Equal(h[:], other[:])
+}
+
 func HashFromBase58(s string) (Hash, error) {
 	var h Hash
 	b, err := base58.Decode(s)
@@ -46,7 +50,7 @@ func messageHashRaw(t string, b []byte) [hashLength]byte {
 	return r
 }
 
-func MessageHash(c Cborer) (h Hash, err error) {
+func NewMessageHash(c Cborer) (h Hash, err error) {
 	b, err := c.MarshalCBORBytes()
 	if err != nil {
 		return h, err

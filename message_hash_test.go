@@ -3,6 +3,7 @@ package nimona
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,7 +52,7 @@ func TestMessageHash_Ping(t *testing.T) {
 	})
 
 	t.Run("from cborer", func(t *testing.T) {
-		h, err := MessageHash(m)
+		h, err := NewMessageHash(m)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
@@ -61,15 +62,37 @@ func TestMessageHash_Ping(t *testing.T) {
 		err = g.UnmarshalCBORBytes(b)
 		require.NoError(t, err)
 
-		h, err := MessageHash(g)
+		h, err := NewMessageHash(g)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("ephemeral fields should not affect hash", func(t *testing.T) {
 		m.EphemeralString = "foo"
-		h, err := MessageHash(m)
+		h, err := NewMessageHash(m)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
 	})
+}
+
+func TestMessageHash_NewRandomHash(t *testing.T) {
+	t.Run("test random hash", func(t *testing.T) {
+		h1 := NewRandomHash(t)
+		h2 := NewRandomHash(t)
+		require.NotEqual(t, h1, h2)
+	})
+}
+
+// NewRandomHash returns a random hash for testing purposes.
+func NewRandomHash(t *testing.T) Hash {
+	t.Helper()
+
+	doc := &CborFixture{
+		String: uuid.New().String(),
+	}
+
+	hash, err := NewMessageHash(doc)
+	require.NoError(t, err)
+
+	return hash
 }
