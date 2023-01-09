@@ -11,7 +11,7 @@ type Signature struct {
 	X      []byte `cborgen:"x"`
 }
 
-func NewDocumentSignature(sk ed25519.PrivateKey, hash Hash) (*Signature, error) {
+func NewDocumentSignature(sk ed25519.PrivateKey, hash DocumentHash) (*Signature, error) {
 	sig, err := sk.Sign(nil, hash[:], &ed25519.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("error signing document: %w", err)

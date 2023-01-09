@@ -14,18 +14,18 @@ import (
 
 const hashLength = 32
 
-type Hash [hashLength]byte
+type DocumentHash [hashLength]byte
 
-func (h Hash) String() string {
+func (h DocumentHash) String() string {
 	return base58.Encode(h[:])
 }
 
-func (h Hash) IsEqual(other Hash) bool {
+func (h DocumentHash) IsEqual(other DocumentHash) bool {
 	return bytes.Equal(h[:], other[:])
 }
 
-func HashFromBase58(s string) (Hash, error) {
-	var h Hash
+func DocumentHashFromBase58(s string) (DocumentHash, error) {
+	var h DocumentHash
 	b, err := base58.Decode(s)
 	if err != nil {
 		return h, err
@@ -50,7 +50,7 @@ func documentHashRaw(t string, b []byte) [hashLength]byte {
 	return r
 }
 
-func NewDocumentHash(c Cborer) (h Hash, err error) {
+func NewDocumentHash(c Cborer) (h DocumentHash, err error) {
 	b, err := c.MarshalCBORBytes()
 	if err != nil {
 		return h, err
@@ -59,7 +59,7 @@ func NewDocumentHash(c Cborer) (h Hash, err error) {
 	return NewDocumentHashFromCBOR(b)
 }
 
-func NewDocumentHashFromCBOR(b []byte) (h Hash, err error) {
+func NewDocumentHashFromCBOR(b []byte) (h DocumentHash, err error) {
 	r := cbg.NewCborReader(bytes.NewReader(b))
 	maj, n, err := r.ReadHeader()
 	if err != nil {
@@ -78,17 +78,17 @@ type DocumentHashEntry struct {
 	vhash [hashLength]byte
 }
 
-type byKHash []DocumentHashEntry
+type byKDocumentHash []DocumentHashEntry
 
-func (h byKHash) Len() int      { return len(h) }
-func (h byKHash) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
-func (h byKHash) Less(i, j int) bool {
+func (h byKDocumentHash) Len() int      { return len(h) }
+func (h byKDocumentHash) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+func (h byKDocumentHash) Less(i, j int) bool {
 	return bytes.Compare(h[i].khash[:],
 		h[j].khash[:]) < 0
 }
 
 func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
-	e := byKHash{}
+	e := byKDocumentHash{}
 	for i := uint64(0); i < extra; i++ {
 		// read the key
 		key, err := cbg.ReadString(r)
@@ -134,7 +134,7 @@ func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err e
 		})
 	}
 
-	sort.Sort(byKHash(e))
+	sort.Sort(byKDocumentHash(e))
 	hr := new(bytes.Buffer)
 	for _, ee := range e {
 		hr.Write(ee.khash[:])

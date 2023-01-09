@@ -7,7 +7,7 @@ import (
 )
 
 func NewDocumentID(v Cborer) DocumentID {
-	hash, err := NewMessageHash(v)
+	hash, err := NewDocumentHash(v)
 	if err != nil {
 		panic(fmt.Errorf("error creating document id: %w", err))
 	}
@@ -23,7 +23,7 @@ func ParseDocumentID(pID string) (DocumentID, error) {
 	}
 
 	pID = strings.TrimPrefix(pID, prefix)
-	hash, err := HashFromBase58(pID)
+	hash, err := DocumentHashFromBase58(pID)
 	if err != nil {
 		return DocumentID{}, fmt.Errorf("invalid resource id")
 	}
@@ -33,7 +33,7 @@ func ParseDocumentID(pID string) (DocumentID, error) {
 
 type DocumentID struct {
 	_            string `cborgen:"$prefix,const=nimona://doc"`
-	DocumentHash Hash
+	DocumentHash DocumentHash
 }
 
 func (p DocumentID) String() string {

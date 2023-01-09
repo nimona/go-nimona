@@ -11,7 +11,7 @@ func TestDocumentID_Marshal(t *testing.T) {
 		String: "foo",
 	}
 
-	hash, err := NewMessageHash(doc)
+	hash, err := NewDocumentHash(doc)
 	require.NoError(t, err)
 
 	id := &DocumentID{

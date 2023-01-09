@@ -84,7 +84,7 @@ func TestDocumentHash_NewRandomHash(t *testing.T) {
 }
 
 // NewRandomHash returns a random hash for testing purposes.
-func NewRandomHash(t *testing.T) Hash {
+func NewRandomHash(t *testing.T) DocumentHash {
 	t.Helper()
 
 	doc := &CborFixture{
