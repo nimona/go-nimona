@@ -1,0 +1,19 @@
+name: CI
+on:
+  push:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2.4.0
+      - name: Install Nix
+        uses: cachix/install-nix-action@v18
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Install Devbox
+        run: curl -fsSL https://get.jetpack.io/devbox | bash -s -- -f
+      - name: Run linter
+        run: devbox shell -- task lint

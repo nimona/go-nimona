@@ -68,15 +68,6 @@ tasks:
     cmds:
       - go install github.com/frapposelli/wwhrd@{{.WWHRD_VERSION}}
 
-  install-go-linting-tools:
-    run: once
-    deps:
-      - init-bin
-    status:
-      - go version -m {{.BIN}}/golangci-lint | grep github.com/golangci/golangci-lint | grep {{.GOLANGCI_LINT_VERSION}}
-    cmds:
-      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
-
   install-deps-tools:
     run: once
     deps:
@@ -85,6 +76,11 @@ tasks:
       - go version -m {{.BIN}}/go-mod-upgrade | grep github.com/oligot/go-mod-upgrade | grep {{.GO_MOD_UPGRADE_VERSION}}
     cmds:
       - go install github.com/oligot/go-mod-upgrade@{{.GO_MOD_UPGRADE_VERSION}}
+
+  lint:
+    run: once
+    cmds:
+      - "golangci-lint run"
 
   generate:
     deps:
