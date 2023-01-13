@@ -53,7 +53,7 @@ func documentHashRaw(t string, b []byte) [hashLength]byte {
 func NewDocumentHash(c Cborer) (h DocumentHash, err error) {
 	b, err := c.MarshalCBORBytes()
 	if err != nil {
-		return h, err
+		return h, fmt.Errorf("error marshaling cbor: %s", err)
 	}
 
 	return NewDocumentHashFromCBOR(b)
@@ -63,14 +63,19 @@ func NewDocumentHashFromCBOR(b []byte) (h DocumentHash, err error) {
 	r := cbg.NewCborReader(bytes.NewReader(b))
 	maj, n, err := r.ReadHeader()
 	if err != nil {
-		return h, err
+		return h, fmt.Errorf("error reading header: %s", err)
 	}
 
 	if maj != cbg.MajMap {
 		return h, fmt.Errorf("cannot hash non maps")
 	}
 
-	return documentHashMap(r, n)
+	h, err = documentHashMap(r, n)
+	if err != nil {
+		return h, fmt.Errorf("error hashing map: %s", err)
+	}
+
+	return h, nil
 }
 
 type DocumentHashEntry struct {
@@ -93,7 +98,7 @@ func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err e
 		// read the key
 		key, err := cbg.ReadString(r)
 		if err != nil {
-			return h, err
+			return h, fmt.Errorf("error reading key: %w", err)
 		}
 		// skip ephemeral fields
 		if strings.HasPrefix(key, "_") {
@@ -113,12 +118,22 @@ func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err e
 		case cbg.MajNegativeInt:
 			hh, err = documentHashInt(r, extra)
 		case cbg.MajByteString:
+			if extra == 0 {
+				continue
+			}
 			hh, err = documentHashByteString(r, extra)
 		case cbg.MajTextString:
+			if extra == 0 {
+				continue
+			}
 			hh, err = documentHashTextString(r, extra)
 		case cbg.MajArray:
+			if extra == 0 {
+				continue
+			}
 			hh, err = documentHashArray(r, extra)
-		// case cbg.MajTag:
+		case cbg.MajTag:
+			panic("tags not supported")
 		// 	hh, err = documentHashTag(r, extra)
 		case cbg.MajOther: // bool
 			hh, err = documentHashOther(r, extra)
@@ -126,7 +141,7 @@ func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err e
 			panic(fmt.Errorf("unhandled major type: %d", valMaj))
 		}
 		if err != nil {
-			return h, err
+			return h, fmt.Errorf("error hashing value of key %s: %w", key, err)
 		}
 		e = append(e, DocumentHashEntry{
 			khash: documentHashRaw("s", []byte(key)),
@@ -164,7 +179,7 @@ func documentHashByteString(r *cbg.CborReader, extra uint64) (h [hashLength]byte
 	b := make([]byte, extra)
 	_, err = r.Read(b)
 	if err != nil {
-		return h, err
+		return h, fmt.Errorf("error reading byte string: %s", err)
 	}
 	return documentHashRaw("d", b), nil
 }
@@ -197,11 +212,14 @@ func documentHashArray(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err
 			hh, err = documentHashByteString(r, extra)
 		case cbg.MajTextString:
 			hh, err = documentHashTextString(r, extra)
-		// case cbg.MajArray:
-		// 	hh, err = documentHashArray(r, extra)
-		// case cbg.MajTag:
+		case cbg.MajArray:
+			panic("nested arrays not supported")
+			// hh, err = documentHashArray(r, extra)
+		case cbg.MajTag:
+			panic("arrays of tags not supported")
 		// 	hh, err = documentHashTag(r, extra)
-		// case cbg.MajOther: // bool
+		case cbg.MajOther: // bool
+			panic("arrays of bools not supported")
 		// 	hh, err = documentHashOther(r, extra)
 		default:
 			panic("unhandled major type, " + fmt.Sprintf("%d", valMaj))

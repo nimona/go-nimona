@@ -35,11 +35,18 @@ func TestDocumentHash_Ping(t *testing.T) {
 		b, err := m.MarshalCBORBytes()
 		require.NoError(t, err)
 
-		g := &CborFixture{}
-		err = g.UnmarshalCBORBytes(b)
-		require.NoError(t, err)
+		t.Run("test hashing", func(t *testing.T) {
+			h, err := NewDocumentHash(m)
+			require.NoError(t, err)
+			require.Equal(t, exp, h.String())
+		})
 
-		require.Equal(t, m, g)
+		t.Run("test unmarshaling", func(t *testing.T) {
+			g := &CborFixture{}
+			err = g.UnmarshalCBORBytes(b)
+			require.NoError(t, err)
+			require.Equal(t, m, g)
+		})
 	})
 
 	b, err := m.MarshalCBORBytes()
@@ -72,6 +79,25 @@ func TestDocumentHash_Ping(t *testing.T) {
 		h, err := NewDocumentHash(m)
 		require.NoError(t, err)
 		require.Equal(t, exp, h.String())
+	})
+
+	t.Run("add document id", func(t *testing.T) {
+		m.DocumentID = NewDocumentIDFromCBOR(b)
+		exp := "7BWGuG4uUwVFQpdMXaca3rnkz2BvKPNoN2MRgXBr8KjF"
+
+		HexPrint(m)
+
+		t.Run("test hashing", func(t *testing.T) {
+			h, err := NewDocumentHash(m)
+			require.NoError(t, err)
+			require.Equal(t, exp, h.String())
+		})
+
+		t.Run("test unmarshaling", func(t *testing.T) {
+			g := &CborFixture{}
+			err = g.UnmarshalCBORBytes(b)
+			require.NoError(t, err)
+		})
 	})
 }
 
