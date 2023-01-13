@@ -16,6 +16,16 @@ func NewDocumentID(v Cborer) DocumentID {
 	}
 }
 
+func NewDocumentIDFromCBOR(b []byte) DocumentID {
+	hash, err := NewDocumentHashFromCBOR(b)
+	if err != nil {
+		panic(fmt.Errorf("error creating document id: %w", err))
+	}
+	return DocumentID{
+		DocumentHash: hash,
+	}
+}
+
 func ParseDocumentID(pID string) (DocumentID, error) {
 	prefix := string(ResourceTypeDocumentID)
 	if !strings.HasPrefix(pID, prefix) {
