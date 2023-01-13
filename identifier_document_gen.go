@@ -22,8 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-var lengthBufDocumentID = []byte{130}
-
 func (t *DocumentID) MarshalCBORBytes() ([]byte, error) {
 	w := bytes.NewBuffer(nil)
 	err := t.MarshalCBOR(w)
@@ -41,11 +39,22 @@ func (t *DocumentID) MarshalCBOR(w io.Writer) error {
 
 	cw := cbg.NewCborWriter(w)
 
-	if _, err := cw.Write(lengthBufDocumentID); err != nil {
+	if _, err := cw.Write([]byte{162}); err != nil {
 		return err
 	}
 
 	// t._ (string) (string)
+	if len("$prefix") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$prefix\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$prefix"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$prefix")); err != nil {
+		return err
+	}
+
 	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("nimona://doc"))); err != nil {
 		return err
 	}
@@ -53,7 +62,18 @@ func (t *DocumentID) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.DocumentHash (nimona.Hash) (array)
+	// t.DocumentHash (nimona.DocumentHash) (array)
+	if len("DocumentHash") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"DocumentHash\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("DocumentHash"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("DocumentHash")); err != nil {
+		return err
+	}
+
 	if len(t.DocumentHash) > cbg.ByteArrayMaxLen {
 		return xerrors.Errorf("Byte array in field t.DocumentHash was too long")
 	}
@@ -69,11 +89,14 @@ func (t *DocumentID) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *DocumentID) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = DocumentID{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *DocumentID) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = DocumentID{}
+	if t == nil {
+		*t = DocumentID{}
+	}
 
 	cr := cbg.NewCborReader(r)
 
@@ -87,44 +110,61 @@ func (t *DocumentID) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 	}()
 
-	if maj != cbg.MajArray {
-		return fmt.Errorf("cbor input should be of type array")
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
 	}
 
-	if extra != 2 {
-		return fmt.Errorf("cbor input had wrong number of fields")
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("DocumentID: map struct too large (%d)", extra)
 	}
 
-	// t._ (string) (string)
+	var name string
+	n := extra
 
-	{
-		_, err := cbg.ReadString(cr)
-		if err != nil {
-			return err
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t._ (string) (string) - ignored
+
+		// t.DocumentHash (nimona.DocumentHash) (array)
+		case "DocumentHash":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+
+			if extra > cbg.ByteArrayMaxLen {
+				return fmt.Errorf("t.DocumentHash: byte array too large (%d)", extra)
+			}
+			if maj != cbg.MajByteString {
+				return fmt.Errorf("expected byte array")
+			}
+
+			if extra != 32 {
+				return fmt.Errorf("expected array to have 32 elements")
+			}
+
+			t.DocumentHash = [32]uint8{}
+
+			if _, err := io.ReadFull(cr, t.DocumentHash[:]); err != nil {
+				return err
+			}
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
 		}
 	}
-	// t.DocumentHash (nimona.Hash) (array)
 
-	maj, extra, err = cr.ReadHeader()
-	if err != nil {
-		return err
-	}
-
-	if extra > cbg.ByteArrayMaxLen {
-		return fmt.Errorf("t.DocumentHash: byte array too large (%d)", extra)
-	}
-	if maj != cbg.MajByteString {
-		return fmt.Errorf("expected byte array")
-	}
-
-	if extra != 32 {
-		return fmt.Errorf("expected array to have 32 elements")
-	}
-
-	t.DocumentHash = [32]uint8{}
-
-	if _, err := io.ReadFull(cr, t.DocumentHash[:]); err != nil {
-		return err
-	}
 	return nil
 }

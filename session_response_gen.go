@@ -69,11 +69,14 @@ func (t *Response) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *Response) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = Response{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Response) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = Response{}
+	if t == nil {
+		*t = Response{}
+	}
 
 	cr := cbg.NewCborReader(r)
 

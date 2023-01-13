@@ -135,11 +135,14 @@ func (t *PeerAddr) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *PeerAddr) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = PeerAddr{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PeerAddr) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = PeerAddr{}
+	if t == nil {
+		*t = PeerAddr{}
+	}
 
 	cr := cbg.NewCborReader(r)
 

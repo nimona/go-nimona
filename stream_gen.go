@@ -146,11 +146,14 @@ func (t *StreamOperation) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *StreamOperation) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = StreamOperation{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *StreamOperation) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = StreamOperation{}
+	if t == nil {
+		*t = StreamOperation{}
+	}
 
 	cr := cbg.NewCborReader(r)
 
@@ -255,7 +258,11 @@ func (t *StreamPatch) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 3
+	fieldCount := 4
+
+	if zero.IsZeroVal(t.Metadata) {
+		fieldCount--
+	}
 
 	if zero.IsZeroVal(t.Dependencies) {
 		fieldCount--
@@ -286,6 +293,25 @@ func (t *StreamPatch) MarshalCBOR(w io.Writer) error {
 	}
 	if _, err := io.WriteString(w, string("core/stream/patch")); err != nil {
 		return err
+	}
+
+	// t.Metadata (nimona.Metadata) (struct)
+	if !zero.IsZeroVal(t.Metadata) {
+
+		if len("$metadata") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"$metadata\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$metadata"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("$metadata")); err != nil {
+			return err
+		}
+
+		if err := t.Metadata.MarshalCBOR(cw); err != nil {
+			return err
+		}
 	}
 
 	// t.Dependencies ([]nimona.DocumentID) (slice)
@@ -347,11 +373,14 @@ func (t *StreamPatch) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *StreamPatch) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = StreamPatch{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *StreamPatch) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = StreamPatch{}
+	if t == nil {
+		*t = StreamPatch{}
+	}
 
 	cr := cbg.NewCborReader(r)
 
@@ -390,7 +419,17 @@ func (t *StreamPatch) UnmarshalCBOR(r io.Reader) (err error) {
 		switch name {
 		// t._ (string) (string) - ignored
 
-		// t.Dependencies ([]nimona.DocumentID) (slice)
+		// t.Metadata (nimona.Metadata) (struct)
+		case "$metadata":
+
+			{
+
+				if err := t.Metadata.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.Metadata: %w", err)
+				}
+
+			}
+			// t.Dependencies ([]nimona.DocumentID) (slice)
 		case "dependencies":
 
 			maj, extra, err = cr.ReadHeader()

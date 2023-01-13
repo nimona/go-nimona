@@ -38,7 +38,7 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 12
+	fieldCount := 13
 
 	if zero.IsZeroVal(t.String) {
 		fieldCount--
@@ -85,6 +85,10 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	}
 
 	if zero.IsZeroVal(t.EphemeralString) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.DocumentID) {
 		fieldCount--
 	}
 
@@ -414,15 +418,37 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 			return err
 		}
 	}
+
+	// t.DocumentID (nimona.DocumentID) (struct)
+	if !zero.IsZeroVal(t.DocumentID) {
+
+		if len("documentID") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"documentID\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("documentID"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("documentID")); err != nil {
+			return err
+		}
+
+		if err := t.DocumentID.MarshalCBOR(cw); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func (t *CborFixture) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = CborFixture{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = CborFixture{}
+	if t == nil {
+		*t = CborFixture{}
+	}
 
 	cr := cbg.NewCborReader(r)
 
@@ -772,6 +798,16 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 				}
 
 				t.EphemeralString = string(sval)
+			}
+			// t.DocumentID (nimona.DocumentID) (struct)
+		case "documentID":
+
+			{
+
+				if err := t.DocumentID.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.DocumentID: %w", err)
+				}
+
 			}
 
 		default:

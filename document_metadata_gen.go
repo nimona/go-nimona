@@ -39,7 +39,23 @@ func (t *Signature) MarshalCBOR(w io.Writer) error {
 
 	cw := cbg.NewCborWriter(w)
 
-	if _, err := cw.Write([]byte{161}); err != nil {
+	if _, err := cw.Write([]byte{162}); err != nil {
+		return err
+	}
+
+	// t.Signer (nimona.PeerID) (struct)
+	if len("signer") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"signer\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("signer"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("signer")); err != nil {
+		return err
+	}
+
+	if err := t.Signer.MarshalCBOR(cw); err != nil {
 		return err
 	}
 
@@ -70,11 +86,14 @@ func (t *Signature) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *Signature) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = Signature{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Signature) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = Signature{}
+	if t == nil {
+		*t = Signature{}
+	}
 
 	cr := cbg.NewCborReader(r)
 
@@ -111,7 +130,17 @@ func (t *Signature) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 
 		switch name {
-		// t.X ([]uint8) (slice)
+		// t.Signer (nimona.PeerID) (struct)
+		case "signer":
+
+			{
+
+				if err := t.Signer.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.Signer: %w", err)
+				}
+
+			}
+			// t.X ([]uint8) (slice)
 		case "x":
 
 			maj, extra, err = cr.ReadHeader()
@@ -159,74 +188,99 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
+	fieldCount := 3
 
-	if _, err := cw.Write([]byte{163}); err != nil {
+	if zero.IsZeroVal(t.Owner) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.Timestamp) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.Signature) {
+		fieldCount--
+	}
+
+	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
 		return err
 	}
 
 	// t.Owner (string) (string)
-	if len("owner") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"owner\" was too long")
-	}
+	if !zero.IsZeroVal(t.Owner) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("owner"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("owner")); err != nil {
-		return err
-	}
+		if len("owner") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"owner\" was too long")
+		}
 
-	if len(t.Owner) > cbg.MaxLength {
-		return xerrors.Errorf("Value in field t.Owner was too long")
-	}
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("owner"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("owner")); err != nil {
+			return err
+		}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Owner))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string(t.Owner)); err != nil {
-		return err
+		if len(t.Owner) > cbg.MaxLength {
+			return xerrors.Errorf("Value in field t.Owner was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Owner))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string(t.Owner)); err != nil {
+			return err
+		}
 	}
 
 	// t.Timestamp (typegen.CborTime) (struct)
-	if len("timestamp") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"timestamp\" was too long")
-	}
+	if !zero.IsZeroVal(t.Timestamp) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("timestamp"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("timestamp")); err != nil {
-		return err
-	}
+		if len("timestamp") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"timestamp\" was too long")
+		}
 
-	if err := t.Timestamp.MarshalCBOR(cw); err != nil {
-		return err
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("timestamp"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("timestamp")); err != nil {
+			return err
+		}
+
+		if err := t.Timestamp.MarshalCBOR(cw); err != nil {
+			return err
+		}
 	}
 
 	// t.Signature (nimona.Signature) (struct)
-	if len("_signature") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"_signature\" was too long")
-	}
+	if !zero.IsZeroVal(t.Signature) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("_signature"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("_signature")); err != nil {
-		return err
-	}
+		if len("_signature") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"_signature\" was too long")
+		}
 
-	if err := t.Signature.MarshalCBOR(cw); err != nil {
-		return err
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("_signature"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("_signature")); err != nil {
+			return err
+		}
+
+		if err := t.Signature.MarshalCBOR(cw); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (t *Metadata) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = Metadata{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = Metadata{}
+	if t == nil {
+		*t = Metadata{}
+	}
 
 	cr := cbg.NewCborReader(r)
 

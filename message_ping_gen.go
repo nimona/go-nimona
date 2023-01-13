@@ -88,11 +88,14 @@ func (t *Ping) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *Ping) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = Ping{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Ping) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = Ping{}
+	if t == nil {
+		*t = Ping{}
+	}
 
 	cr := cbg.NewCborReader(r)
 
@@ -218,11 +221,14 @@ func (t *Pong) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *Pong) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = Pong{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Pong) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = Pong{}
+	if t == nil {
+		*t = Pong{}
+	}
 
 	cr := cbg.NewCborReader(r)
 

@@ -90,11 +90,14 @@ func (t *PeerInfo) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *PeerInfo) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = PeerInfo{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PeerInfo) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = PeerInfo{}
+	if t == nil {
+		*t = PeerInfo{}
+	}
 
 	cr := cbg.NewCborReader(r)
 

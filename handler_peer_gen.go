@@ -65,11 +65,14 @@ func (t *PeerCapabilitiesRequest) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *PeerCapabilitiesRequest) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = PeerCapabilitiesRequest{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PeerCapabilitiesRequest) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = PeerCapabilitiesRequest{}
+	if t == nil {
+		*t = PeerCapabilitiesRequest{}
+	}
 
 	cr := cbg.NewCborReader(r)
 
@@ -202,11 +205,14 @@ func (t *PeerCapabilitiesResponse) MarshalCBOR(w io.Writer) error {
 }
 
 func (t *PeerCapabilitiesResponse) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = PeerCapabilitiesResponse{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PeerCapabilitiesResponse) UnmarshalCBOR(r io.Reader) (err error) {
-	*t = PeerCapabilitiesResponse{}
+	if t == nil {
+		*t = PeerCapabilitiesResponse{}
+	}
 
 	cr := cbg.NewCborReader(r)
 

@@ -81,9 +81,7 @@ var mapEncoders = []mapping{{
 		nimona.StreamOperation{},
 		nimona.StreamPatch{},
 	},
-}}
-
-var tupleEncoders = []mapping{{
+}, {
 	file: "identifier_document_gen.go",
 	types: []any{
 		nimona.DocumentID{},
@@ -99,6 +97,8 @@ var tupleEncoders = []mapping{{
 		nimona.PeerID{},
 	},
 }}
+
+var tupleEncoders = []mapping{}
 
 func main() {
 	for _, m := range mapEncoders {
