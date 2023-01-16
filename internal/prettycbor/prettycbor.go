@@ -108,8 +108,8 @@ func printMap(sb *strings.Builder, r *cbg.CborReader, extra uint64, indent int) 
 			printValue(sb, r, valMaj, extra, indent+3)
 		case cbg.MajArray:
 			printArray(sb, r, extra, indent+3)
-		// case cbg.MajTag:
-		// 	messageHashTag(r, extra)
+		case cbg.MajTag:
+			panic(fmt.Errorf("unhandled major type: %d", valMaj))
 		case cbg.MajOther: // bool
 			printValue(sb, r, valMaj, extra, indent+3)
 		default:
@@ -138,10 +138,10 @@ func printArray(sb *strings.Builder, r *cbg.CborReader, extra uint64, indent int
 			printValue(sb, r, valMaj, extra, indent+3)
 		case cbg.MajArray:
 			printArray(sb, r, extra, indent+3)
-		// case cbg.MajTag:
-		// 	hh, err = messageHashTag(r, extra)
-		// case cbg.MajOther: // bool
-		// 	hh, err = messageHashOther(r, extra)
+		case cbg.MajTag:
+			panic(fmt.Errorf("unhandled major type: %d", valMaj))
+		case cbg.MajOther: // bool
+			panic(fmt.Errorf("unhandled major type: %d", valMaj))
 		default:
 			panic("unhandled major type, " + fmt.Sprintf("%d", valMaj))
 		}
