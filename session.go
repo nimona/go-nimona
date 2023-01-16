@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 	"github.com/oasisprotocol/curve25519-voi/primitives/x25519"
 	"golang.org/x/crypto/blake2b"
 )
@@ -23,7 +22,7 @@ type Session struct {
 	conn  net.Conn
 	suite cipher.AEAD
 	// available after handshake
-	remotePublicKey ed25519.PublicKey
+	remotePublicKey PublicKey
 	remotePeerAddr  PeerAddr
 	rpc             *RPC
 	codec           Codec
@@ -46,8 +45,8 @@ func NewSession(conn net.Conn) *Session {
 // The shared secret is then used to derive the cipher suite for encrypting
 // and decrypting data.
 func (s *Session) DoServer(
-	serverPublicKey ed25519.PublicKey,
-	serverPrivateKey ed25519.PrivateKey,
+	serverPublicKey PublicKey,
+	serverPrivateKey PrivateKey,
 ) error {
 	// write the server's ephemeral keys to the connection
 	_, err := s.conn.Write(serverPublicKey)
@@ -82,7 +81,7 @@ func (s *Session) DoServer(
 	}
 
 	// store the remote node key and address
-	s.remotePublicKey = ed25519.PublicKey(clientEphemeral[:])
+	s.remotePublicKey = PublicKey(clientEphemeral[:])
 	s.remotePeerAddr = PeerAddr{
 		Network:   s.conn.RemoteAddr().Network(),
 		Address:   s.conn.RemoteAddr().String(),
@@ -98,8 +97,8 @@ func (s *Session) DoServer(
 }
 
 func (s *Session) DoClient(
-	clientPublicKey ed25519.PublicKey,
-	clientPrivateKey ed25519.PrivateKey,
+	clientPublicKey PublicKey,
+	clientPrivateKey PrivateKey,
 ) error {
 	// Read the server's ephemeral keys from the connection
 	var serverEphemeral [32]byte
@@ -134,7 +133,7 @@ func (s *Session) DoClient(
 	}
 
 	// store the remote node key and address
-	s.remotePublicKey = ed25519.PublicKey(serverEphemeral[:])
+	s.remotePublicKey = PublicKey(serverEphemeral[:])
 	s.remotePeerAddr = PeerAddr{
 		Network:   s.conn.RemoteAddr().Network(),
 		Address:   s.conn.RemoteAddr().String(),
@@ -291,15 +290,18 @@ func (s *Session) Read() (*Request, error) {
 // according to RFC 7748, Section 5. scalar, point and the return value are
 // slices of 32 bytes.
 func (s *Session) x25519(
-	privateKey ed25519.PrivateKey,
-	publicKey ed25519.PublicKey,
+	privateKey PrivateKey,
+	publicKey PublicKey,
 ) ([]byte, error) {
-	publicKeyX, ok := x25519.EdPublicKeyToX25519(publicKey)
-	if !ok {
-		return nil, errors.New("unable to derive ed25519 key to x25519 key")
+	publicKeyX, err := publicKey.X25519()
+	if err != nil {
+		return nil, errors.New("unable to derive public ed25519 key to x25519 key")
 	}
 
-	privateKeyX := x25519.EdPrivateKeyToX25519(privateKey)
+	privateKeyX, err := privateKey.X25519()
+	if err != nil {
+		return nil, errors.New("unable to derive private ed25519 key to x25519 key")
+	}
 
 	shared, err := x25519.X25519(privateKeyX, publicKeyX[:])
 	if err != nil {
@@ -313,7 +315,7 @@ func (s *Session) PeerAddr() PeerAddr {
 	return s.remotePeerAddr
 }
 
-func (s *Session) PublicKey() ed25519.PublicKey {
+func (s *Session) PublicKey() PublicKey {
 	return s.remotePublicKey
 }
 

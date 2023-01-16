@@ -4,7 +4,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,10 +36,10 @@ func NewMockSession(t *testing.T, skipRPC bool) *MockSession {
 	m.Server.skipRPC = skipRPC
 	m.Client.skipRPC = skipRPC
 
-	serverPublic, serverPrivate, err := ed25519.GenerateKey(nil)
+	serverPublic, serverPrivate, err := GenerateKey()
 	require.NoError(t, err)
 
-	clientPublic, clientPrivate, err := ed25519.GenerateKey(nil)
+	clientPublic, clientPrivate, err := GenerateKey()
 	require.NoError(t, err)
 
 	serverDone := make(chan struct{})

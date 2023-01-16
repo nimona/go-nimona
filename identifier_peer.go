@@ -4,11 +4,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"strings"
-
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 )
 
-func NewPeerID(key ed25519.PublicKey) PeerID {
+func NewPeerID(key PublicKey) PeerID {
 	return PeerID{
 		PublicKey: key,
 	}
@@ -16,11 +14,11 @@ func NewPeerID(key ed25519.PublicKey) PeerID {
 
 type PeerID struct {
 	_         string `cborgen:"$prefix,const=nimona://peer:key"`
-	PublicKey ed25519.PublicKey
+	PublicKey PublicKey
 }
 
 func (p PeerID) String() string {
-	return string(ResourceTypePeerKey) + PublicKeyToBase58(p.PublicKey)
+	return string(ResourceTypePeerKey) + p.PublicKey.String()
 }
 
 func ParsePeerID(pID string) (PeerID, error) {

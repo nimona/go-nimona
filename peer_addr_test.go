@@ -2,10 +2,8 @@ package nimona
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +24,7 @@ func TestPeerAddr(t *testing.T) {
 	})
 
 	t.Run("string addr to struct with public key", func(t *testing.T) {
-		pub, _, err := ed25519.GenerateKey(nil)
+		pub, _, err := GenerateKey()
 		require.NoError(t, err)
 
 		a = &PeerAddr{
@@ -42,7 +40,7 @@ func TestPeerAddr(t *testing.T) {
 }
 
 func TestPeerAddr_Marshal(t *testing.T) {
-	pk, _, err := ed25519.GenerateKey(nil)
+	pk, _, err := GenerateKey()
 	require.NoError(t, err)
 
 	na := &PeerAddr{
@@ -54,8 +52,6 @@ func TestPeerAddr_Marshal(t *testing.T) {
 	cb := new(bytes.Buffer)
 	err = na.MarshalCBOR(cb)
 	require.NoError(t, err)
-
-	fmt.Printf("%x\n", cb.Bytes())
 
 	ga := &PeerAddr{}
 	err = ga.UnmarshalCBOR(cb)

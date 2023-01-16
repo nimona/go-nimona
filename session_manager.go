@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/golang-lru/v2/simplelru"
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 )
 
 // SessionManager manages the dialing and accepting of connections.
@@ -15,8 +14,8 @@ type SessionManager struct {
 	dialer     Dialer
 	listener   Listener
 	handlers   map[string]RequestHandlerFunc
-	publicKey  ed25519.PublicKey
-	privateKey ed25519.PrivateKey
+	publicKey  PublicKey
+	privateKey PrivateKey
 }
 
 type RequestHandlerFunc func(context.Context, *Request) error
@@ -28,8 +27,8 @@ type connCacheKey struct {
 func NewSessionManager(
 	dialer Dialer,
 	listener Listener,
-	publicKey ed25519.PublicKey,
-	privateKey ed25519.PrivateKey,
+	publicKey PublicKey,
+	privateKey PrivateKey,
 ) (*SessionManager, error) {
 	connCache, err := simplelru.NewLRU(100, func(_ connCacheKey, ses *Session) {
 		err := ses.Close()
@@ -98,7 +97,7 @@ func (cm *SessionManager) Dial(
 	return ses, nil
 }
 
-func (cm *SessionManager) connCacheKey(k ed25519.PublicKey) connCacheKey {
+func (cm *SessionManager) connCacheKey(k PublicKey) connCacheKey {
 	return connCacheKey{
 		publicKeyInHex: fmt.Sprintf("%x", k),
 	}

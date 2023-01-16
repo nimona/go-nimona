@@ -2,12 +2,10 @@ package nimona
 
 import (
 	"context"
-	"crypto/rand"
 	"net"
 	"sync"
 	"testing"
 
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,11 +17,11 @@ func TestSession_E2E_Pipe(t *testing.T) {
 	server, client := net.Pipe()
 
 	// Generate the server's static keys
-	serverPublicKey, serverPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+	serverPublicKey, serverPrivateKey, err := GenerateKey()
 	require.NoError(t, err)
 
 	// Generate the client's static keys
-	clientPublicKey, clientPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+	clientPublicKey, clientPrivateKey, err := GenerateKey()
 	require.NoError(t, err)
 
 	// Perform the handshake from the server side

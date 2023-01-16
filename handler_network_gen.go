@@ -296,7 +296,7 @@ func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
-				return fmt.Errorf("t.PeerAddresses readHeader: %w", err)
+				return err
 			}
 
 			if extra > cbg.MaxLength {

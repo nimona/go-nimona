@@ -8,10 +8,10 @@ import (
 )
 
 type PeerAddr struct {
-	_         string `cborgen:"$type,const=core/node.address"`
-	Address   string `cborgen:"address"`
-	Network   string `cborgen:"network"`
-	PublicKey []byte `cborgen:"publicKey"`
+	_         string    `cborgen:"$type,const=core/node.address"`
+	Address   string    `cborgen:"address"`
+	Network   string    `cborgen:"network"`
+	PublicKey PublicKey `cborgen:"publicKey"`
 }
 
 func ParsePeerAddr(addr string) (*PeerAddr, error) {
@@ -49,7 +49,7 @@ func (a PeerAddr) String() string {
 	b := strings.Builder{}
 	b.WriteString(ResourceTypePeerAddress.String())
 	if a.PublicKey != nil {
-		b.WriteString(PublicKeyToBase58(a.PublicKey))
+		b.WriteString(a.PublicKey.String())
 		b.WriteString("@")
 	}
 	b.WriteString(a.Network)

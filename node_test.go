@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,7 +59,7 @@ func TestNode_E2E(t *testing.T) {
 func NewTestNodeConfig(t *testing.T) NodeConfig {
 	t.Helper()
 
-	pub, prv, err := ed25519.GenerateKey(nil)
+	pub, prv, err := GenerateKey()
 	require.NoError(t, err)
 
 	transport := &TransportUTP{}

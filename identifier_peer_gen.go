@@ -62,7 +62,7 @@ func (t *PeerID) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.PublicKey (ed25519.PublicKey) (slice)
+	// t.PublicKey (nimona.PublicKey) (slice)
 	if len("PublicKey") > cbg.MaxLength {
 		return xerrors.Errorf("Value in field \"PublicKey\" was too long")
 	}
@@ -135,7 +135,7 @@ func (t *PeerID) UnmarshalCBOR(r io.Reader) (err error) {
 		switch name {
 		// t._ (string) (string) - ignored
 
-		// t.PublicKey (ed25519.PublicKey) (slice)
+		// t.PublicKey (nimona.PublicKey) (slice)
 		case "PublicKey":
 
 			maj, extra, err = cr.ReadHeader()

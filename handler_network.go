@@ -3,8 +3,6 @@ package nimona
 import (
 	"context"
 	"fmt"
-
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 )
 
 type (
@@ -23,7 +21,7 @@ type (
 type HandlerNetwork struct {
 	Hostname      string
 	PeerAddresses []PeerAddr
-	PrivateKey    ed25519.PrivateKey
+	PrivateKey    PrivateKey
 }
 
 func RequestNetworkInfo(

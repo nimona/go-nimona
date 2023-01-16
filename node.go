@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 
 	"nimona.io/internal/xsync"
 )
@@ -23,8 +22,8 @@ type (
 		Dialer        Dialer
 		Listener      Listener
 		Resolver      Resolver
-		PublicKey     ed25519.PublicKey
-		PrivateKey    ed25519.PrivateKey
+		PublicKey     PublicKey
+		PrivateKey    PrivateKey
 		Handlers      map[string]RequestHandlerFunc
 		DocumentStore *DocumentStore
 	}

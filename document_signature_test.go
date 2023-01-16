@@ -3,12 +3,11 @@ package nimona
 import (
 	"testing"
 
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDocumentSignature_SignVerify(t *testing.T) {
-	_, sk, err := ed25519.GenerateKey(nil)
+	_, sk, err := GenerateKey()
 	require.NoError(t, err)
 
 	doc := &CborFixture{
@@ -21,9 +20,6 @@ func TestDocumentSignature_SignVerify(t *testing.T) {
 	sig, err := NewDocumentSignature(sk, hash)
 	require.NoError(t, err)
 
-	docBytes, err := doc.MarshalCBORBytes()
-	require.NoError(t, err)
-
-	err = VerifyDocument(docBytes, sig)
+	err = VerifySignature(sig, hash)
 	require.NoError(t, err)
 }

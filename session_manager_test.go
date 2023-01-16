@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/oasisprotocol/curve25519-voi/primitives/ed25519"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,7 +42,7 @@ func newTestSessionManager(t *testing.T) (srv *SessionManager, clt *SessionManag
 	t.Helper()
 
 	// create a new SessionManager for the server
-	srvPub, srvPrv, err := ed25519.GenerateKey(nil)
+	srvPub, srvPrv, err := GenerateKey()
 	require.NoError(t, err)
 	srvTransport := &TransportUTP{}
 	srvListener, err := srvTransport.Listen(context.Background(), "127.0.0.1:0")
@@ -52,7 +51,7 @@ func newTestSessionManager(t *testing.T) (srv *SessionManager, clt *SessionManag
 	require.NoError(t, err)
 
 	// create a new SessionManager for the client
-	cltPub, cltPrv, err := ed25519.GenerateKey(nil)
+	cltPub, cltPrv, err := GenerateKey()
 	require.NoError(t, err)
 	cltTransport := &TransportUTP{}
 	cltListener, err := cltTransport.Listen(context.Background(), "127.0.0.1:0")
