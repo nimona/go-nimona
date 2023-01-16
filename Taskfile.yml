@@ -83,12 +83,16 @@ tasks:
       - "golangci-lint run"
 
   generate:
+    cmds:
+      - task: generate-mocks
+      - task: generate-cbor
+
+  generate-mocks:
     deps:
       - install-mock-tools
-    sources:
-      - "**/*.go"
-    generates:
-      - "**/*_mock.go"
     cmds:
       - go generate ./...
+
+  generate-cbor:
+    cmds:
       - go run cmd/cborgen/main.go

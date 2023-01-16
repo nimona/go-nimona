@@ -34,6 +34,9 @@ node_modules
 # Local testing
 .local
 
+# Local development
+.task
+
 # Infrastructure
 infrastructure/*/.terraform/
 infrastructure/*/ssh/id_rsa
