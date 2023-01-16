@@ -21,6 +21,10 @@
     "go.lintFlags": [
       "--fast"
     ],
+    "go.testFlags": [
+        "-count=1",
+        "-v",
+    ],
 
     // File nesting
     "explorer.fileNesting.enabled": true,
