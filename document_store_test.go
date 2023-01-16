@@ -2,6 +2,7 @@ package nimona
 
 import (
 	"testing"
+	"time"
 
 	_ "modernc.org/sqlite"
 
@@ -75,4 +76,47 @@ func TestDocumentStore(t *testing.T) {
 	err = gotDoc.UnmarshalCBORBytes(gotEntry.DocumentBytes)
 	require.NoError(t, err)
 	require.Equal(t, gotDoc, doc)
+}
+
+func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
+	// Set up test DB
+	store := NewTestDocumentStore(t)
+
+	// Create an entry
+	rootEntry := &DocumentEntry{
+		DocumentID:       NewTestRandomDocumentID(t),
+		DocumentType:     "test",
+		DocumentEncoding: "cbor",
+		DocumentBytes:    []byte("root"),
+		Sequence:         0,
+	}
+	childEntry := &DocumentEntry{
+		DocumentID:       NewTestRandomDocumentID(t),
+		DocumentType:     "test",
+		DocumentEncoding: "cbor",
+		DocumentBytes:    []byte("child"),
+		RootDocumentID:   &rootEntry.DocumentID,
+		Sequence:         1,
+	}
+
+	err := store.PutDocument(rootEntry)
+	require.NoError(t, err)
+
+	err = store.PutDocument(childEntry)
+	require.NoError(t, err)
+
+	// Test getting the stream
+	gotEntries, err := store.GetDocumentsByRootID(rootEntry.DocumentID)
+	require.NoError(t, err)
+	require.Len(t, gotEntries, 2)
+
+	// Ignore the datetimes
+	rootEntry.CreatedAt = time.Time{}
+	childEntry.CreatedAt = time.Time{}
+	for _, e := range gotEntries {
+		e.CreatedAt = time.Time{}
+	}
+
+	require.EqualValues(t, rootEntry, gotEntries[0])
+	require.EqualValues(t, childEntry, gotEntries[1])
 }

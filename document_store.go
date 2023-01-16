@@ -20,7 +20,8 @@ type (
 		DocumentEncoding string
 		DocumentBytes    []byte      `gorm:"type:bytea"`
 		RootDocumentID   *DocumentID `gorm:"index"`
-		CreatedAt        time.Time   `gorm:"autoCreateTime"`
+		Sequence         uint64
+		CreatedAt        time.Time `gorm:"autoCreateTime"`
 	}
 )
 
@@ -93,6 +94,20 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*DocumentEntry, er
 	var docs []*DocumentEntry
 	err := s.db.
 		Where("document_type = ?", docType).
+		Find(&docs).
+		Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting documents: %w", err)
+	}
+
+	return docs, nil
+}
+
+func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*DocumentEntry, error) {
+	var docs []*DocumentEntry
+	err := s.db.
+		Where("document_id = ? OR root_document_id = ?", id, id).
+		Order("sequence ASC, document_id ASC").
 		Find(&docs).
 		Error
 	if err != nil {
