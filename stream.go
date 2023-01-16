@@ -27,11 +27,12 @@ type StreamOperation struct {
 
 type StreamPatch struct {
 	_            string            `cborgen:"$type,const=core/stream/patch"`
+	Metadata     Metadata          `cborgen:"$metadata,omitempty"`
 	Dependencies []DocumentID      `cborgen:"dependencies,omitempty"`
 	Operations   []StreamOperation `cborgen:"operations,omitempty"`
 }
 
-func streamPatchFromCBORPatch(cp cborpatch.Patch) StreamPatch {
+func streamPatchFromCBORPatch(cp cborpatch.Patch) *StreamPatch {
 	ops := make([]StreamOperation, len(cp))
 	for i, op := range cp {
 		ops[i] = StreamOperation{
@@ -41,12 +42,12 @@ func streamPatchFromCBORPatch(cp cborpatch.Patch) StreamPatch {
 			Value: cbg.Deferred{Raw: op.Value},
 		}
 	}
-	return StreamPatch{
+	return &StreamPatch{
 		Operations: ops,
 	}
 }
 
-func streamPatchToCBORPatch(p StreamPatch) cborpatch.Patch {
+func streamPatchToCBORPatch(p *StreamPatch) cborpatch.Patch {
 	ops := make([]cborpatch.Operation, len(p.Operations))
 	for i, op := range p.Operations {
 		ops[i] = cborpatch.Operation{
@@ -60,12 +61,12 @@ func streamPatchToCBORPatch(p StreamPatch) cborpatch.Patch {
 }
 
 func CreateStreamPatch(
-	original Cborer,
-	updated Cborer,
-) (StreamPatch, error) {
-	p, err := createCBORPatch(original, updated)
+	originalCbor []byte,
+	updatedCbor []byte,
+) (*StreamPatch, error) {
+	p, err := createCBORPatch(originalCbor, updatedCbor)
 	if err != nil {
-		return StreamPatch{}, fmt.Errorf("error creating json patch: %w", err)
+		return nil, fmt.Errorf("error creating json patch: %w", err)
 	}
 
 	return streamPatchFromCBORPatch(p), nil
@@ -73,7 +74,7 @@ func CreateStreamPatch(
 
 func ApplyStreamPatch(
 	original Cborer,
-	patches ...StreamPatch,
+	patches ...*StreamPatch,
 ) error {
 	oc, err := original.MarshalCBORBytes()
 	if err != nil {
@@ -96,10 +97,20 @@ func ApplyStreamPatch(
 }
 
 func createCBORPatch(
-	original Cborer,
-	updated Cborer,
+	originalCbor []byte,
+	updatedCbor []byte,
 ) (cborpatch.Patch, error) {
-	d, err := jsondiff.Compare(original, updated)
+	originalMap, err := NewDocumentMapFromCBOR(originalCbor)
+	if err != nil {
+		return nil, fmt.Errorf("error converting original cbor to map: %w", err)
+	}
+
+	updatedMap, err := NewDocumentMapFromCBOR(updatedCbor)
+	if err != nil {
+		return nil, fmt.Errorf("error converting updated cbor to map: %w", err)
+	}
+
+	d, err := jsondiff.Compare(originalMap, updatedMap)
 	if err != nil {
 		return nil, fmt.Errorf("error comparing json: %w", err)
 	}

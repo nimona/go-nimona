@@ -1,9 +1,13 @@
 package nimona
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"nimona.io/internal/prettycbor"
 )
 
 func TestStream_ApplyStreamPatch(t *testing.T) {
@@ -16,8 +20,24 @@ func TestStream_ApplyStreamPatch(t *testing.T) {
 		Int64:  42,
 	}
 
-	p, err := CreateStreamPatch(a, b)
+	aCbor, err := a.MarshalCBORBytes()
 	require.NoError(t, err)
+
+	bCbor, err := b.MarshalCBORBytes()
+	require.NoError(t, err)
+
+	p, err := CreateStreamPatch(aCbor, bCbor)
+	require.NoError(t, err)
+
+	pCbor, err := p.MarshalCBORBytes()
+	require.NoError(t, err)
+
+	m, err := NewDocumentMap(p)
+	require.NoError(t, err)
+	mb, err := json.MarshalIndent(m, "", "  ")
+	require.NoError(t, err)
+	fmt.Println(string(mb))
+	fmt.Println(prettycbor.Dump(pCbor))
 
 	err = ApplyStreamPatch(a, p)
 	require.NoError(t, err)
@@ -34,12 +54,20 @@ func TestStream_CreateStreamPatch(t *testing.T) {
 		Int64:  42,
 	}
 
-	p, err := CreateStreamPatch(a, b)
+	aCbor, err := a.MarshalCBORBytes()
 	require.NoError(t, err)
 
+	bCbor, err := b.MarshalCBORBytes()
+	require.NoError(t, err)
+
+	p, err := CreateStreamPatch(aCbor, bCbor)
+	require.NoError(t, err)
+
+	p.Metadata.Owner = "foo"
+
 	p.Dependencies = []DocumentID{{
-		DocumentHash: []byte("foo"),
+		DocumentHash: NewRandomHash(t),
 	}}
 
-	PrettyPrint(&p)
+	PrettyPrint(p)
 }
