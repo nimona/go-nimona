@@ -85,8 +85,6 @@ func TestDocumentHash_Ping(t *testing.T) {
 		m.DocumentID = NewDocumentIDFromCBOR(b)
 		exp := "7BWGuG4uUwVFQpdMXaca3rnkz2BvKPNoN2MRgXBr8KjF"
 
-		HexPrint(m)
-
 		t.Run("test hashing", func(t *testing.T) {
 			h, err := NewDocumentHash(m)
 			require.NoError(t, err)
