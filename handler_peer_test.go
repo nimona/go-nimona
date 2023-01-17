@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRPCNetworkCapabilities(t *testing.T) {
+func TestHandlerNetworkCapabilities(t *testing.T) {
 	srv, clt := newTestSessionManager(t)
 
 	caps := []string{"core/peer/capabilities"}
