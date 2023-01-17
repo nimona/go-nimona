@@ -22,104 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *NetworkInfoRequest) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
-func (t *NetworkInfoRequest) MarshalCBOR(w io.Writer) error {
-	if t == nil {
-		_, err := w.Write(cbg.CborNull)
-		return err
-	}
-
-	cw := cbg.NewCborWriter(w)
-
-	if _, err := cw.Write([]byte{161}); err != nil {
-		return err
-	}
-
-	// t._ (string) (string)
-	if len("$type") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"$type\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("$type")); err != nil {
-		return err
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network/info.request"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("core/network/info.request")); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *NetworkInfoRequest) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = NetworkInfoRequest{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
-}
-
-func (t *NetworkInfoRequest) UnmarshalCBOR(r io.Reader) (err error) {
-	if t == nil {
-		*t = NetworkInfoRequest{}
-	}
-
-	cr := cbg.NewCborReader(r)
-
-	maj, extra, err := cr.ReadHeader()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err == io.EOF {
-			err = io.ErrUnexpectedEOF
-		}
-	}()
-
-	if maj != cbg.MajMap {
-		return fmt.Errorf("cbor input should be of type map")
-	}
-
-	if extra > cbg.MaxLength {
-		return fmt.Errorf("NetworkInfoRequest: map struct too large (%d)", extra)
-	}
-
-	var name string
-	n := extra
-
-	for i := uint64(0); i < n; i++ {
-
-		{
-			sval, err := cbg.ReadString(cr)
-			if err != nil {
-				return err
-			}
-
-			name = string(sval)
-		}
-
-		switch name {
-		// t._ (string) (string) - ignored
-
-		default:
-			// Field doesn't exist on this type, so ignore it
-			cbg.ScanForLinks(r, func(cid.Cid) {})
-		}
-	}
-
-	return nil
-}
-
 func (t *NetworkInfo) MarshalCBORBytes() ([]byte, error) {
 	w := bytes.NewBuffer(nil)
 	err := t.MarshalCBOR(w)
@@ -322,6 +224,104 @@ func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
 			}
 
 			// t.RawBytes ([]uint8) (slice) - ignored
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *NetworkInfoRequest) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (t *NetworkInfoRequest) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+
+	if _, err := cw.Write([]byte{161}); err != nil {
+		return err
+	}
+
+	// t._ (string) (string)
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$type")); err != nil {
+		return err
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network/info.request"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("core/network/info.request")); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *NetworkInfoRequest) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = NetworkInfoRequest{}
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
+func (t *NetworkInfoRequest) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = NetworkInfoRequest{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("NetworkInfoRequest: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t._ (string) (string) - ignored
 
 		default:
 			// Field doesn't exist on this type, so ignore it
