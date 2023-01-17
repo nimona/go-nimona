@@ -108,7 +108,7 @@ func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
 	// Test getting the stream
 	gotEntries, err := store.GetDocumentsByRootID(rootEntry.DocumentID)
 	require.NoError(t, err)
-	require.Len(t, gotEntries, 2)
+	require.Len(t, gotEntries, 1)
 
 	// Ignore the datetimes
 	rootEntry.CreatedAt = time.Time{}
@@ -117,6 +117,5 @@ func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
 		e.CreatedAt = time.Time{}
 	}
 
-	require.EqualValues(t, rootEntry, gotEntries[0])
-	require.EqualValues(t, childEntry, gotEntries[1])
+	require.EqualValues(t, childEntry, gotEntries[0])
 }

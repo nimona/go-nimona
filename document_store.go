@@ -103,11 +103,13 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*DocumentEntry, er
 	return docs, nil
 }
 
+// GetDocumentsByRootID returns all documents with the given root id, not including
+// the root document itself.
 func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*DocumentEntry, error) {
 	var docs []*DocumentEntry
 	err := s.db.
-		Where("document_id = ? OR root_document_id = ?", id, id).
-		Order("sequence ASC, document_id ASC").
+		Where("root_document_id = ?", id).
+		Order("sequence ASC").
 		Find(&docs).
 		Error
 	if err != nil {
