@@ -56,7 +56,7 @@ func TestNode_E2E(t *testing.T) {
 	})
 }
 
-func NewTestNodeConfig(t *testing.T) NodeConfig {
+func NewTestNodeConfig(t *testing.T) *NodeConfig {
 	t.Helper()
 
 	pub, prv, err := GenerateKey()
@@ -66,7 +66,7 @@ func NewTestNodeConfig(t *testing.T) NodeConfig {
 	listener, err := transport.Listen(context.Background(), "127.0.0.1:0")
 	require.NoError(t, err)
 
-	return NodeConfig{
+	return &NodeConfig{
 		Dialer:        transport,
 		Listener:      listener,
 		PublicKey:     pub,

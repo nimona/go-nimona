@@ -11,7 +11,7 @@ import (
 
 type (
 	Node struct {
-		config   NodeConfig
+		config   *NodeConfig
 		sessions *SessionManager
 		networks *xsync.Map[NetworkID, nodeNetwork]
 	}
@@ -29,7 +29,11 @@ type (
 	}
 )
 
-func NewNode(cfg NodeConfig) (*Node, error) {
+func NewNode(cfg *NodeConfig) (*Node, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("missing config")
+	}
+
 	ses, err := NewSessionManager(
 		cfg.Dialer,
 		cfg.Listener,
@@ -81,16 +85,19 @@ func (n *Node) JoinNetwork(ctx context.Context, nID NetworkID) (*NetworkInfo, er
 	var errs error
 	var netInfo *NetworkInfo
 	for _, peerAddr := range peerAddrs {
-		ses, err := n.sessions.Dial(ctx, peerAddr)
+		ses, dialErr := n.sessions.Dial(ctx, peerAddr)
 		if err != nil {
-			errs = multierror.Append(errs, err)
+			errs = multierror.Append(errs, dialErr)
 			continue
 		}
-		netInfo, err = RequestNetworkInfo(ctx, ses)
+		netInfo, dialErr = RequestNetworkInfo(ctx, ses)
 		if err != nil {
-			errs = multierror.Append(errs, err)
+			errs = multierror.Append(errs, dialErr)
 			continue
 		}
+		n.networks.Store(nID, nodeNetwork{
+			networkInfo: *netInfo,
+		})
 		break
 	}
 
