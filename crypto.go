@@ -49,7 +49,7 @@ func (sk PrivateKey) Sign(message []byte, opts *ed25519.Options) (*Signature, er
 
 	return &Signature{
 		Signer: NewPeerID(sk.Public()),
-		X:      sig[:],
+		X:      sig,
 	}, nil
 }
 
