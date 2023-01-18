@@ -62,7 +62,6 @@ func printValue(sb *strings.Builder, r *cbg.CborReader, maj byte, extra uint64, 
 	if err != nil {
 		panic(fmt.Errorf("error reading value: %w", err))
 	}
-	// printHeader(sb, maj, extra, indent+3)
 	printLine(sb, fmt.Sprintf("%X", b), fmt.Sprintf("%q", b), indent+3)
 }
 
@@ -88,7 +87,7 @@ func printMap(sb *strings.Builder, r *cbg.CborReader, extra uint64, indent int) 
 			panic(fmt.Errorf("error reading key: %w", err))
 		}
 		printHeader(sb, cbg.MajTextString, uint64(len(key)), indent+3)
-		printLine(sb, fmt.Sprintf("%X", key), fmt.Sprintf("\"%s\"", key), indent+6)
+		printLine(sb, fmt.Sprintf("%X", key), fmt.Sprintf("%q", key), indent+6)
 		// read the value
 		valMaj, extra, err := r.ReadHeader()
 		if err != nil {
