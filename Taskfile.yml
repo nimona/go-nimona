@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 
 vars:
@@ -23,6 +24,10 @@ tasks:
   deps:
     cmds:
       - go get
+
+  test:
+    cmds:
+      - go test -v -count=1 ./...
 
   init-bin:
     run: once
