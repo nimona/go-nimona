@@ -68,7 +68,7 @@ func (s *Session) DoServer(
 	}
 
 	// use the shared secret and blake2b to generate the key for the cipher suite
-	key := blake2b.Sum256(shared[:])
+	key := blake2b.Sum256(shared)
 
 	// derive the cipher suite using the generated key
 	block, err := aes.NewCipher(key[:])
@@ -120,7 +120,7 @@ func (s *Session) DoClient(
 	}
 
 	// Use the shared secret and blake2b to generate the key for the cipher suite
-	key := blake2b.Sum256(shared[:])
+	key := blake2b.Sum256(shared)
 
 	// Derive the cipher suite using the generated key
 	block, err := aes.NewCipher(key[:])
@@ -303,7 +303,7 @@ func (s *Session) x25519(
 		return nil, errors.New("unable to derive private ed25519 key to x25519 key")
 	}
 
-	shared, err := x25519.X25519(privateKeyX, publicKeyX[:])
+	shared, err := x25519.X25519(privateKeyX, publicKeyX)
 	if err != nil {
 		return nil, err
 	}
