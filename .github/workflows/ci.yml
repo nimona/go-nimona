@@ -9,19 +9,20 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@v3
-      - name: Restore cached Nix directory
-        id: cache-nix-restore
-        uses: actions/cache/restore@v3
-        with:
-          path: /nix
-          key: ${{ runner.os }}-nix
       - name: Install devbox
         uses: jetpack-io/devbox-install-action@v0.2.0
-      - name: Cache Nix directory
-        id: cache-nix-save
-        uses: actions/cache/save@v3
         with:
-          path: /nix
-          key: ${{ runner.os }}-nix
+          enable-cache: true
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+      - name: Download dependencies
+        run: devbox shell -- task deps
       - name: Run linter
         run: devbox shell -- task lint

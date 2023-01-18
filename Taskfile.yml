@@ -16,6 +16,14 @@ env:
 
 tasks:
 
+  tidy:
+    cmds:
+      - go mod tidy
+
+  deps:
+    cmds:
+      - go get
+
   init-bin:
     run: once
     status:
