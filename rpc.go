@@ -217,7 +217,7 @@ func (c *RPC) readLoop(conn *Session) error {
 	}
 }
 
-func (c *RPC) Read() ([]byte, func([]byte) error, error) {
+func (c *RPC) Read() (body []byte, callback func([]byte) error, err error) {
 	pr, err := c.readerQueue.Pop()
 	if err != nil {
 		if errors.Is(err, xsync.ErrQueueClosed) {
