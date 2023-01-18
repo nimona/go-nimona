@@ -3,6 +3,7 @@ package nimona
 import (
 	"bytes"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,6 +12,8 @@ import (
 	cbg "github.com/whyrusleeping/cbor-gen"
 	"golang.org/x/exp/slices"
 )
+
+var errDocumentHashValueIsNil = fmt.Errorf("value is nil")
 
 const hashLength = 32
 
@@ -105,40 +108,9 @@ func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err e
 			continue
 		}
 		// read the value
-		valMaj, extra, err := r.ReadHeader()
-		if err != nil {
-			return h, fmt.Errorf("error reading value header: %s", err)
-		}
-		var hh [hashLength]byte
-		switch valMaj {
-		case cbg.MajMap:
-			hh, err = documentHashMap(r, extra)
-		case cbg.MajUnsignedInt:
-			hh, err = documentHashUInt(r, extra)
-		case cbg.MajNegativeInt:
-			hh, err = documentHashInt(r, extra)
-		case cbg.MajByteString:
-			if extra == 0 {
-				continue
-			}
-			hh, err = documentHashByteString(r, extra)
-		case cbg.MajTextString:
-			if extra == 0 {
-				continue
-			}
-			hh, err = documentHashTextString(r, extra)
-		case cbg.MajArray:
-			if extra == 0 {
-				continue
-			}
-			hh, err = documentHashArray(r, extra)
-		case cbg.MajTag:
-			panic("tags not supported")
-		// 	hh, err = documentHashTag(r, extra)
-		case cbg.MajOther: // bool
-			hh, err = documentHashOther(r, extra)
-		default:
-			panic(fmt.Errorf("unhandled major type: %d", valMaj))
+		hh, err := documentHashAny(r)
+		if errors.Is(err, errDocumentHashValueIsNil) {
+			continue
 		}
 		if err != nil {
 			return h, fmt.Errorf("error hashing value of key %s: %w", key, err)
@@ -149,7 +121,7 @@ func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err e
 		})
 	}
 
-	sort.Sort(byKDocumentHash(e))
+	sort.Sort(e)
 	hr := new(bytes.Buffer)
 	for _, ee := range e {
 		hr.Write(ee.khash[:])
@@ -158,7 +130,7 @@ func documentHashMap(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err e
 	return documentHashRaw("m", hr.Bytes()), nil
 }
 
-func documentHashUInt(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashUInt(extra uint64) (h [hashLength]byte, err error) {
 	extraI := int64(extra)
 	if extraI < 0 {
 		return h, fmt.Errorf("int64 positive overflow")
@@ -166,7 +138,7 @@ func documentHashUInt(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err 
 	return documentHashRaw("u", []byte(fmt.Sprintf("%d", extraI))), nil
 }
 
-func documentHashInt(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashInt(extra uint64) (h [hashLength]byte, err error) {
 	extraI := int64(extra)
 	if extraI < 0 {
 		return h, fmt.Errorf("int64 negative oveflow")
@@ -193,36 +165,48 @@ func documentHashTextString(r *cbg.CborReader, extra uint64) (h [hashLength]byte
 	return documentHashRaw("s", b), nil
 }
 
+func documentHashAny(r *cbg.CborReader) (h [hashLength]byte, err error) {
+	maj, extra, err := r.ReadHeader()
+	if err != nil {
+		return h, err
+	}
+	switch maj {
+	case cbg.MajMap:
+		return documentHashMap(r, extra)
+	case cbg.MajUnsignedInt:
+		return documentHashUInt(extra)
+	case cbg.MajNegativeInt:
+		return documentHashInt(extra)
+	case cbg.MajByteString:
+		if extra == 0 {
+			return h, errDocumentHashValueIsNil
+		}
+		return documentHashByteString(r, extra)
+	case cbg.MajTextString:
+		if extra == 0 {
+			return h, errDocumentHashValueIsNil
+		}
+		return documentHashTextString(r, extra)
+	case cbg.MajArray:
+		if extra == 0 {
+			return h, errDocumentHashValueIsNil
+		}
+		return documentHashArray(r, extra)
+	case cbg.MajTag:
+		panic("tags not supported")
+	case cbg.MajOther: // bool
+		return documentHashOther(extra)
+	default:
+		panic(fmt.Errorf("unhandled major type: %d", maj))
+	}
+}
+
 func documentHashArray(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	hr := new(bytes.Buffer)
 	for i := uint64(0); i < extra; i++ {
-		valMaj, extra, err := r.ReadHeader()
-		if err != nil {
-			return h, fmt.Errorf("error reading value header: %s", err)
-		}
-		var hh [hashLength]byte
-		switch valMaj {
-		case cbg.MajMap:
-			hh, err = documentHashMap(r, extra)
-		case cbg.MajUnsignedInt:
-			hh, err = documentHashUInt(r, extra)
-		case cbg.MajNegativeInt:
-			hh, err = documentHashInt(r, extra)
-		case cbg.MajByteString:
-			hh, err = documentHashByteString(r, extra)
-		case cbg.MajTextString:
-			hh, err = documentHashTextString(r, extra)
-		case cbg.MajArray:
-			panic("nested arrays not supported")
-			// hh, err = documentHashArray(r, extra)
-		case cbg.MajTag:
-			panic("arrays of tags not supported")
-		// 	hh, err = documentHashTag(r, extra)
-		case cbg.MajOther: // bool
-			panic("arrays of bools not supported")
-		// 	hh, err = documentHashOther(r, extra)
-		default:
-			panic("unhandled major type, " + fmt.Sprintf("%d", valMaj))
+		hh, err := documentHashAny(r)
+		if errors.Is(err, errDocumentHashValueIsNil) {
+			continue
 		}
 		if err != nil {
 			return h, err
@@ -232,11 +216,12 @@ func documentHashArray(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err
 	return documentHashRaw("a", hr.Bytes()), nil
 }
 
+// nolint:unused,deadcode // TODO: implement
 func documentHashTag(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
 	panic("documentHashTag not implemented")
 }
 
-func documentHashOther(r *cbg.CborReader, extra uint64) (h [hashLength]byte, err error) {
+func documentHashOther(extra uint64) (h [hashLength]byte, err error) {
 	switch extra {
 	case 20: // false
 		return documentHashRaw("b", []byte{0}), nil
