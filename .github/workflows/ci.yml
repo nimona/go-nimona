@@ -26,3 +26,5 @@ jobs:
         run: devbox shell -- task deps
       - name: Run linter
         run: devbox shell -- task lint
+      - name: Run tests
+        run: devbox shell -- task test
