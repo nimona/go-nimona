@@ -38,6 +38,7 @@ func NewDocumentMapFromCBOR(b []byte) (h DocumentMap, err error) {
 	return h, nil
 }
 
+// nolint: gocyclo // TODO: Refactor to reduce complexity
 func documentMap(r *cbg.CborReader, extra uint64) (m DocumentMap, err error) {
 	m = DocumentMap{}
 	var v interface{}
