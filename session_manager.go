@@ -53,8 +53,8 @@ func NewSessionManager(
 
 	if listener != nil {
 		go func() {
-			// TODO: handle error
-			c.handleConnections(context.Background())
+			// nolint:errcheck // TODO: handle error
+			c.handleConnections()
 		}()
 	}
 
@@ -116,7 +116,7 @@ func (cm *SessionManager) Request(
 	return ses.Request(ctx, req)
 }
 
-func (cm *SessionManager) handleConnections(ctx context.Context) error {
+func (cm *SessionManager) handleConnections() error {
 	errCh := make(chan error)
 	// accept inbound connections.
 	// if a connection with the same remote address already exists in the cache,
