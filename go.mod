@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/fxamacker/cbor/v2 v2.4.0
+	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1

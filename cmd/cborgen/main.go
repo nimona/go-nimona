@@ -18,6 +18,9 @@ func main() {
 	}
 
 	addMapping("document_metadata_gen.go", nimona.Metadata{})
+	addMapping("document_metadata_gen.go", nimona.Permissions{})
+	addMapping("document_metadata_gen.go", nimona.PermissionsAllow{})
+	addMapping("document_metadata_gen.go", nimona.PermissionsCondition{})
 	addMapping("document_metadata_gen.go", nimona.Signature{})
 	addMapping("fixtures_gen.go", nimona.CborFixture{})
 	addMapping("handler_network_gen.go", nimona.NetworkInfo{})

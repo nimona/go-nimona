@@ -38,86 +38,89 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 3
 
-	if zero.IsZeroVal(t.Owner) {
-		fieldCount--
-	}
-
-	if zero.IsZeroVal(t.Timestamp) {
-		fieldCount--
-	}
-
-	if zero.IsZeroVal(t.Signature) {
-		fieldCount--
-	}
-
-	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
+	if _, err := cw.Write([]byte{164}); err != nil {
 		return err
 	}
 
 	// t.Owner (string) (string)
-	if !zero.IsZeroVal(t.Owner) {
-
-		if len("owner") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"owner\" was too long")
-		}
-
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("owner"))); err != nil {
-			return err
-		}
-		if _, err := io.WriteString(w, string("owner")); err != nil {
-			return err
-		}
-
-		if len(t.Owner) > cbg.MaxLength {
-			return xerrors.Errorf("Value in field t.Owner was too long")
-		}
-
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Owner))); err != nil {
-			return err
-		}
-		if _, err := io.WriteString(w, string(t.Owner)); err != nil {
-			return err
-		}
+	if len("Owner") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Owner\" was too long")
 	}
 
-	// t.Timestamp (typegen.CborTime) (struct)
-	if !zero.IsZeroVal(t.Timestamp) {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Owner"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Owner")); err != nil {
+		return err
+	}
 
-		if len("timestamp") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"timestamp\" was too long")
-		}
+	if len(t.Owner) > cbg.MaxLength {
+		return xerrors.Errorf("Value in field t.Owner was too long")
+	}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("timestamp"))); err != nil {
-			return err
-		}
-		if _, err := io.WriteString(w, string("timestamp")); err != nil {
-			return err
-		}
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Owner))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string(t.Owner)); err != nil {
+		return err
+	}
 
-		if err := t.Timestamp.MarshalCBOR(cw); err != nil {
+	// t.Permissions ([]nimona.Permissions) (slice)
+	if len("Permissions") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Permissions\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Permissions"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Permissions")); err != nil {
+		return err
+	}
+
+	if len(t.Permissions) > cbg.MaxLength {
+		return xerrors.Errorf("Slice value in field t.Permissions was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajArray, uint64(len(t.Permissions))); err != nil {
+		return err
+	}
+	for _, v := range t.Permissions {
+		if err := v.MarshalCBOR(cw); err != nil {
 			return err
 		}
 	}
 
 	// t.Signature (nimona.Signature) (struct)
-	if !zero.IsZeroVal(t.Signature) {
+	if len("Signature") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Signature\" was too long")
+	}
 
-		if len("_signature") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"_signature\" was too long")
-		}
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Signature"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Signature")); err != nil {
+		return err
+	}
 
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("_signature"))); err != nil {
-			return err
-		}
-		if _, err := io.WriteString(w, string("_signature")); err != nil {
-			return err
-		}
+	if err := t.Signature.MarshalCBOR(cw); err != nil {
+		return err
+	}
 
-		if err := t.Signature.MarshalCBOR(cw); err != nil {
-			return err
-		}
+	// t.Timestamp (typegen.CborTime) (struct)
+	if len("Timestamp") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Timestamp\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Timestamp"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Timestamp")); err != nil {
+		return err
+	}
+
+	if err := t.Timestamp.MarshalCBOR(cw); err != nil {
+		return err
 	}
 	return nil
 }
@@ -168,7 +171,7 @@ func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
 
 		switch name {
 		// t.Owner (string) (string)
-		case "owner":
+		case "Owner":
 
 			{
 				sval, err := cbg.ReadString(cr)
@@ -178,8 +181,48 @@ func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
 
 				t.Owner = string(sval)
 			}
+			// t.Permissions ([]nimona.Permissions) (slice)
+		case "Permissions":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+
+			if extra > cbg.MaxLength {
+				return fmt.Errorf("t.Permissions: array too large (%d)", extra)
+			}
+
+			if maj != cbg.MajArray {
+				return fmt.Errorf("expected cbor array")
+			}
+
+			if extra > 0 {
+				t.Permissions = make([]Permissions, extra)
+			}
+
+			for i := 0; i < int(extra); i++ {
+
+				var v Permissions
+				if err := v.UnmarshalCBOR(cr); err != nil {
+					return err
+				}
+
+				t.Permissions[i] = v
+			}
+
+			// t.Signature (nimona.Signature) (struct)
+		case "Signature":
+
+			{
+
+				if err := t.Signature.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.Signature: %w", err)
+				}
+
+			}
 			// t.Timestamp (typegen.CborTime) (struct)
-		case "timestamp":
+		case "Timestamp":
 
 			{
 
@@ -188,15 +231,627 @@ func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
 				}
 
 			}
-			// t.Signature (nimona.Signature) (struct)
-		case "_signature":
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *Permissions) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (t *Permissions) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+
+	if _, err := cw.Write([]byte{163}); err != nil {
+		return err
+	}
+
+	// t.Paths ([]string) (slice)
+	if len("Paths") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Paths\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Paths"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Paths")); err != nil {
+		return err
+	}
+
+	if len(t.Paths) > cbg.MaxLength {
+		return xerrors.Errorf("Slice value in field t.Paths was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajArray, uint64(len(t.Paths))); err != nil {
+		return err
+	}
+	for _, v := range t.Paths {
+		if len(v) > cbg.MaxLength {
+			return xerrors.Errorf("Value in field v was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(v))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string(v)); err != nil {
+			return err
+		}
+	}
+
+	// t.Operations (nimona.PermissionsAllow) (struct)
+	if len("Operations") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Operations\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Operations"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Operations")); err != nil {
+		return err
+	}
+
+	if err := t.Operations.MarshalCBOR(cw); err != nil {
+		return err
+	}
+
+	// t.Conditions (nimona.PermissionsCondition) (struct)
+	if len("Conditions") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Conditions\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Conditions"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Conditions")); err != nil {
+		return err
+	}
+
+	if err := t.Conditions.MarshalCBOR(cw); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *Permissions) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = Permissions{}
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
+func (t *Permissions) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = Permissions{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("Permissions: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t.Paths ([]string) (slice)
+		case "Paths":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+
+			if extra > cbg.MaxLength {
+				return fmt.Errorf("t.Paths: array too large (%d)", extra)
+			}
+
+			if maj != cbg.MajArray {
+				return fmt.Errorf("expected cbor array")
+			}
+
+			if extra > 0 {
+				t.Paths = make([]string, extra)
+			}
+
+			for i := 0; i < int(extra); i++ {
+
+				{
+					sval, err := cbg.ReadString(cr)
+					if err != nil {
+						return err
+					}
+
+					t.Paths[i] = string(sval)
+				}
+			}
+
+			// t.Operations (nimona.PermissionsAllow) (struct)
+		case "Operations":
 
 			{
 
-				if err := t.Signature.UnmarshalCBOR(cr); err != nil {
-					return xerrors.Errorf("unmarshaling t.Signature: %w", err)
+				if err := t.Operations.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.Operations: %w", err)
 				}
 
+			}
+			// t.Conditions (nimona.PermissionsCondition) (struct)
+		case "Conditions":
+
+			{
+
+				if err := t.Conditions.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.Conditions: %w", err)
+				}
+
+			}
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *PermissionsAllow) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (t *PermissionsAllow) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+
+	if _, err := cw.Write([]byte{167}); err != nil {
+		return err
+	}
+
+	// t.Read (bool) (bool)
+	if len("Read") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Read\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Read"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Read")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Read); err != nil {
+		return err
+	}
+
+	// t.Add (bool) (bool)
+	if len("Add") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Add\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Add"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Add")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Add); err != nil {
+		return err
+	}
+
+	// t.Remove (bool) (bool)
+	if len("Remove") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Remove\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Remove"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Remove")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Remove); err != nil {
+		return err
+	}
+
+	// t.Replace (bool) (bool)
+	if len("Replace") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Replace\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Replace"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Replace")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Replace); err != nil {
+		return err
+	}
+
+	// t.Move (bool) (bool)
+	if len("Move") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Move\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Move"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Move")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Move); err != nil {
+		return err
+	}
+
+	// t.Copy (bool) (bool)
+	if len("Copy") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Copy\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Copy"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Copy")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Copy); err != nil {
+		return err
+	}
+
+	// t.Test (bool) (bool)
+	if len("Test") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Test\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Test"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Test")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Test); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *PermissionsAllow) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = PermissionsAllow{}
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
+func (t *PermissionsAllow) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = PermissionsAllow{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("PermissionsAllow: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t.Read (bool) (bool)
+		case "Read":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Read = false
+			case 21:
+				t.Read = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.Add (bool) (bool)
+		case "Add":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Add = false
+			case 21:
+				t.Add = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.Remove (bool) (bool)
+		case "Remove":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Remove = false
+			case 21:
+				t.Remove = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.Replace (bool) (bool)
+		case "Replace":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Replace = false
+			case 21:
+				t.Replace = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.Move (bool) (bool)
+		case "Move":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Move = false
+			case 21:
+				t.Move = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.Copy (bool) (bool)
+		case "Copy":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Copy = false
+			case 21:
+				t.Copy = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.Test (bool) (bool)
+		case "Test":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Test = false
+			case 21:
+				t.Test = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *PermissionsCondition) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (t *PermissionsCondition) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+
+	if _, err := cw.Write([]byte{161}); err != nil {
+		return err
+	}
+
+	// t.IsOwner (bool) (bool)
+	if len("IsOwner") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"IsOwner\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("IsOwner"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("IsOwner")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.IsOwner); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *PermissionsCondition) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = PermissionsCondition{}
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
+func (t *PermissionsCondition) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = PermissionsCondition{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("PermissionsCondition: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t.IsOwner (bool) (bool)
+		case "IsOwner":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.IsOwner = false
+			case 21:
+				t.IsOwner = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
 			}
 
 		default:
