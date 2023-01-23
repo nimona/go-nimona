@@ -3,10 +3,26 @@ package nimona
 import (
 	"encoding/json"
 	"fmt"
-	reflect "reflect"
-
-	"github.com/fxamacker/cbor/v2"
 )
+
+func PrettyPrintCbor(b []byte) {
+	s := PrettySPrintCbor(b)
+	fmt.Println(s)
+}
+
+func PrettySPrintCbor(b []byte) string {
+	m, err := NewDocumentMapFromCBOR(b)
+	if err != nil {
+		panic(fmt.Errorf("error unmarshaling cbor, err: %w", err))
+	}
+
+	jb, err := json.Marshal(m)
+	if err != nil {
+		panic(fmt.Errorf("error marshaling to json, err: %w", err))
+	}
+
+	return fmt.Sprintf("cbor: %x\njson: %s\n", b, string(jb))
+}
 
 func PrettyPrint(v Cborer) {
 	s := PrettySPrint(v)
@@ -22,23 +38,5 @@ func PrettySPrint(v Cborer) string {
 		panic(fmt.Errorf("error marshaling to cbor, err: %w", err))
 	}
 
-	m := map[string]interface{}{}
-	dm, err := cbor.DecOptions{
-		DefaultMapType: reflect.TypeOf(map[string]interface{}{}),
-	}.DecMode()
-	if err != nil {
-		panic(fmt.Errorf("error creating cbor decoder, err: %w", err))
-	}
-
-	err = dm.Unmarshal(b, &m)
-	if err != nil {
-		panic(fmt.Errorf("error unmarshaling cbor, err: %w", err))
-	}
-
-	j, err := json.Marshal(m)
-	if err != nil {
-		panic(fmt.Errorf("error marshaling to json, err: %w", err))
-	}
-
-	return fmt.Sprintf("cbor: %x\njson: %s\n", b, string(j))
+	return PrettySPrintCbor(b)
 }
