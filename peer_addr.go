@@ -16,7 +16,7 @@ type PeerAddr struct {
 
 func ParsePeerAddr(addr string) (*PeerAddr, error) {
 	regex := regexp.MustCompile(
-		ResourceTypePeerAddress.String() +
+		DocumentTypePeerAddress.String() +
 			`(?:([\w\d]+@))?([\w\d]+):([\w\d\.]+):(\d+)`,
 	)
 	matches := regex.FindStringSubmatch(addr)
@@ -47,7 +47,7 @@ func ParsePeerAddr(addr string) (*PeerAddr, error) {
 
 func (a PeerAddr) String() string {
 	b := strings.Builder{}
-	b.WriteString(ResourceTypePeerAddress.String())
+	b.WriteString(DocumentTypePeerAddress.String())
 	if a.PublicKey != nil {
 		b.WriteString(a.PublicKey.String())
 		b.WriteString("@")

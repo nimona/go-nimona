@@ -29,7 +29,7 @@ func TestResolverDNS_E2E(t *testing.T) {
 		*exp1,
 	}
 
-	nID, err := ParseNetworkID("nimona://network:handle:testing.reamde.dev")
+	nID, err := ParseNetworkAlias("nimona://net:alias:testing.reamde.dev")
 	require.NoError(t, err)
 
 	res := ResolverDNS{}

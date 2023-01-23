@@ -14,7 +14,7 @@ func TestPeerAddr(t *testing.T) {
 	}
 	t.Run("struct addr to string", func(t *testing.T) {
 		require.Equal(t, "utp", a.Network)
-		require.Equal(t, ResourceTypePeerAddress.String()+"utp:localhost:1234", a.String())
+		require.Equal(t, DocumentTypePeerAddress.String()+"utp:localhost:1234", a.String())
 	})
 
 	t.Run("string addr to struct", func(t *testing.T) {

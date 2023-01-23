@@ -27,7 +27,7 @@ func NewDocumentIDFromCBOR(b []byte) DocumentID {
 }
 
 func ParseDocumentID(pID string) (DocumentID, error) {
-	prefix := string(ResourceTypeDocumentID)
+	prefix := string(DocumentTypeDocumentID)
 	if !strings.HasPrefix(pID, prefix) {
 		return DocumentID{}, fmt.Errorf("invalid resource id")
 	}
@@ -42,12 +42,12 @@ func ParseDocumentID(pID string) (DocumentID, error) {
 }
 
 type DocumentID struct {
-	_            string `cborgen:"$prefix,const=nimona://doc"`
+	_            string `cborgen:"$type,const=nimona://doc"`
 	DocumentHash DocumentHash
 }
 
 func (p DocumentID) String() string {
-	return string(ResourceTypeDocumentID) + p.DocumentHash.String()
+	return string(DocumentTypeDocumentID) + p.DocumentHash.String()
 }
 
 func (p DocumentID) IsEmpty() bool {

@@ -12,7 +12,7 @@ var ErrResolverUnsupported = errors.New("resolver unsupported")
 type ResolverDNS struct{}
 
 // TODO add context
-func (r *ResolverDNS) Resolve(nID NetworkID) ([]PeerAddr, error) {
+func (r *ResolverDNS) Resolve(nID NetworkAlias) ([]PeerAddr, error) {
 	// look up all the TXT DNS entries for the given hostname
 	peerAddrs := []PeerAddr{}
 	entries, err := net.LookupTXT(nID.Hostname)

@@ -44,14 +44,14 @@ func (t *DocumentID) MarshalCBOR(w io.Writer) error {
 	}
 
 	// t._ (string) (string)
-	if len("$prefix") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"$prefix\" was too long")
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$prefix"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("$prefix")); err != nil {
+	if _, err := io.WriteString(w, string("$type")); err != nil {
 		return err
 	}
 
