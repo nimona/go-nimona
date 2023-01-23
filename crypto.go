@@ -41,6 +41,10 @@ func PublicKeyFromBase58(pk string) (PublicKey, error) {
 	return base58.Decode(pk)
 }
 
+func (sk PrivateKey) Equal(other PrivateKey) bool {
+	return ed25519.PrivateKey(sk).Equal(ed25519.PrivateKey(other))
+}
+
 func (sk PrivateKey) Sign(message []byte, opts *ed25519.Options) (*Signature, error) {
 	sig, err := ed25519.PrivateKey(sk).Sign(nil, message, &ed25519.Options{})
 	if err != nil {
