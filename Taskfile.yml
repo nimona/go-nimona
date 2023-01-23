@@ -27,6 +27,14 @@ tasks:
 
   test:
     cmds:
+      - go test -count=1 ./...
+
+  test-all:
+    cmds:
+      - go test -count=1 -tags=integration ./...
+
+  test-verbose:
+    cmds:
       - go test -v -count=1 ./...
 
   init-bin:
