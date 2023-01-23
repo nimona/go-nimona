@@ -6,30 +6,34 @@ import (
 )
 
 type (
+	DocumentBase struct {
+		Type     string   `cborgen:"$type"`
+		Metadata Metadata `cborgen:"$metadata"`
+	}
 	Metadata struct {
-		Owner       string
-		Permissions []Permissions
-		Signature   Signature
-		Timestamp   cbg.CborTime
+		Owner       string        `cborgen:"owner,omitempty"`
+		Permissions []Permissions `cborgen:"permissions,omitempty"`
+		Timestamp   cbg.CborTime  `cborgen:"timestamp,omitempty"`
+		Signature   Signature     `cborgen:"_signature,omitempty"`
 	}
 	Permissions struct {
-		Paths      []string
-		Operations PermissionsAllow
-		Conditions PermissionsCondition
+		Paths      []string             `cborgen:"paths"`
+		Operations PermissionsAllow     `cborgen:"operations"`
+		Conditions PermissionsCondition `cborgen:"conditions"`
 	}
 	PermissionsAllow struct {
 		// generic ops
-		Read bool
+		Read bool `cborgen:"read,omitempty"`
 		// json patch
-		Add     bool
-		Remove  bool
-		Replace bool
-		Move    bool
-		Copy    bool
-		Test    bool
+		Add     bool `cborgen:"add,omitempty"`
+		Remove  bool `cborgen:"remove,omitempty"`
+		Replace bool `cborgen:"replace,omitempty"`
+		Move    bool `cborgen:"move,omitempty"`
+		Copy    bool `cborgen:"copy,omitempty"`
+		Test    bool `cborgen:"test,omitempty"`
 	}
 	PermissionsCondition struct {
-		IsOwner bool
+		IsOwner bool `cborgen:"isOwner,omitempty"`
 	}
 )
 
