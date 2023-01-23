@@ -38,7 +38,7 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 13
+	fieldCount := 14
 
 	if zero.IsZeroVal(t.String) {
 		fieldCount--
@@ -93,6 +93,25 @@ func (t *CborFixture) MarshalCBOR(w io.Writer) error {
 	}
 
 	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
+		return err
+	}
+
+	// t._ (string) (string)
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$type")); err != nil {
+		return err
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("test/fixture"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("test/fixture")); err != nil {
 		return err
 	}
 
@@ -485,6 +504,8 @@ func (t *CborFixture) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 
 		switch name {
+		// t._ (string) (string) - ignored
+
 		// t.String (string) (string)
 		case "string":
 

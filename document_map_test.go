@@ -2,6 +2,7 @@ package nimona
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,10 +31,12 @@ func TestDocumentMap(t *testing.T) {
 	}
 
 	exp := `{
+  "$type": "test/fixture",
   "bool": true,
   "bytes": "YmFy",
   "int64": -42,
   "map": {
+    "$type": "test/fixture",
     "string": "foo"
   },
   "repeatedbytes": [
@@ -47,9 +50,11 @@ func TestDocumentMap(t *testing.T) {
   ],
   "repeatedmap": [
     {
+      "$type": "test/fixture",
       "string": "foo"
     },
     {
+      "$type": "test/fixture",
       "string": "bar"
     }
   ],
@@ -71,6 +76,7 @@ func TestDocumentMap(t *testing.T) {
 		require.NoError(t, err)
 
 		b, err := json.MarshalIndent(m, "", "  ")
+		fmt.Println(string(b))
 		require.NoError(t, err)
 		require.Equal(t, exp, string(b))
 	})

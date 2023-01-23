@@ -1,6 +1,7 @@
 package nimona
 
 type CborFixture struct {
+	_              string       `cborgen:"$type,const=test/fixture"`
 	String         string       `cborgen:"string,omitempty"`
 	Uint64         uint64       `cborgen:"uint64,omitempty"`
 	Int64          int64        `cborgen:"int64,omitempty"`

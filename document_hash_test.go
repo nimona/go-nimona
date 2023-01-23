@@ -29,7 +29,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 		}},
 	}
 
-	exp := "ANYEibdUhncK5kumasnV7Q3FsF4PBpL1GbyiZd3QN1XA"
+	exp := "82pCJU9HhpjB1XgndtpSzby9UT13dCmdbBVFnDyWysGq"
 
 	t.Run("test marshaling", func(t *testing.T) {
 		b, err := m.MarshalCBORBytes()
@@ -83,7 +83,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 
 	t.Run("add document id", func(t *testing.T) {
 		m.DocumentID = NewDocumentIDFromCBOR(b)
-		exp := "7BWGuG4uUwVFQpdMXaca3rnkz2BvKPNoN2MRgXBr8KjF"
+		exp := "F31excad5AE5KndjRHFGx2gpU8XUrRuBiG19vLzC3LrK"
 
 		t.Run("test hashing", func(t *testing.T) {
 			h, err := NewDocumentHash(m)
