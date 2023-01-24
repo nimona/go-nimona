@@ -1,4 +1,4 @@
 ansible-lint==5.0.12
-ansible==2.10.7
+ansible==7.0.0
 bcrypt==3.2.0
 passlib==1.7.4
