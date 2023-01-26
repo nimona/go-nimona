@@ -8,10 +8,10 @@ import (
 type (
 	DocumentBase struct {
 		Type     string   `cborgen:"$type"`
-		Metadata Metadata `cborgen:"$metadata"`
+		Metadata Metadata `cborgen:"$metadata,omitempty"`
 	}
 	Metadata struct {
-		Owner       string        `cborgen:"owner,omitempty"`
+		Owner       *IdentityID   `cborgen:"owner,omitempty"`
 		Permissions []Permissions `cborgen:"permissions,omitempty"`
 		Timestamp   cbg.CborTime  `cborgen:"timestamp,omitempty"`
 		Signature   Signature     `cborgen:"_signature,omitempty"`

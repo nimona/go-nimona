@@ -6,6 +6,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func NewTestIdentity(t *testing.T) *Identity {
+	t.Helper()
+
+	pk, _, err := GenerateKey()
+	require.NoError(t, err)
+
+	return &Identity{
+		Keys: pk,
+	}
+}
+
 func TestIdentityAlias(t *testing.T) {
 	s0 := "nimona://id:alias:testing.romdo.io/geoah"
 	n0 := &IdentityAlias{
@@ -33,54 +44,44 @@ func TestIdentityAlias(t *testing.T) {
 	})
 }
 
-// func TestIdentityIdentifier(t *testing.T) {
-// 	networkInfoRootID := NewTestRandomDocumentID(t)
-// 	tests := []struct {
-// 		name    string
-// 		cborer  Cborer
-// 		want    *IdentityIdentifier
-// 		wantErr bool
-// 	}{{
-// 		name: "network alias",
-// 		cborer: &IdentityAlias{
-// 			Network: NetworkAlias{
-// 				Hostname: "nimona.io",
-// 			},
-// 			Handle: "geoah",
-// 		},
-// 		want: &IdentityIdentifier{
-// 			IdentityAlias: &IdentityAlias{
-// 				Network: NetworkAlias{
-// 					Hostname: "nimona.io",
-// 				},
-// 				Handle: "geoah",
-// 			},
-// 		},
-// 	}, {
-// 		name: "network identity",
-// 		cborer: &Identity{
+func TestIdentity(t *testing.T) {
+	id := NewTestIdentity(t)
 
-// 		},
-// 		want: &IdentityIdentifier{
-// 			IdentityIdentity: &IdentityIdentity{
-// 				IdentityInfoRootID: networkInfoRootID,
-// 			},
-// 		},
-// 	}}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			cborBytes, err := tt.cborer.MarshalCBORBytes()
-// 			require.NoError(t, err)
+	t.Run("marshal unmarshal", func(t *testing.T) {
+		b, err := id.MarshalCBORBytes()
+		require.NoError(t, err)
 
-// 			PrettyPrintCbor(cborBytes)
+		id1 := &Identity{}
+		err = id1.UnmarshalCBORBytes(b)
+		require.NoError(t, err)
+		require.EqualValues(t, id, id1)
+		require.Equal(t, id.String(), id1.String())
+	})
 
-// 			id := &IdentityIdentifier{}
-// 			err = id.UnmarshalCBORBytes(cborBytes)
-// 			if (err != nil) != tt.wantErr {
-// 				t.Errorf("UnmarshalCBORBytes() error = %v, wantErr %v", err, tt.wantErr)
-// 				return
-// 			}
-// 			require.Equal(t, tt.want, id)
-// 		})
-// 	}
-// }
+	t.Run("IdentityID", func(t *testing.T) {
+		idID := id.IdentityID()
+		require.Equal(t, id.String(), idID.String())
+	})
+}
+
+func TestIdentityID(t *testing.T) {
+	id := NewTestIdentity(t)
+	idID := id.IdentityID()
+	require.Equal(t, id.String(), idID.String())
+
+	t.Run("parse", func(t *testing.T) {
+		idID, err := ParseIdentityID(idID.String())
+		require.NoError(t, err)
+		require.Equal(t, id.String(), idID.String())
+	})
+
+	t.Run("value/scan", func(t *testing.T) {
+		val, err := idID.Value()
+		require.NoError(t, err)
+
+		var idID IdentityID
+		err = idID.Scan(val)
+		require.NoError(t, err)
+		require.Equal(t, id.String(), idID.String())
+	})
+}

@@ -33,7 +33,7 @@ func ParseDocumentID(pID string) (DocumentID, error) {
 	}
 
 	pID = strings.TrimPrefix(pID, prefix)
-	hash, err := DocumentHashFromBase58(pID)
+	hash, err := ParseDocumentHash(pID)
 	if err != nil {
 		return DocumentID{}, fmt.Errorf("invalid resource id")
 	}

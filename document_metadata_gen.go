@@ -38,8 +38,13 @@ func (t *DocumentBase) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
+	fieldCount := 2
 
-	if _, err := cw.Write([]byte{162}); err != nil {
+	if zero.IsZeroVal(t.Metadata) {
+		fieldCount--
+	}
+
+	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
 		return err
 	}
 
@@ -67,19 +72,22 @@ func (t *DocumentBase) MarshalCBOR(w io.Writer) error {
 	}
 
 	// t.Metadata (nimona.Metadata) (struct)
-	if len("$metadata") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"$metadata\" was too long")
-	}
+	if !zero.IsZeroVal(t.Metadata) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$metadata"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("$metadata")); err != nil {
-		return err
-	}
+		if len("$metadata") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"$metadata\" was too long")
+		}
 
-	if err := t.Metadata.MarshalCBOR(cw); err != nil {
-		return err
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$metadata"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("$metadata")); err != nil {
+			return err
+		}
+
+		if err := t.Metadata.MarshalCBOR(cw); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -178,7 +186,7 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 	cw := cbg.NewCborWriter(w)
 	fieldCount := 4
 
-	if zero.IsZeroVal(t.Owner) {
+	if t.Owner == nil {
 		fieldCount--
 	}
 
@@ -198,8 +206,8 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.Owner (string) (string)
-	if !zero.IsZeroVal(t.Owner) {
+	// t.Owner (nimona.IdentityID) (struct)
+	if t.Owner != nil {
 
 		if len("owner") > cbg.MaxLength {
 			return xerrors.Errorf("Value in field \"owner\" was too long")
@@ -212,14 +220,7 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 			return err
 		}
 
-		if len(t.Owner) > cbg.MaxLength {
-			return xerrors.Errorf("Value in field t.Owner was too long")
-		}
-
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Owner))); err != nil {
-			return err
-		}
-		if _, err := io.WriteString(w, string(t.Owner)); err != nil {
+		if err := t.Owner.MarshalCBOR(cw); err != nil {
 			return err
 		}
 	}
@@ -337,16 +338,25 @@ func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 
 		switch name {
-		// t.Owner (string) (string)
+		// t.Owner (nimona.IdentityID) (struct)
 		case "owner":
 
 			{
-				sval, err := cbg.ReadString(cr)
+
+				b, err := cr.ReadByte()
 				if err != nil {
 					return err
 				}
+				if b != cbg.CborNull[0] {
+					if err := cr.UnreadByte(); err != nil {
+						return err
+					}
+					t.Owner = new(IdentityID)
+					if err := t.Owner.UnmarshalCBOR(cr); err != nil {
+						return xerrors.Errorf("unmarshaling t.Owner pointer: %w", err)
+					}
+				}
 
-				t.Owner = string(sval)
 			}
 			// t.Permissions ([]nimona.Permissions) (slice)
 		case "permissions":

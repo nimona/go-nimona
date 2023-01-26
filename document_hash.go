@@ -27,7 +27,7 @@ func (h DocumentHash) IsEqual(other DocumentHash) bool {
 	return bytes.Equal(h[:], other[:])
 }
 
-func DocumentHashFromBase58(s string) (DocumentHash, error) {
+func ParseDocumentHash(s string) (DocumentHash, error) {
 	var h DocumentHash
 	b, err := base58.Decode(s)
 	if err != nil {

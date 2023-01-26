@@ -18,6 +18,10 @@ type (
 		Keys     PublicKey `cborgen:"keys"`
 		Next     PublicKey `cborgen:"next"`
 	}
+	IdentityID struct {
+		_              string     `cborgen:"$type,const=core/identity/id"`
+		IdentityRootID DocumentID `cborgen:"identityStreamID"`
+	}
 	IdentityIdentifier struct {
 		IdentityAlias *IdentityAlias
 		Identity      *Identity
@@ -64,7 +68,11 @@ func (i *IdentityAlias) Scan(value interface{}) error {
 }
 
 func (i *Identity) String() string {
-	return string(ShorthandIdentity) + NewDocumentID(i).String()
+	h, err := NewDocumentHash(i)
+	if err != nil {
+		panic(fmt.Errorf("unable to get hash of identity: %w", err))
+	}
+	return string(ShorthandIdentity) + h.String()
 }
 
 func (i *Identity) Value() (driver.Value, error) {
@@ -73,6 +81,53 @@ func (i *Identity) Value() (driver.Value, error) {
 
 func (i *Identity) Scan(value interface{}) error {
 	return fmt.Errorf("not implemented")
+}
+
+func (i *Identity) IdentityID() IdentityID {
+	return IdentityID{
+		IdentityRootID: NewDocumentID(i),
+	}
+}
+
+func (i *IdentityID) String() string {
+	return string(ShorthandIdentity) + i.IdentityRootID.DocumentHash.String()
+}
+
+func (i *IdentityID) Value() (driver.Value, error) {
+	return i.String(), nil
+}
+
+func (i *IdentityID) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	if idString, ok := value.(string); ok {
+		id, err := ParseIdentityID(idString)
+		if err != nil {
+			return fmt.Errorf("unable to scan into IdentityID: %w", err)
+		}
+		i.IdentityRootID = id.IdentityRootID
+		return nil
+	}
+	return fmt.Errorf("unable to scan into IdentityID")
+}
+
+func ParseIdentityID(id string) (*IdentityID, error) {
+	t := string(ShorthandIdentity)
+	if !strings.HasPrefix(id, t) {
+		return nil, fmt.Errorf("invalid resource id")
+	}
+
+	id = strings.TrimPrefix(id, t)
+	dh, err := ParseDocumentHash(id)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse identity id: %w", err)
+	}
+	return &IdentityID{
+		IdentityRootID: DocumentID{
+			DocumentHash: dh,
+		},
+	}, nil
 }
 
 func (i IdentityIdentifier) String() string {

@@ -420,3 +420,128 @@ func (t *IdentityAlias) UnmarshalCBOR(r io.Reader) (err error) {
 
 	return nil
 }
+
+func (t *IdentityID) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (t *IdentityID) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+
+	if _, err := cw.Write([]byte{162}); err != nil {
+		return err
+	}
+
+	// t._ (string) (string)
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$type")); err != nil {
+		return err
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/identity/id"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("core/identity/id")); err != nil {
+		return err
+	}
+
+	// t.IdentityRootID (nimona.DocumentID) (struct)
+	if len("identityStreamID") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"identityStreamID\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("identityStreamID"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("identityStreamID")); err != nil {
+		return err
+	}
+
+	if err := t.IdentityRootID.MarshalCBOR(cw); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *IdentityID) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = IdentityID{}
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
+func (t *IdentityID) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = IdentityID{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("IdentityID: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t._ (string) (string) - ignored
+
+		// t.IdentityRootID (nimona.DocumentID) (struct)
+		case "identityStreamID":
+
+			{
+
+				if err := t.IdentityRootID.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.IdentityRootID: %w", err)
+				}
+
+			}
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
