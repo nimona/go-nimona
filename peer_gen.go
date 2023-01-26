@@ -22,151 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *PeerKey) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
-func (t *PeerKey) MarshalCBOR(w io.Writer) error {
-	if t == nil {
-		_, err := w.Write(cbg.CborNull)
-		return err
-	}
-
-	cw := cbg.NewCborWriter(w)
-
-	if _, err := cw.Write([]byte{162}); err != nil {
-		return err
-	}
-
-	// t._ (string) (string)
-	if len("$type") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"$type\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("$type")); err != nil {
-		return err
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("nimona://peer:key"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("nimona://peer:key")); err != nil {
-		return err
-	}
-
-	// t.PublicKey (nimona.PublicKey) (slice)
-	if len("PublicKey") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"PublicKey\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("PublicKey"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("PublicKey")); err != nil {
-		return err
-	}
-
-	if len(t.PublicKey) > cbg.ByteArrayMaxLen {
-		return xerrors.Errorf("Byte array in field t.PublicKey was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajByteString, uint64(len(t.PublicKey))); err != nil {
-		return err
-	}
-
-	if _, err := cw.Write(t.PublicKey[:]); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *PeerKey) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = PeerKey{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
-}
-
-func (t *PeerKey) UnmarshalCBOR(r io.Reader) (err error) {
-	if t == nil {
-		*t = PeerKey{}
-	}
-
-	cr := cbg.NewCborReader(r)
-
-	maj, extra, err := cr.ReadHeader()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err == io.EOF {
-			err = io.ErrUnexpectedEOF
-		}
-	}()
-
-	if maj != cbg.MajMap {
-		return fmt.Errorf("cbor input should be of type map")
-	}
-
-	if extra > cbg.MaxLength {
-		return fmt.Errorf("PeerKey: map struct too large (%d)", extra)
-	}
-
-	var name string
-	n := extra
-
-	for i := uint64(0); i < n; i++ {
-
-		{
-			sval, err := cbg.ReadString(cr)
-			if err != nil {
-				return err
-			}
-
-			name = string(sval)
-		}
-
-		switch name {
-		// t._ (string) (string) - ignored
-
-		// t.PublicKey (nimona.PublicKey) (slice)
-		case "PublicKey":
-
-			maj, extra, err = cr.ReadHeader()
-			if err != nil {
-				return err
-			}
-
-			if extra > cbg.ByteArrayMaxLen {
-				return fmt.Errorf("t.PublicKey: byte array too large (%d)", extra)
-			}
-			if maj != cbg.MajByteString {
-				return fmt.Errorf("expected byte array")
-			}
-
-			if extra > 0 {
-				t.PublicKey = make([]uint8, extra)
-			}
-
-			if _, err := io.ReadFull(cr, t.PublicKey[:]); err != nil {
-				return err
-			}
-
-		default:
-			// Field doesn't exist on this type, so ignore it
-			cbg.ScanForLinks(r, func(cid.Cid) {})
-		}
-	}
-
-	return nil
-}
-
 func (t *PeerInfo) MarshalCBORBytes() ([]byte, error) {
 	w := bytes.NewBuffer(nil)
 	err := t.MarshalCBOR(w)
@@ -201,10 +56,10 @@ func (t *PeerInfo) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/node.info"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/peer/info"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("core/node.info")); err != nil {
+	if _, err := io.WriteString(w, string("core/peer/info")); err != nil {
 		return err
 	}
 
@@ -363,6 +218,151 @@ func (t *PeerInfo) UnmarshalCBOR(r io.Reader) (err error) {
 			}
 
 			// t.RawBytes ([]uint8) (slice) - ignored
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *PeerKey) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (t *PeerKey) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+
+	if _, err := cw.Write([]byte{162}); err != nil {
+		return err
+	}
+
+	// t._ (string) (string)
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$type")); err != nil {
+		return err
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/peer/key"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("core/peer/key")); err != nil {
+		return err
+	}
+
+	// t.PublicKey (nimona.PublicKey) (slice)
+	if len("PublicKey") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"PublicKey\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("PublicKey"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("PublicKey")); err != nil {
+		return err
+	}
+
+	if len(t.PublicKey) > cbg.ByteArrayMaxLen {
+		return xerrors.Errorf("Byte array in field t.PublicKey was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajByteString, uint64(len(t.PublicKey))); err != nil {
+		return err
+	}
+
+	if _, err := cw.Write(t.PublicKey[:]); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *PeerKey) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = PeerKey{}
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
+func (t *PeerKey) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = PeerKey{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("PeerKey: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t._ (string) (string) - ignored
+
+		// t.PublicKey (nimona.PublicKey) (slice)
+		case "PublicKey":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+
+			if extra > cbg.ByteArrayMaxLen {
+				return fmt.Errorf("t.PublicKey: byte array too large (%d)", extra)
+			}
+			if maj != cbg.MajByteString {
+				return fmt.Errorf("expected byte array")
+			}
+
+			if extra > 0 {
+				t.PublicKey = make([]uint8, extra)
+			}
+
+			if _, err := io.ReadFull(cr, t.PublicKey[:]); err != nil {
+				return err
+			}
 
 		default:
 			// Field doesn't exist on this type, so ignore it

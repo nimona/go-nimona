@@ -10,13 +10,13 @@ import (
 type PeerAddr struct {
 	_         string    `cborgen:"$type,const=core/node.address"`
 	Address   string    `cborgen:"address"`
-	Network   string    `cborgen:"network"`
+	Network   string    `cborgen:"network"` // TODO: rename to transport
 	PublicKey PublicKey `cborgen:"publicKey"`
 }
 
 func ParsePeerAddr(addr string) (*PeerAddr, error) {
 	regex := regexp.MustCompile(
-		DocumentTypePeerAddress.String() +
+		ShorthandPeerAddress.String() +
 			`(?:([\w\d]+@))?([\w\d]+):([\w\d\.]+):(\d+)`,
 	)
 	matches := regex.FindStringSubmatch(addr)
@@ -47,7 +47,7 @@ func ParsePeerAddr(addr string) (*PeerAddr, error) {
 
 func (a PeerAddr) String() string {
 	b := strings.Builder{}
-	b.WriteString(DocumentTypePeerAddress.String())
+	b.WriteString(ShorthandPeerAddress.String())
 	if a.PublicKey != nil {
 		b.WriteString(a.PublicKey.String())
 		b.WriteString("@")

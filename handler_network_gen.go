@@ -22,7 +22,7 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *NetworkInfo) MarshalCBORBytes() ([]byte, error) {
+func (t *NetworkAccountingRegistrationRequest) MarshalCBORBytes() ([]byte, error) {
 	w := bytes.NewBuffer(nil)
 	err := t.MarshalCBOR(w)
 	if err != nil {
@@ -31,16 +31,15 @@ func (t *NetworkInfo) MarshalCBORBytes() ([]byte, error) {
 	return w.Bytes(), nil
 }
 
-func (t *NetworkInfo) MarshalCBOR(w io.Writer) error {
+func (t *NetworkAccountingRegistrationRequest) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
 		return err
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 4
 
-	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
+	if _, err := cw.Write([]byte{163}); err != nil {
 		return err
 	}
 
@@ -56,22 +55,22 @@ func (t *NetworkInfo) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network/info"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network/accounting/registration.request"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("core/network/info")); err != nil {
+	if _, err := io.WriteString(w, string("core/network/accounting/registration.request")); err != nil {
 		return err
 	}
 
 	// t.Metadata (nimona.Metadata) (struct)
-	if len("metadata") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"metadata\" was too long")
+	if len("Metadata") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Metadata\" was too long")
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("metadata"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Metadata"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("metadata")); err != nil {
+	if _, err := io.WriteString(w, string("Metadata")); err != nil {
 		return err
 	}
 
@@ -79,61 +78,39 @@ func (t *NetworkInfo) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.NetworkID (nimona.NetworkID) (struct)
-	if len("networkID") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"networkID\" was too long")
+	// t.RequestedHandle (string) (string)
+	if len("RequestedHandle") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"RequestedHandle\" was too long")
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("networkID"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RequestedHandle"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("networkID")); err != nil {
-		return err
-	}
-
-	if err := t.NetworkID.MarshalCBOR(cw); err != nil {
+	if _, err := io.WriteString(w, string("RequestedHandle")); err != nil {
 		return err
 	}
 
-	// t.PeerAddresses ([]nimona.PeerAddr) (slice)
-	if len("peerAddresses") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"peerAddresses\" was too long")
+	if len(t.RequestedHandle) > cbg.MaxLength {
+		return xerrors.Errorf("Value in field t.RequestedHandle was too long")
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("peerAddresses"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.RequestedHandle))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("peerAddresses")); err != nil {
+	if _, err := io.WriteString(w, string(t.RequestedHandle)); err != nil {
 		return err
 	}
-
-	if len(t.PeerAddresses) > cbg.MaxLength {
-		return xerrors.Errorf("Slice value in field t.PeerAddresses was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajArray, uint64(len(t.PeerAddresses))); err != nil {
-		return err
-	}
-	for _, v := range t.PeerAddresses {
-		if err := v.MarshalCBOR(cw); err != nil {
-			return err
-		}
-	}
-
-	// t.RawBytes ([]uint8) (slice) - ignored
-
 	return nil
 }
 
-func (t *NetworkInfo) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = NetworkInfo{}
-	t.RawBytes = b
+func (t *NetworkAccountingRegistrationRequest) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = NetworkAccountingRegistrationRequest{}
 	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
-func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
+func (t *NetworkAccountingRegistrationRequest) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
-		*t = NetworkInfo{}
+		*t = NetworkAccountingRegistrationRequest{}
 	}
 
 	cr := cbg.NewCborReader(r)
@@ -153,7 +130,7 @@ func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	if extra > cbg.MaxLength {
-		return fmt.Errorf("NetworkInfo: map struct too large (%d)", extra)
+		return fmt.Errorf("NetworkAccountingRegistrationRequest: map struct too large (%d)", extra)
 	}
 
 	var name string
@@ -174,7 +151,7 @@ func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
 		// t._ (string) (string) - ignored
 
 		// t.Metadata (nimona.Metadata) (struct)
-		case "metadata":
+		case "Metadata":
 
 			{
 
@@ -183,47 +160,252 @@ func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
 				}
 
 			}
-			// t.NetworkID (nimona.NetworkID) (struct)
-		case "networkID":
+			// t.RequestedHandle (string) (string)
+		case "RequestedHandle":
 
 			{
-
-				if err := t.NetworkID.UnmarshalCBOR(cr); err != nil {
-					return xerrors.Errorf("unmarshaling t.NetworkID: %w", err)
+				sval, err := cbg.ReadString(cr)
+				if err != nil {
+					return err
 				}
 
+				t.RequestedHandle = string(sval)
 			}
-			// t.PeerAddresses ([]nimona.PeerAddr) (slice)
-		case "peerAddresses":
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *NetworkAccountingRegistrationResponse) MarshalCBORBytes() ([]byte, error) {
+	w := bytes.NewBuffer(nil)
+	err := t.MarshalCBOR(w)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (t *NetworkAccountingRegistrationResponse) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+
+	if _, err := cw.Write([]byte{165}); err != nil {
+		return err
+	}
+
+	// t._ (string) (string)
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$type")); err != nil {
+		return err
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network/accounting/registration.response"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("core/network/accounting/registration.response")); err != nil {
+		return err
+	}
+
+	// t.Handle (string) (string)
+	if len("Handle") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Handle\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Handle"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Handle")); err != nil {
+		return err
+	}
+
+	if len(t.Handle) > cbg.MaxLength {
+		return xerrors.Errorf("Value in field t.Handle was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Handle))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string(t.Handle)); err != nil {
+		return err
+	}
+
+	// t.Accepted (bool) (bool)
+	if len("Accepted") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Accepted\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Accepted"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Accepted")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Accepted); err != nil {
+		return err
+	}
+
+	// t.Error (bool) (bool)
+	if len("Error") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"Error\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Error"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("Error")); err != nil {
+		return err
+	}
+
+	if err := cbg.WriteBool(w, t.Error); err != nil {
+		return err
+	}
+
+	// t.ErrorDescription (string) (string)
+	if len("ErrorDescription") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"ErrorDescription\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("ErrorDescription"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("ErrorDescription")); err != nil {
+		return err
+	}
+
+	if len(t.ErrorDescription) > cbg.MaxLength {
+		return xerrors.Errorf("Value in field t.ErrorDescription was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.ErrorDescription))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string(t.ErrorDescription)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *NetworkAccountingRegistrationResponse) UnmarshalCBORBytes(b []byte) (err error) {
+	*t = NetworkAccountingRegistrationResponse{}
+	return t.UnmarshalCBOR(bytes.NewReader(b))
+}
+
+func (t *NetworkAccountingRegistrationResponse) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = NetworkAccountingRegistrationResponse{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("NetworkAccountingRegistrationResponse: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t._ (string) (string) - ignored
+
+		// t.Handle (string) (string)
+		case "Handle":
+
+			{
+				sval, err := cbg.ReadString(cr)
+				if err != nil {
+					return err
+				}
+
+				t.Handle = string(sval)
+			}
+			// t.Accepted (bool) (bool)
+		case "Accepted":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
 				return err
 			}
-
-			if extra > cbg.MaxLength {
-				return fmt.Errorf("t.PeerAddresses: array too large (%d)", extra)
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
 			}
-
-			if maj != cbg.MajArray {
-				return fmt.Errorf("expected cbor array")
+			switch extra {
+			case 20:
+				t.Accepted = false
+			case 21:
+				t.Accepted = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
 			}
+			// t.Error (bool) (bool)
+		case "Error":
 
-			if extra > 0 {
-				t.PeerAddresses = make([]PeerAddr, extra)
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
 			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Error = false
+			case 21:
+				t.Error = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.ErrorDescription (string) (string)
+		case "ErrorDescription":
 
-			for i := 0; i < int(extra); i++ {
-
-				var v PeerAddr
-				if err := v.UnmarshalCBOR(cr); err != nil {
+			{
+				sval, err := cbg.ReadString(cr)
+				if err != nil {
 					return err
 				}
 
-				t.PeerAddresses[i] = v
+				t.ErrorDescription = string(sval)
 			}
-
-			// t.RawBytes ([]uint8) (slice) - ignored
 
 		default:
 			// Field doesn't exist on this type, so ignore it

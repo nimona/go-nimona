@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetDocumentType(t *testing.T) {
+func TestGetShorthand(t *testing.T) {
 	tests := []struct {
 		name    string
 		cborer  Cborer
@@ -26,7 +26,7 @@ func TestGetDocumentType(t *testing.T) {
 
 			got, err := GetDocumentTypeFromCbor(cborBytes)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetDocumentType() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetShorthand() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			require.Equal(t, tt.want, got)

@@ -3,26 +3,43 @@ package nimona
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 type (
 	NetworkInfoRequest struct {
 		_ string `cborgen:"$type,const=core/network/info.request"`
 	}
-	NetworkInfo struct {
-		_             string     `cborgen:"$type,const=core/network/info"`
-		Metadata      Metadata   `cborgen:"metadata"`
-		NetworkID     NetworkID  `cborgen:"networkID"`
-		PeerAddresses []PeerAddr `cborgen:"peerAddresses"`
-		RawBytes      []byte     `cborgen:"rawbytes"`
+	NetworkAccountingRegistrationRequest struct {
+		_               string   `cborgen:"$type,const=core/network/accounting/registration.request"`
+		Metadata        Metadata `cbor:"$metadata,omitempty"`
+		RequestedHandle string   `cbor:"requestedHandle,omitempty"`
+	}
+	NetworkAccountingRegistrationResponse struct {
+		_                string `cborgen:"$type,const=core/network/accounting/registration.response"`
+		Handle           string `cbor:"handle,omitempty"`
+		Accepted         bool   `cbor:"accepted"`
+		Error            bool   `cbor:"error,omitempty"`
+		ErrorDescription string `cbor:"errorDescription,omitempty"`
 	}
 )
 
-type HandlerNetwork struct {
-	Hostname      string
-	PeerAddresses []PeerAddr
-	PrivateKey    PrivateKey
-}
+type (
+	HandlerNetwork struct {
+		Hostname        string
+		PeerAddresses   []PeerAddr
+		PrivateKey      PrivateKey
+		AccountingStore *gorm.DB
+	}
+	NetworkAccountingModel struct {
+		Handle    string   `gorm:"primaryKey"`
+		PeerInfo  PeerInfo `gorm:"embedded"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
+	}
+)
 
 func RequestNetworkInfo(
 	ctx context.Context,
@@ -51,7 +68,7 @@ func (h *HandlerNetwork) HandleNetworkInfoRequest(
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
 	res := &NetworkInfo{
-		NetworkID: NetworkID{
+		NetworkAlias: NetworkAlias{
 			Hostname: h.Hostname,
 		},
 		PeerAddresses: h.PeerAddresses,

@@ -11,7 +11,7 @@ func TestHandlerNetwork(t *testing.T) {
 	srv, clt := newTestSessionManager(t)
 
 	info := NetworkInfo{
-		NetworkID: NetworkID{
+		NetworkAlias: NetworkAlias{
 			Hostname: "testing.nimona.io",
 		},
 		PeerAddresses: []PeerAddr{{
@@ -39,6 +39,6 @@ func TestHandlerNetwork(t *testing.T) {
 	ctx := context.Background()
 	res, err := RequestNetworkInfo(ctx, ses)
 	require.NoError(t, err)
-	require.Equal(t, info.NetworkID, res.NetworkID)
+	require.Equal(t, info.NetworkAlias, res.NetworkAlias)
 	require.Equal(t, info.PeerAddresses, res.PeerAddresses)
 }

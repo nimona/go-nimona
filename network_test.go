@@ -67,8 +67,6 @@ func TestNetworkIdentifier(t *testing.T) {
 			cborBytes, err := tt.cborer.MarshalCBORBytes()
 			require.NoError(t, err)
 
-			PrettyPrintCbor(cborBytes)
-
 			id := &NetworkIdentifier{}
 			err = id.UnmarshalCBORBytes(cborBytes)
 			if (err != nil) != tt.wantErr {

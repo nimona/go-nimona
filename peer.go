@@ -14,11 +14,11 @@ func NewPeerKey(key PublicKey) PeerKey {
 
 type (
 	PeerKey struct {
-		_         string `cborgen:"$type,const=nimona://peer:key"`
+		_         string `cborgen:"$type,const=core/peer/key"`
 		PublicKey PublicKey
 	}
 	PeerInfo struct {
-		_         string     `cborgen:"$type,const=core/node.info"`
+		_         string     `cborgen:"$type,const=core/peer/info"`
 		PublicKey PublicKey  `cborgen:"publicKey"`
 		Addresses []PeerAddr `cborgen:"addresses"`
 		RawBytes  []byte     `cborgen:"rawbytes"`
@@ -30,11 +30,11 @@ type (
 )
 
 func (p PeerKey) String() string {
-	return string(DocumentTypePeerKey) + p.PublicKey.String()
+	return string(ShorthandPeerKey) + p.PublicKey.String()
 }
 
 func ParsePeerKey(pID string) (PeerKey, error) {
-	prefix := string(DocumentTypePeerKey)
+	prefix := string(ShorthandPeerKey)
 	if !strings.HasPrefix(pID, prefix) {
 		return PeerKey{}, fmt.Errorf("invalid resource id")
 	}

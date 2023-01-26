@@ -63,14 +63,14 @@ func (t *NetworkAlias) MarshalCBOR(w io.Writer) error {
 	}
 
 	// t.Hostname (string) (string)
-	if len("Hostname") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"Hostname\" was too long")
+	if len("hostname") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"hostname\" was too long")
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Hostname"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("hostname"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("Hostname")); err != nil {
+	if _, err := io.WriteString(w, string("hostname")); err != nil {
 		return err
 	}
 
@@ -135,7 +135,7 @@ func (t *NetworkAlias) UnmarshalCBOR(r io.Reader) (err error) {
 		// t._ (string) (string) - ignored
 
 		// t.Hostname (string) (string)
-		case "Hostname":
+		case "hostname":
 
 			{
 				sval, err := cbg.ReadString(cr)
@@ -171,9 +171,13 @@ func (t *NetworkIdentity) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 2
+	fieldCount := 3
 
 	if zero.IsZeroVal(t.NetworkInfoRootID) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.NetworkAlias) {
 		fieldCount--
 	}
 
@@ -193,10 +197,10 @@ func (t *NetworkIdentity) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network/id"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("core/network/id")); err != nil {
+	if _, err := io.WriteString(w, string("core/network")); err != nil {
 		return err
 	}
 
@@ -215,6 +219,25 @@ func (t *NetworkIdentity) MarshalCBOR(w io.Writer) error {
 		}
 
 		if err := t.NetworkInfoRootID.MarshalCBOR(cw); err != nil {
+			return err
+		}
+	}
+
+	// t.NetworkAlias (nimona.NetworkAlias) (struct)
+	if !zero.IsZeroVal(t.NetworkAlias) {
+
+		if len("networkAlias") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"networkAlias\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("networkAlias"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("networkAlias")); err != nil {
+			return err
+		}
+
+		if err := t.NetworkAlias.MarshalCBOR(cw); err != nil {
 			return err
 		}
 	}
@@ -275,6 +298,16 @@ func (t *NetworkIdentity) UnmarshalCBOR(r io.Reader) (err error) {
 
 				if err := t.NetworkInfoRootID.UnmarshalCBOR(cr); err != nil {
 					return xerrors.Errorf("unmarshaling t.NetworkInfoRootID: %w", err)
+				}
+
+			}
+			// t.NetworkAlias (nimona.NetworkAlias) (struct)
+		case "networkAlias":
+
+			{
+
+				if err := t.NetworkAlias.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.NetworkAlias: %w", err)
 				}
 
 			}

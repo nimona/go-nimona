@@ -3,17 +3,19 @@ package nimona
 import (
 	"database/sql/driver"
 	"fmt"
+	"io"
 	"strings"
 )
 
 type (
 	NetworkAlias struct {
 		_        string `cborgen:"$type,const=core/network/alias"`
-		Hostname string
+		Hostname string `cborgen:"hostname"`
 	}
 	NetworkIdentity struct {
-		_                 string     `cborgen:"$type,const=core/network/id"`
-		NetworkInfoRootID DocumentID `cborgen:"networkInfoRootID,omitempty"`
+		_                 string       `cborgen:"$type,const=core/network"`
+		NetworkInfoRootID DocumentID   `cborgen:"networkInfoRootID,omitempty"`
+		NetworkAlias      NetworkAlias `cborgen:"networkAlias,omitempty"`
 	}
 	NetworkInfo struct {
 		_             string       `cborgen:"$type,const=core/network/info"`
@@ -30,11 +32,11 @@ type (
 )
 
 func (n NetworkAlias) String() string {
-	return string(DocumentTypeNetworkAlias) + n.Hostname
+	return string(ShorthandNetworkAlias) + n.Hostname
 }
 
 func ParseNetworkAlias(handle string) (NetworkAlias, error) {
-	t := string(DocumentTypeNetworkAlias)
+	t := string(ShorthandNetworkAlias)
 	if !strings.HasPrefix(handle, t) {
 		return NetworkAlias{}, fmt.Errorf("invalid resource id")
 	}
@@ -90,6 +92,33 @@ func (n *NetworkInfo) NetworkIdentity() NetworkIdentity {
 	}
 }
 
+func (n *NetworkInfo) String() string {
+	return n.NetworkAlias.String()
+}
+
+func (n *NetworkIdentifier) MarshalCBOR(w io.Writer) error {
+	b, err := n.MarshalCBORBytes()
+	if err != nil {
+		return fmt.Errorf("unable to marshal network identifier: %w", err)
+	}
+
+	_, err = w.Write(b)
+	if err != nil {
+		return fmt.Errorf("unable to write network identifier: %w", err)
+	}
+
+	return nil
+}
+
+func (n NetworkIdentifier) UnmarshalCBOR(r io.Reader) (err error) {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("unable to read network identifier: %w", err)
+	}
+
+	return n.UnmarshalCBORBytes(b)
+}
+
 func (n NetworkIdentifier) MarshalCBORBytes() ([]byte, error) {
 	if n.NetworkAlias != nil {
 		return n.NetworkAlias.MarshalCBORBytes()
@@ -111,14 +140,48 @@ func (n *NetworkIdentifier) UnmarshalCBORBytes(b []byte) error {
 	switch t {
 	case "core/network/alias":
 		n.NetworkAlias = &NetworkAlias{}
-		return n.NetworkAlias.UnmarshalCBORBytes(b)
-	case "core/network/id":
+		err := n.NetworkAlias.UnmarshalCBORBytes(b)
+		if err != nil {
+			return fmt.Errorf("unable to unmarshal network alias: %w", err)
+		}
+	case "core/network":
 		n.NetworkIdentity = &NetworkIdentity{}
-		return n.NetworkIdentity.UnmarshalCBORBytes(b)
+		err := n.NetworkIdentity.UnmarshalCBORBytes(b)
+		if err != nil {
+			return fmt.Errorf("unable to unmarshal network identity: %w", err)
+		}
 	case "core/network/info":
 		n.NetworkInfo = &NetworkInfo{}
-		return n.NetworkInfo.UnmarshalCBORBytes(b)
+		err := n.NetworkInfo.UnmarshalCBORBytes(b)
+		if err != nil {
+			return fmt.Errorf("unable to unmarshal network info: %w", err)
+		}
 	default:
 		return fmt.Errorf("unknown network identifier type: %s", t)
 	}
+	return nil
+}
+
+func (n NetworkIdentifier) Hostname() string {
+	if n.NetworkAlias != nil {
+		return n.NetworkAlias.Hostname
+	}
+	if n.NetworkInfo != nil {
+		return n.NetworkInfo.NetworkAlias.Hostname
+	}
+	return ""
+}
+
+func (n NetworkIdentifier) String() string {
+	if n.NetworkAlias != nil {
+		return n.NetworkAlias.String()
+	}
+	// TODO: implement NetworkIdentity.String() for NetworkIdentity
+	// if n.NetworkIdentity != nil {
+	// 	return n.NetworkIdentity.String()
+	// }
+	if n.NetworkInfo != nil {
+		return n.NetworkInfo.String()
+	}
+	return ""
 }
