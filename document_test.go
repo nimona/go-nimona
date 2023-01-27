@@ -7,19 +7,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDocumentID_Marshal(t *testing.T) {
+func TestDocumentHash(t *testing.T) {
 	doc := &CborFixture{
 		String: "foo",
 	}
 
 	hash, err := NewDocumentHash(doc)
 	require.NoError(t, err)
-
-	id := &DocumentID{
-		DocumentHash: hash,
-	}
-
-	PrettyPrint(id)
+	require.Equal(t, "4QBmwF9dpvChi39wVAiCWi8cAKEiRpT3hRD4TNopirdT", hash.String())
 }
 
 func TestDocumentHash_NewTestRandomDocumentID(t *testing.T) {
