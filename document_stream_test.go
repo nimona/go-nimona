@@ -50,7 +50,7 @@ func TestStream_CreateStreamPatch(t *testing.T) {
 	require.NoError(t, err)
 
 	id := NewTestIdentity(t).IdentityID()
-	p.Metadata.Owner = &id
+	p.Metadata.Owner = id
 
 	p.Dependencies = []DocumentID{{
 		DocumentHash: NewRandomHash(t),

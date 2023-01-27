@@ -7,11 +7,10 @@ import (
 )
 
 func TestMetadata(t *testing.T) {
-	o := NewTestIdentity(t).IdentityID()
 	b := &DocumentBase{
 		Type: "test/fixture",
 		Metadata: Metadata{
-			Owner: &o,
+			Owner: NewTestIdentity(t).IdentityID(),
 		},
 	}
 

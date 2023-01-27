@@ -94,8 +94,7 @@ func RequestNetworkJoin(
 	if identity == nil {
 		return nil, fmt.Errorf("cannot join a network without an identity")
 	}
-	id := identity.IdentityID()
-	req.Metadata.Owner = &id
+	req.Metadata.Owner = identity.IdentityID()
 	res := &NetworkJoinResponse{}
 	msgRes, err := ses.Request(ctx, req)
 	if err != nil {

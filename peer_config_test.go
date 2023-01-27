@@ -17,6 +17,10 @@ func TestPeerConfig(t *testing.T) {
 
 	// Test GetPeerInfo()
 	require.EqualValues(t, pc.peerInfo, pc.GetPeerInfo())
+
+	// Test GetIdentity().IdentityID() when identity is nil
+	pc.identity = nil
+	require.Nil(t, pc.GetIdentity().IdentityID())
 }
 
 func NewTestPeerConfig(t *testing.T) *PeerConfig {

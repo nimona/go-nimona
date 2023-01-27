@@ -90,8 +90,11 @@ func (i *Identity) Scan(value interface{}) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (i *Identity) IdentityID() IdentityID {
-	return IdentityID{
+func (i *Identity) IdentityID() *IdentityID {
+	if i == nil {
+		return nil
+	}
+	return &IdentityID{
 		IdentityRootID: NewDocumentID(i),
 	}
 }
