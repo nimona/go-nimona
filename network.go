@@ -70,9 +70,9 @@ func (n NetworkAlias) NetworkIdentifier() NetworkIdentifier {
 	}
 }
 
-func (n NetworkIdentity) NetworkIdentifier() NetworkIdentifier {
+func (n *NetworkIdentity) NetworkIdentifier() NetworkIdentifier {
 	return NetworkIdentifier{
-		NetworkIdentity: &n,
+		NetworkIdentity: n,
 	}
 }
 

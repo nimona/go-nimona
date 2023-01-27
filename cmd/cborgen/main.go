@@ -32,6 +32,8 @@ func main() {
 	addMapping("handler_network_gen.go", nimona.NetworkInfoRequest{})
 	addMapping("handler_network_gen.go", nimona.NetworkJoinRequest{})
 	addMapping("handler_network_gen.go", nimona.NetworkJoinResponse{})
+	addMapping("handler_network_gen.go", nimona.NetworkResolveHandleRequest{})
+	addMapping("handler_network_gen.go", nimona.NetworkResolveHandleResponse{})
 	addMapping("handler_peer_gen.go", nimona.PeerCapabilitiesRequest{})
 	addMapping("handler_peer_gen.go", nimona.PeerCapabilitiesResponse{})
 	addMapping("handler_stream_gen.go", nimona.StreamRequest{})

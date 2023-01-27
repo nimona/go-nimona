@@ -113,8 +113,17 @@ func (t *NetworkJoinRequest) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
+	fieldCount := 3
 
-	if _, err := cw.Write([]byte{163}); err != nil {
+	if zero.IsZeroVal(t.Metadata) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.RequestedHandle) {
+		fieldCount--
+	}
+
+	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
 		return err
 	}
 
@@ -138,42 +147,48 @@ func (t *NetworkJoinRequest) MarshalCBOR(w io.Writer) error {
 	}
 
 	// t.Metadata (nimona.Metadata) (struct)
-	if len("Metadata") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"Metadata\" was too long")
-	}
+	if !zero.IsZeroVal(t.Metadata) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Metadata"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("Metadata")); err != nil {
-		return err
-	}
+		if len("$metadata") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"$metadata\" was too long")
+		}
 
-	if err := t.Metadata.MarshalCBOR(cw); err != nil {
-		return err
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$metadata"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("$metadata")); err != nil {
+			return err
+		}
+
+		if err := t.Metadata.MarshalCBOR(cw); err != nil {
+			return err
+		}
 	}
 
 	// t.RequestedHandle (string) (string)
-	if len("RequestedHandle") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"RequestedHandle\" was too long")
-	}
+	if !zero.IsZeroVal(t.RequestedHandle) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RequestedHandle"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("RequestedHandle")); err != nil {
-		return err
-	}
+		if len("requestedHandle") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"requestedHandle\" was too long")
+		}
 
-	if len(t.RequestedHandle) > cbg.MaxLength {
-		return xerrors.Errorf("Value in field t.RequestedHandle was too long")
-	}
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("requestedHandle"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("requestedHandle")); err != nil {
+			return err
+		}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.RequestedHandle))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string(t.RequestedHandle)); err != nil {
-		return err
+		if len(t.RequestedHandle) > cbg.MaxLength {
+			return xerrors.Errorf("Value in field t.RequestedHandle was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.RequestedHandle))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string(t.RequestedHandle)); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -221,7 +236,7 @@ func (t *NetworkJoinRequest) UnmarshalCBOR(r io.Reader) (err error) {
 		// t._ (string) (string) - ignored
 
 		// t.Metadata (nimona.Metadata) (struct)
-		case "Metadata":
+		case "$metadata":
 
 			{
 
@@ -231,7 +246,7 @@ func (t *NetworkJoinRequest) UnmarshalCBOR(r io.Reader) (err error) {
 
 			}
 			// t.RequestedHandle (string) (string)
-		case "RequestedHandle":
+		case "requestedHandle":
 
 			{
 				sval, err := cbg.ReadString(cr)
@@ -258,8 +273,21 @@ func (t *NetworkJoinResponse) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
+	fieldCount := 5
 
-	if _, err := cw.Write([]byte{165}); err != nil {
+	if zero.IsZeroVal(t.Handle) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.Error) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.ErrorDescription) {
+		fieldCount--
+	}
+
+	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
 		return err
 	}
 
@@ -283,37 +311,40 @@ func (t *NetworkJoinResponse) MarshalCBOR(w io.Writer) error {
 	}
 
 	// t.Handle (string) (string)
-	if len("Handle") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"Handle\" was too long")
-	}
+	if !zero.IsZeroVal(t.Handle) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Handle"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("Handle")); err != nil {
-		return err
-	}
+		if len("handle") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"handle\" was too long")
+		}
 
-	if len(t.Handle) > cbg.MaxLength {
-		return xerrors.Errorf("Value in field t.Handle was too long")
-	}
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("handle"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("handle")); err != nil {
+			return err
+		}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Handle))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string(t.Handle)); err != nil {
-		return err
+		if len(t.Handle) > cbg.MaxLength {
+			return xerrors.Errorf("Value in field t.Handle was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Handle))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string(t.Handle)); err != nil {
+			return err
+		}
 	}
 
 	// t.Accepted (bool) (bool)
-	if len("Accepted") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"Accepted\" was too long")
+	if len("accepted") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"accepted\" was too long")
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Accepted"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("accepted"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("Accepted")); err != nil {
+	if _, err := io.WriteString(w, string("accepted")); err != nil {
 		return err
 	}
 
@@ -322,42 +353,48 @@ func (t *NetworkJoinResponse) MarshalCBOR(w io.Writer) error {
 	}
 
 	// t.Error (bool) (bool)
-	if len("Error") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"Error\" was too long")
-	}
+	if !zero.IsZeroVal(t.Error) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("Error"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("Error")); err != nil {
-		return err
-	}
+		if len("error") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"error\" was too long")
+		}
 
-	if err := cbg.WriteBool(w, t.Error); err != nil {
-		return err
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("error"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("error")); err != nil {
+			return err
+		}
+
+		if err := cbg.WriteBool(w, t.Error); err != nil {
+			return err
+		}
 	}
 
 	// t.ErrorDescription (string) (string)
-	if len("ErrorDescription") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"ErrorDescription\" was too long")
-	}
+	if !zero.IsZeroVal(t.ErrorDescription) {
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("ErrorDescription"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("ErrorDescription")); err != nil {
-		return err
-	}
+		if len("errorDescription") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"errorDescription\" was too long")
+		}
 
-	if len(t.ErrorDescription) > cbg.MaxLength {
-		return xerrors.Errorf("Value in field t.ErrorDescription was too long")
-	}
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("errorDescription"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("errorDescription")); err != nil {
+			return err
+		}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.ErrorDescription))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string(t.ErrorDescription)); err != nil {
-		return err
+		if len(t.ErrorDescription) > cbg.MaxLength {
+			return xerrors.Errorf("Value in field t.ErrorDescription was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.ErrorDescription))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string(t.ErrorDescription)); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -405,7 +442,7 @@ func (t *NetworkJoinResponse) UnmarshalCBOR(r io.Reader) (err error) {
 		// t._ (string) (string) - ignored
 
 		// t.Handle (string) (string)
-		case "Handle":
+		case "handle":
 
 			{
 				sval, err := cbg.ReadString(cr)
@@ -416,7 +453,7 @@ func (t *NetworkJoinResponse) UnmarshalCBOR(r io.Reader) (err error) {
 				t.Handle = string(sval)
 			}
 			// t.Accepted (bool) (bool)
-		case "Accepted":
+		case "accepted":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -434,7 +471,7 @@ func (t *NetworkJoinResponse) UnmarshalCBOR(r io.Reader) (err error) {
 				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
 			}
 			// t.Error (bool) (bool)
-		case "Error":
+		case "error":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {
@@ -452,7 +489,438 @@ func (t *NetworkJoinResponse) UnmarshalCBOR(r io.Reader) (err error) {
 				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
 			}
 			// t.ErrorDescription (string) (string)
-		case "ErrorDescription":
+		case "errorDescription":
+
+			{
+				sval, err := cbg.ReadString(cr)
+				if err != nil {
+					return err
+				}
+
+				t.ErrorDescription = string(sval)
+			}
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *NetworkResolveHandleRequest) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+	fieldCount := 2
+
+	if zero.IsZeroVal(t.Handle) {
+		fieldCount--
+	}
+
+	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
+		return err
+	}
+
+	// t._ (string) (string)
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$type")); err != nil {
+		return err
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network/resolveHandle.request"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("core/network/resolveHandle.request")); err != nil {
+		return err
+	}
+
+	// t.Handle (string) (string)
+	if !zero.IsZeroVal(t.Handle) {
+
+		if len("handle") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"handle\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("handle"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("handle")); err != nil {
+			return err
+		}
+
+		if len(t.Handle) > cbg.MaxLength {
+			return xerrors.Errorf("Value in field t.Handle was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Handle))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string(t.Handle)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *NetworkResolveHandleRequest) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = NetworkResolveHandleRequest{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("NetworkResolveHandleRequest: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t._ (string) (string) - ignored
+
+		// t.Handle (string) (string)
+		case "handle":
+
+			{
+				sval, err := cbg.ReadString(cr)
+				if err != nil {
+					return err
+				}
+
+				t.Handle = string(sval)
+			}
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *NetworkResolveHandleResponse) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+	fieldCount := 6
+
+	if zero.IsZeroVal(t.IdentityID) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.PeerAddresses) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.Found) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.Error) {
+		fieldCount--
+	}
+
+	if zero.IsZeroVal(t.ErrorDescription) {
+		fieldCount--
+	}
+
+	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
+		return err
+	}
+
+	// t._ (string) (string)
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$type")); err != nil {
+		return err
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/network/resolveHandle.response"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("core/network/resolveHandle.response")); err != nil {
+		return err
+	}
+
+	// t.IdentityID (nimona.IdentityID) (struct)
+	if !zero.IsZeroVal(t.IdentityID) {
+
+		if len("identityID") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"identityID\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("identityID"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("identityID")); err != nil {
+			return err
+		}
+
+		if err := t.IdentityID.MarshalCBOR(cw); err != nil {
+			return err
+		}
+	}
+
+	// t.PeerAddresses ([]nimona.PeerAddr) (slice)
+	if !zero.IsZeroVal(t.PeerAddresses) {
+
+		if len("peerAddresses") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"peerAddresses\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("peerAddresses"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("peerAddresses")); err != nil {
+			return err
+		}
+
+		if len(t.PeerAddresses) > cbg.MaxLength {
+			return xerrors.Errorf("Slice value in field t.PeerAddresses was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajArray, uint64(len(t.PeerAddresses))); err != nil {
+			return err
+		}
+		for _, v := range t.PeerAddresses {
+			if err := v.MarshalCBOR(cw); err != nil {
+				return err
+			}
+		}
+	}
+
+	// t.Found (bool) (bool)
+	if !zero.IsZeroVal(t.Found) {
+
+		if len("found") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"found\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("found"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("found")); err != nil {
+			return err
+		}
+
+		if err := cbg.WriteBool(w, t.Found); err != nil {
+			return err
+		}
+	}
+
+	// t.Error (bool) (bool)
+	if !zero.IsZeroVal(t.Error) {
+
+		if len("error") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"error\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("error"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("error")); err != nil {
+			return err
+		}
+
+		if err := cbg.WriteBool(w, t.Error); err != nil {
+			return err
+		}
+	}
+
+	// t.ErrorDescription (string) (string)
+	if !zero.IsZeroVal(t.ErrorDescription) {
+
+		if len("errorDescription") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"errorDescription\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("errorDescription"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("errorDescription")); err != nil {
+			return err
+		}
+
+		if len(t.ErrorDescription) > cbg.MaxLength {
+			return xerrors.Errorf("Value in field t.ErrorDescription was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.ErrorDescription))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string(t.ErrorDescription)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *NetworkResolveHandleResponse) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = NetworkResolveHandleResponse{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("NetworkResolveHandleResponse: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t._ (string) (string) - ignored
+
+		// t.IdentityID (nimona.IdentityID) (struct)
+		case "identityID":
+
+			{
+
+				if err := t.IdentityID.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.IdentityID: %w", err)
+				}
+
+			}
+			// t.PeerAddresses ([]nimona.PeerAddr) (slice)
+		case "peerAddresses":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+
+			if extra > cbg.MaxLength {
+				return fmt.Errorf("t.PeerAddresses: array too large (%d)", extra)
+			}
+
+			if maj != cbg.MajArray {
+				return fmt.Errorf("expected cbor array")
+			}
+
+			if extra > 0 {
+				t.PeerAddresses = make([]PeerAddr, extra)
+			}
+
+			for i := 0; i < int(extra); i++ {
+
+				var v PeerAddr
+				if err := v.UnmarshalCBOR(cr); err != nil {
+					return err
+				}
+
+				t.PeerAddresses[i] = v
+			}
+
+			// t.Found (bool) (bool)
+		case "found":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Found = false
+			case 21:
+				t.Found = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.Error (bool) (bool)
+		case "error":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+			if maj != cbg.MajOther {
+				return fmt.Errorf("booleans must be major type 7")
+			}
+			switch extra {
+			case 20:
+				t.Error = false
+			case 21:
+				t.Error = true
+			default:
+				return fmt.Errorf("booleans are either major type 7, value 20 or 21 (got %d)", extra)
+			}
+			// t.ErrorDescription (string) (string)
+		case "errorDescription":
 
 			{
 				sval, err := cbg.ReadString(cr)
