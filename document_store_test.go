@@ -49,16 +49,13 @@ func TestDocumentStore(t *testing.T) {
 	docID := NewDocumentID(doc)
 	entry := &DocumentEntry{
 		DocumentID:       docID,
-		DocumentType:     "test",
+		DocumentType:     "test/fixture",
 		DocumentEncoding: "cbor",
 		DocumentBytes:    docBytes,
-		RootDocumentID: &DocumentID{
-			DocumentHash: NewRandomHash(t),
-		},
 	}
 
 	// Test putting a document
-	err = store.PutDocument(entry)
+	err = store.PutDocument(doc)
 	require.NoError(t, err)
 
 	// Test getting an entry
@@ -68,8 +65,6 @@ func TestDocumentStore(t *testing.T) {
 	require.Equal(t, gotEntry.DocumentType, entry.DocumentType)
 	require.Equal(t, gotEntry.DocumentEncoding, entry.DocumentEncoding)
 	require.Equal(t, gotEntry.DocumentBytes, entry.DocumentBytes)
-	require.NotNil(t, gotEntry.RootDocumentID)
-	require.True(t, gotEntry.RootDocumentID.IsEqual(*entry.RootDocumentID))
 
 	// Test unmarshaling the entry
 	gotDoc := &CborFixture{}
@@ -99,10 +94,10 @@ func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
 		Sequence:         1,
 	}
 
-	err := store.PutDocument(rootEntry)
+	err := store.PutDocumentEntry(rootEntry)
 	require.NoError(t, err)
 
-	err = store.PutDocument(childEntry)
+	err = store.PutDocumentEntry(childEntry)
 	require.NoError(t, err)
 
 	// Test getting the stream

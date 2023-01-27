@@ -72,12 +72,14 @@ func (n *Node) JoinNetwork(ctx context.Context, nIDs NetworkIdentifier) (*Networ
 		networkInfo: *netInfo,
 	})
 
-	err := n.config.DocumentStore.PutDocument(&DocumentEntry{
-		DocumentID:       netID.NetworkInfoRootID,
-		DocumentType:     "core/network/info",
-		DocumentEncoding: "cbor",
-		DocumentBytes:    netInfo.RawBytes,
-	})
+	err := n.config.DocumentStore.PutDocumentEntry(
+		&DocumentEntry{
+			DocumentID:       netID.NetworkInfoRootID,
+			DocumentType:     "core/network/info",
+			DocumentEncoding: "cbor",
+			DocumentBytes:    netInfo.RawBytes,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error storing network info: %w", err)
 	}

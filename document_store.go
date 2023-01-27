@@ -48,9 +48,34 @@ func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 	return s, nil
 }
 
-// PutDocument puts a document in the database, if it already exists, return
-// a ErrDocumentAlreadyExists error.
-func (s *DocumentStore) PutDocument(entry *DocumentEntry) error {
+func (s *DocumentStore) PutDocument(v Cborer) error {
+	docBytes, err := MarshalCBORBytes(v)
+	if err != nil {
+		return fmt.Errorf("error marshaling document: %w", err)
+	}
+
+	doc := &DocumentBase{}
+	err = UnmarshalCBORBytes(docBytes, doc)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling document: %w", err)
+	}
+
+	docID := NewDocumentIDFromCBOR(docBytes)
+
+	entry := &DocumentEntry{
+		DocumentID:       docID,
+		DocumentType:     doc.Type,
+		DocumentEncoding: "cbor",
+		DocumentBytes:    docBytes,
+		// RootDocumentID:   doc.Metadata.Parent,
+		// Sequence:         doc.Metadata.Sequence,
+	}
+	return s.PutDocumentEntry(entry)
+}
+
+// PutDocumentEntry puts a document entry in the database, if it already exists,
+// returns a ErrDocumentAlreadyExists error.
+func (s *DocumentStore) PutDocumentEntry(entry *DocumentEntry) error {
 	if entry.DocumentID.IsEmpty() {
 		return fmt.Errorf("document id is empty")
 	}
