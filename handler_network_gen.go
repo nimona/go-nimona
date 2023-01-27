@@ -688,7 +688,7 @@ func (t *NetworkResolveHandleResponse) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.IdentityID (nimona.IdentityID) (struct)
+	// t.IdentityID (nimona.Identity) (struct)
 	if !zero.IsZeroVal(t.IdentityID) {
 
 		if len("identityID") > cbg.MaxLength {
@@ -843,7 +843,7 @@ func (t *NetworkResolveHandleResponse) UnmarshalCBOR(r io.Reader) (err error) {
 		switch name {
 		// t._ (string) (string) - ignored
 
-		// t.IdentityID (nimona.IdentityID) (struct)
+		// t.IdentityID (nimona.Identity) (struct)
 		case "identityID":
 
 			{

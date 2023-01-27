@@ -40,7 +40,7 @@ func main() {
 	addMapping("handler_stream_gen.go", nimona.StreamResponse{})
 	addMapping("identity_gen.go", nimona.Identity{})
 	addMapping("identity_gen.go", nimona.IdentityAlias{})
-	addMapping("identity_gen.go", nimona.IdentityID{})
+	addMapping("identity_gen.go", nimona.KeyGraph{})
 	addMapping("message_ping_gen.go", nimona.Ping{})
 	addMapping("message_ping_gen.go", nimona.Pong{})
 	addMapping("message_wrapper_gen.go", nimona.MessageWrapper{})

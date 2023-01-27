@@ -49,7 +49,7 @@ func TestStream_CreateStreamPatch(t *testing.T) {
 	p, err := CreateStreamPatch(aCbor, bCbor)
 	require.NoError(t, err)
 
-	id := NewTestIdentity(t).IdentityID()
+	id := NewTestIdentity(t)
 	p.Metadata.Owner = id
 
 	p.Dependencies = []DocumentID{{

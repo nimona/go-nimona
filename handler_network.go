@@ -31,7 +31,7 @@ type (
 	}
 	NetworkResolveHandleResponse struct {
 		_                string     `cborgen:"$type,const=core/network/resolveHandle.response"`
-		IdentityID       IdentityID `cborgen:"identityID,omitempty"`
+		IdentityID       Identity   `cborgen:"identityID,omitempty"`
 		PeerAddresses    []PeerAddr `cborgen:"peerAddresses,omitempty"`
 		Found            bool       `cborgen:"found,omitempty"`
 		Error            bool       `cborgen:"error,omitempty"`
@@ -47,8 +47,8 @@ type (
 		AccountingStore *gorm.DB
 	}
 	NetworkAccountingModel struct {
-		Handle     string      `gorm:"uniqueIndex"`
-		IdentityID *IdentityID `gorm:"primaryKey"`
+		Handle     string    `gorm:"uniqueIndex"`
+		IdentityID *Identity `gorm:"primaryKey"`
 		CreatedAt  time.Time
 		UpdatedAt  time.Time
 	}
@@ -102,11 +102,10 @@ func RequestNetworkJoin(
 	req := &NetworkJoinRequest{
 		RequestedHandle: requestedHandle,
 	}
-	identity := peerConfig.GetIdentity()
-	if identity == nil {
+	req.Metadata.Owner = peerConfig.GetIdentity()
+	if req.Metadata.Owner == nil {
 		return nil, fmt.Errorf("cannot join a network without an identity")
 	}
-	req.Metadata.Owner = identity.IdentityID()
 	res := &NetworkJoinResponse{}
 	msgRes, err := ses.Request(ctx, req)
 	if err != nil {

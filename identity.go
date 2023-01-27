@@ -13,15 +13,15 @@ type (
 		Network NetworkAlias `cborgen:"network,omitempty"`
 		Handle  string       `cborgen:"handle,omitempty"`
 	}
-	Identity struct {
+	KeyGraph struct {
 		_        string    `cborgen:"$type,const=core/identity"`
 		Metadata Metadata  `cborgen:"$metadata,omitempty"`
 		Keys     PublicKey `cborgen:"keys"`
 		Next     PublicKey `cborgen:"next"`
 	}
-	IdentityID struct {
-		_              string     `cborgen:"$type,const=core/identity/id"`
-		IdentityRootID DocumentID `cborgen:"identityStreamID"`
+	Identity struct {
+		_          string     `cborgen:"$type,const=core/identity/id"`
+		KeyGraphID DocumentID `cborgen:"keyGraphID"`
 	}
 	IdentityIdentifier struct {
 		IdentityAlias *IdentityAlias
@@ -74,12 +74,17 @@ func (i *IdentityAlias) Scan(value interface{}) error {
 	return fmt.Errorf("unable to scan into IdentityAlias")
 }
 
-func (i *Identity) String() string {
-	h, err := NewDocumentHash(i)
-	if err != nil {
-		panic(fmt.Errorf("unable to get hash of identity: %w", err))
+func (i *KeyGraph) Identity() *Identity {
+	if i == nil {
+		return nil
 	}
-	return string(ShorthandIdentity) + h.String()
+	return &Identity{
+		KeyGraphID: NewDocumentID(i),
+	}
+}
+
+func (i *Identity) String() string {
+	return string(ShorthandIdentity) + i.KeyGraphID.DocumentHash.String()
 }
 
 func (i *Identity) Value() (driver.Value, error) {
@@ -87,48 +92,21 @@ func (i *Identity) Value() (driver.Value, error) {
 }
 
 func (i *Identity) Scan(value interface{}) error {
-	return fmt.Errorf("not implemented")
-}
-
-func (i *Identity) IdentityID() *IdentityID {
-	if i == nil {
-		return nil
-	}
-	return &IdentityID{
-		IdentityRootID: NewDocumentID(i),
-	}
-}
-
-func (i *Identity) IdentityIdentifier() IdentityIdentifier {
-	return IdentityIdentifier{
-		Identity: i,
-	}
-}
-
-func (i *IdentityID) String() string {
-	return string(ShorthandIdentity) + i.IdentityRootID.DocumentHash.String()
-}
-
-func (i *IdentityID) Value() (driver.Value, error) {
-	return i.String(), nil
-}
-
-func (i *IdentityID) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
 	if idString, ok := value.(string); ok {
-		id, err := ParseIdentityID(idString)
+		id, err := ParseIdentity(idString)
 		if err != nil {
 			return fmt.Errorf("unable to scan into IdentityID: %w", err)
 		}
-		i.IdentityRootID = id.IdentityRootID
+		i.KeyGraphID = id.KeyGraphID
 		return nil
 	}
 	return fmt.Errorf("unable to scan into IdentityID")
 }
 
-func ParseIdentityID(id string) (*IdentityID, error) {
+func ParseIdentity(id string) (*Identity, error) {
 	t := string(ShorthandIdentity)
 	if !strings.HasPrefix(id, t) {
 		return nil, fmt.Errorf("invalid resource id")
@@ -139,8 +117,8 @@ func ParseIdentityID(id string) (*IdentityID, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse identity id: %w", err)
 	}
-	return &IdentityID{
-		IdentityRootID: DocumentID{
+	return &Identity{
+		KeyGraphID: DocumentID{
 			DocumentHash: dh,
 		},
 	}, nil

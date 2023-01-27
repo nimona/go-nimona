@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -174,10 +173,9 @@ func TestHandlerNetwork_ResolveHandle(t *testing.T) {
 	// Test with an existing handle
 	t.Run("existing handle", func(t *testing.T) {
 		res, err := RequestNetworkResolveHandle(ctx, ses, "test-handle")
-		spew.Dump(res)
 		require.NoError(t, err)
 		require.True(t, res.Found)
-		require.EqualValues(t, clnPeerConfig.GetIdentity().IdentityID(), &res.IdentityID)
+		require.EqualValues(t, clnPeerConfig.GetIdentity(), &res.IdentityID)
 	})
 }
 

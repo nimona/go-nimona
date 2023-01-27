@@ -39,7 +39,7 @@ func RequestDocument(
 ) (*DocumentBase, error) {
 	req := &DocumentRequest{
 		Metadata: Metadata{
-			Owner: peerConfig.GetIdentity().IdentityID(),
+			Owner: peerConfig.GetIdentity(),
 		},
 		DocumentID: docID,
 	}

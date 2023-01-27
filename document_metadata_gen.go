@@ -194,7 +194,7 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	// t.Owner (nimona.IdentityID) (struct)
+	// t.Owner (nimona.Identity) (struct)
 	if t.Owner != nil {
 
 		if len("owner") > cbg.MaxLength {
@@ -321,7 +321,7 @@ func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 
 		switch name {
-		// t.Owner (nimona.IdentityID) (struct)
+		// t.Owner (nimona.Identity) (struct)
 		case "owner":
 
 			{
@@ -334,7 +334,7 @@ func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
 					if err := cr.UnreadByte(); err != nil {
 						return err
 					}
-					t.Owner = new(IdentityID)
+					t.Owner = new(Identity)
 					if err := t.Owner.UnmarshalCBOR(cr); err != nil {
 						return xerrors.Errorf("unmarshaling t.Owner pointer: %w", err)
 					}

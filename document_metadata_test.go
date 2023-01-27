@@ -10,7 +10,7 @@ func TestMetadata(t *testing.T) {
 	b := &DocumentBase{
 		Type: "test/fixture",
 		Metadata: Metadata{
-			Owner: NewTestIdentity(t).IdentityID(),
+			Owner: NewTestIdentity(t),
 		},
 	}
 

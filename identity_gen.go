@@ -29,13 +29,8 @@ func (t *Identity) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 4
 
-	if zero.IsZeroVal(t.Metadata) {
-		fieldCount--
-	}
-
-	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
+	if _, err := cw.Write([]byte{162}); err != nil {
 		return err
 	}
 
@@ -51,77 +46,26 @@ func (t *Identity) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/identity"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/identity/id"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("core/identity")); err != nil {
-		return err
-	}
-
-	// t.Metadata (nimona.Metadata) (struct)
-	if !zero.IsZeroVal(t.Metadata) {
-
-		if len("$metadata") > cbg.MaxLength {
-			return xerrors.Errorf("Value in field \"$metadata\" was too long")
-		}
-
-		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$metadata"))); err != nil {
-			return err
-		}
-		if _, err := io.WriteString(w, string("$metadata")); err != nil {
-			return err
-		}
-
-		if err := t.Metadata.MarshalCBOR(cw); err != nil {
-			return err
-		}
-	}
-
-	// t.Keys (nimona.PublicKey) (slice)
-	if len("keys") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"keys\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("keys"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("keys")); err != nil {
+	if _, err := io.WriteString(w, string("core/identity/id")); err != nil {
 		return err
 	}
 
-	if len(t.Keys) > cbg.ByteArrayMaxLen {
-		return xerrors.Errorf("Byte array in field t.Keys was too long")
+	// t.KeyGraphID (nimona.DocumentID) (struct)
+	if len("keyGraphID") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"keyGraphID\" was too long")
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajByteString, uint64(len(t.Keys))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("keyGraphID"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("keyGraphID")); err != nil {
 		return err
 	}
 
-	if _, err := cw.Write(t.Keys[:]); err != nil {
-		return err
-	}
-
-	// t.Next (nimona.PublicKey) (slice)
-	if len("next") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"next\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("next"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("next")); err != nil {
-		return err
-	}
-
-	if len(t.Next) > cbg.ByteArrayMaxLen {
-		return xerrors.Errorf("Byte array in field t.Next was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajByteString, uint64(len(t.Next))); err != nil {
-		return err
-	}
-
-	if _, err := cw.Write(t.Next[:]); err != nil {
+	if err := t.KeyGraphID.MarshalCBOR(cw); err != nil {
 		return err
 	}
 	return nil
@@ -169,59 +113,15 @@ func (t *Identity) UnmarshalCBOR(r io.Reader) (err error) {
 		switch name {
 		// t._ (string) (string) - ignored
 
-		// t.Metadata (nimona.Metadata) (struct)
-		case "$metadata":
+		// t.KeyGraphID (nimona.DocumentID) (struct)
+		case "keyGraphID":
 
 			{
 
-				if err := t.Metadata.UnmarshalCBOR(cr); err != nil {
-					return xerrors.Errorf("unmarshaling t.Metadata: %w", err)
+				if err := t.KeyGraphID.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.KeyGraphID: %w", err)
 				}
 
-			}
-			// t.Keys (nimona.PublicKey) (slice)
-		case "keys":
-
-			maj, extra, err = cr.ReadHeader()
-			if err != nil {
-				return err
-			}
-
-			if extra > cbg.ByteArrayMaxLen {
-				return fmt.Errorf("t.Keys: byte array too large (%d)", extra)
-			}
-			if maj != cbg.MajByteString {
-				return fmt.Errorf("expected byte array")
-			}
-
-			if extra > 0 {
-				t.Keys = make([]uint8, extra)
-			}
-
-			if _, err := io.ReadFull(cr, t.Keys[:]); err != nil {
-				return err
-			}
-			// t.Next (nimona.PublicKey) (slice)
-		case "next":
-
-			maj, extra, err = cr.ReadHeader()
-			if err != nil {
-				return err
-			}
-
-			if extra > cbg.ByteArrayMaxLen {
-				return fmt.Errorf("t.Next: byte array too large (%d)", extra)
-			}
-			if maj != cbg.MajByteString {
-				return fmt.Errorf("expected byte array")
-			}
-
-			if extra > 0 {
-				t.Next = make([]uint8, extra)
-			}
-
-			if _, err := io.ReadFull(cr, t.Next[:]); err != nil {
-				return err
 			}
 
 		default:
@@ -393,15 +293,20 @@ func (t *IdentityAlias) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-func (t *IdentityID) MarshalCBOR(w io.Writer) error {
+func (t *KeyGraph) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
 		return err
 	}
 
 	cw := cbg.NewCborWriter(w)
+	fieldCount := 4
 
-	if _, err := cw.Write([]byte{162}); err != nil {
+	if zero.IsZeroVal(t.Metadata) {
+		fieldCount--
+	}
+
+	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
 		return err
 	}
 
@@ -417,34 +322,85 @@ func (t *IdentityID) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/identity/id"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/identity"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("core/identity/id")); err != nil {
-		return err
-	}
-
-	// t.IdentityRootID (nimona.DocumentID) (struct)
-	if len("identityStreamID") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"identityStreamID\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("identityStreamID"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("identityStreamID")); err != nil {
+	if _, err := io.WriteString(w, string("core/identity")); err != nil {
 		return err
 	}
 
-	if err := t.IdentityRootID.MarshalCBOR(cw); err != nil {
+	// t.Metadata (nimona.Metadata) (struct)
+	if !zero.IsZeroVal(t.Metadata) {
+
+		if len("$metadata") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"$metadata\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$metadata"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("$metadata")); err != nil {
+			return err
+		}
+
+		if err := t.Metadata.MarshalCBOR(cw); err != nil {
+			return err
+		}
+	}
+
+	// t.Keys (nimona.PublicKey) (slice)
+	if len("keys") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"keys\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("keys"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("keys")); err != nil {
+		return err
+	}
+
+	if len(t.Keys) > cbg.ByteArrayMaxLen {
+		return xerrors.Errorf("Byte array in field t.Keys was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajByteString, uint64(len(t.Keys))); err != nil {
+		return err
+	}
+
+	if _, err := cw.Write(t.Keys[:]); err != nil {
+		return err
+	}
+
+	// t.Next (nimona.PublicKey) (slice)
+	if len("next") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"next\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("next"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("next")); err != nil {
+		return err
+	}
+
+	if len(t.Next) > cbg.ByteArrayMaxLen {
+		return xerrors.Errorf("Byte array in field t.Next was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajByteString, uint64(len(t.Next))); err != nil {
+		return err
+	}
+
+	if _, err := cw.Write(t.Next[:]); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (t *IdentityID) UnmarshalCBOR(r io.Reader) (err error) {
+func (t *KeyGraph) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
-		*t = IdentityID{}
+		*t = KeyGraph{}
 	}
 
 	cr := cbg.NewCborReader(r)
@@ -464,7 +420,7 @@ func (t *IdentityID) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	if extra > cbg.MaxLength {
-		return fmt.Errorf("IdentityID: map struct too large (%d)", extra)
+		return fmt.Errorf("KeyGraph: map struct too large (%d)", extra)
 	}
 
 	var name string
@@ -484,15 +440,59 @@ func (t *IdentityID) UnmarshalCBOR(r io.Reader) (err error) {
 		switch name {
 		// t._ (string) (string) - ignored
 
-		// t.IdentityRootID (nimona.DocumentID) (struct)
-		case "identityStreamID":
+		// t.Metadata (nimona.Metadata) (struct)
+		case "$metadata":
 
 			{
 
-				if err := t.IdentityRootID.UnmarshalCBOR(cr); err != nil {
-					return xerrors.Errorf("unmarshaling t.IdentityRootID: %w", err)
+				if err := t.Metadata.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.Metadata: %w", err)
 				}
 
+			}
+			// t.Keys (nimona.PublicKey) (slice)
+		case "keys":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+
+			if extra > cbg.ByteArrayMaxLen {
+				return fmt.Errorf("t.Keys: byte array too large (%d)", extra)
+			}
+			if maj != cbg.MajByteString {
+				return fmt.Errorf("expected byte array")
+			}
+
+			if extra > 0 {
+				t.Keys = make([]uint8, extra)
+			}
+
+			if _, err := io.ReadFull(cr, t.Keys[:]); err != nil {
+				return err
+			}
+			// t.Next (nimona.PublicKey) (slice)
+		case "next":
+
+			maj, extra, err = cr.ReadHeader()
+			if err != nil {
+				return err
+			}
+
+			if extra > cbg.ByteArrayMaxLen {
+				return fmt.Errorf("t.Next: byte array too large (%d)", extra)
+			}
+			if maj != cbg.MajByteString {
+				return fmt.Errorf("expected byte array")
+			}
+
+			if extra > 0 {
+				t.Next = make([]uint8, extra)
+			}
+
+			if _, err := io.ReadFull(cr, t.Next[:]); err != nil {
+				return err
 			}
 
 		default:

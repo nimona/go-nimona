@@ -6,14 +6,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func NewTestIdentity(t *testing.T) *Identity {
+func NewTestKeyGraph(t *testing.T) *KeyGraph {
 	t.Helper()
 
 	pk, _, err := GenerateKey()
 	require.NoError(t, err)
 
-	return &Identity{
+	return &KeyGraph{
 		Keys: pk,
+	}
+}
+
+func NewTestIdentity(t *testing.T) *Identity {
+	t.Helper()
+
+	return &Identity{
+		KeyGraphID: NewDocumentID(NewTestKeyGraph(t)),
 	}
 }
 
@@ -44,44 +52,37 @@ func TestIdentityAlias(t *testing.T) {
 	})
 }
 
-func TestIdentity(t *testing.T) {
-	id := NewTestIdentity(t)
+func TestKeyGraph(t *testing.T) {
+	kg := NewTestKeyGraph(t)
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
-		b, err := MarshalCBORBytes(id)
+		b, err := MarshalCBORBytes(kg)
 		require.NoError(t, err)
 
-		id1 := &Identity{}
-		err = UnmarshalCBORBytes(b, id1)
+		kg1 := &KeyGraph{}
+		err = UnmarshalCBORBytes(b, kg1)
 		require.NoError(t, err)
-		require.EqualValues(t, id, id1)
-		require.Equal(t, id.String(), id1.String())
-	})
-
-	t.Run("IdentityID", func(t *testing.T) {
-		idID := id.IdentityID()
-		require.Equal(t, id.String(), idID.String())
+		require.EqualValues(t, kg, kg1)
 	})
 }
 
-func TestIdentityID(t *testing.T) {
+func TestIdentity(t *testing.T) {
 	id := NewTestIdentity(t)
-	idID := id.IdentityID()
-	require.Equal(t, id.String(), idID.String())
+	require.Equal(t, id.String(), id.String())
 
 	t.Run("parse", func(t *testing.T) {
-		idID, err := ParseIdentityID(idID.String())
+		id, err := ParseIdentity(id.String())
 		require.NoError(t, err)
-		require.Equal(t, id.String(), idID.String())
+		require.Equal(t, id.String(), id.String())
 	})
 
 	t.Run("value/scan", func(t *testing.T) {
-		val, err := idID.Value()
+		val, err := id.Value()
 		require.NoError(t, err)
 
-		var idID IdentityID
-		err = idID.Scan(val)
+		id := Identity{}
+		err = id.Scan(val)
 		require.NoError(t, err)
-		require.Equal(t, id.String(), idID.String())
+		require.Equal(t, id.String(), id.String())
 	})
 }
