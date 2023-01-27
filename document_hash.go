@@ -54,7 +54,7 @@ func documentHashRaw(t string, b []byte) [hashLength]byte {
 }
 
 func NewDocumentHash(c Cborer) (h DocumentHash, err error) {
-	b, err := c.MarshalCBORBytes()
+	b, err := MarshalCBORBytes(c)
 	if err != nil {
 		return h, fmt.Errorf("error marshaling cbor: %s", err)
 	}

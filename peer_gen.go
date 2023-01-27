@@ -22,15 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *PeerInfo) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *PeerInfo) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -117,16 +108,17 @@ func (t *PeerInfo) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
-func (t *PeerInfo) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = PeerInfo{}
-	t.RawBytes = b
-	return t.UnmarshalCBOR(bytes.NewReader(b))
-}
-
 func (t *PeerInfo) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
 		*t = PeerInfo{}
 	}
+	rawBytes := bytes.NewBuffer(nil)
+	r = io.TeeReader(r, rawBytes)
+	defer func() {
+		if err == nil {
+			t.RawBytes = rawBytes.Bytes()
+		}
+	}()
 
 	cr := cbg.NewCborReader(r)
 
@@ -228,15 +220,6 @@ func (t *PeerInfo) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-func (t *PeerKey) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *PeerKey) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -292,11 +275,6 @@ func (t *PeerKey) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *PeerKey) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = PeerKey{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PeerKey) UnmarshalCBOR(r io.Reader) (err error) {

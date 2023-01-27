@@ -1,10 +1,10 @@
 package nimona
 
+import "io"
+
 type Cborer interface {
-	// MarshalCBOR(io.Writer) error
-	MarshalCBORBytes() ([]byte, error)
-	// UnmarshalCBOR(io.Reader) error
-	UnmarshalCBORBytes([]byte) error
+	MarshalCBOR(io.Writer) error
+	UnmarshalCBOR(io.Reader) error
 }
 
 type MessageWrapper struct {

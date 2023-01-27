@@ -20,15 +20,15 @@ func TestNetworkAlias_ParseNetworkAlias(t *testing.T) {
 }
 
 func TestNetworkAlias_MarshalUnmarshal(t *testing.T) {
-	n0 := NetworkAlias{
+	n0 := &NetworkAlias{
 		Hostname: "testing.reamde.dev",
 	}
 
-	b, err := n0.MarshalCBORBytes()
+	b, err := MarshalCBORBytes(n0)
 	require.NoError(t, err)
 
-	var n1 NetworkAlias
-	err = n1.UnmarshalCBORBytes(b)
+	n1 := &NetworkAlias{}
+	err = UnmarshalCBORBytes(b, n1)
 	require.NoError(t, err)
 
 	require.Equal(t, n0, n1)
@@ -64,11 +64,11 @@ func TestNetworkIdentifier(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cborBytes, err := tt.cborer.MarshalCBORBytes()
+			cborBytes, err := MarshalCBORBytes(tt.cborer)
 			require.NoError(t, err)
 
 			id := &NetworkIdentifier{}
-			err = id.UnmarshalCBORBytes(cborBytes)
+			err = UnmarshalCBORBytes(cborBytes, id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UnmarshalCBORBytes() error = %v, wantErr %v", err, tt.wantErr)
 				return

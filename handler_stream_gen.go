@@ -22,15 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *StreamRequest) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *StreamRequest) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -78,11 +69,6 @@ func (t *StreamRequest) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *StreamRequest) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = StreamRequest{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *StreamRequest) UnmarshalCBOR(r io.Reader) (err error) {
@@ -154,15 +140,6 @@ func (t *StreamRequest) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	return nil
-}
-
-func (t *StreamResponse) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
 }
 
 func (t *StreamResponse) MarshalCBOR(w io.Writer) error {
@@ -237,11 +214,6 @@ func (t *StreamResponse) MarshalCBOR(w io.Writer) error {
 		}
 	}
 	return nil
-}
-
-func (t *StreamResponse) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = StreamResponse{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *StreamResponse) UnmarshalCBOR(r io.Reader) (err error) {

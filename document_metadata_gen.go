@@ -22,15 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *DocumentBase) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *DocumentBase) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -89,18 +80,23 @@ func (t *DocumentBase) MarshalCBOR(w io.Writer) error {
 			return err
 		}
 	}
-	return nil
-}
 
-func (t *DocumentBase) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = DocumentBase{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
+	// t.DocumentBytes ([]uint8) (slice) - ignored
+
+	return nil
 }
 
 func (t *DocumentBase) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
 		*t = DocumentBase{}
 	}
+	rawBytes := bytes.NewBuffer(nil)
+	r = io.TeeReader(r, rawBytes)
+	defer func() {
+		if err == nil {
+			t.DocumentBytes = rawBytes.Bytes()
+		}
+	}()
 
 	cr := cbg.NewCborReader(r)
 
@@ -158,6 +154,7 @@ func (t *DocumentBase) UnmarshalCBOR(r io.Reader) (err error) {
 				}
 
 			}
+			// t.DocumentBytes ([]uint8) (slice) - ignored
 
 		default:
 			// Field doesn't exist on this type, so ignore it
@@ -166,15 +163,6 @@ func (t *DocumentBase) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	return nil
-}
-
-func (t *Metadata) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
 }
 
 func (t *Metadata) MarshalCBOR(w io.Writer) error {
@@ -291,11 +279,6 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 		}
 	}
 	return nil
-}
-
-func (t *Metadata) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = Metadata{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
@@ -418,15 +401,6 @@ func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-func (t *Permissions) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *Permissions) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -503,11 +477,6 @@ func (t *Permissions) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *Permissions) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = Permissions{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Permissions) UnmarshalCBOR(r io.Reader) (err error) {
@@ -610,15 +579,6 @@ func (t *Permissions) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	return nil
-}
-
-func (t *PermissionsAllow) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
 }
 
 func (t *PermissionsAllow) MarshalCBOR(w io.Writer) error {
@@ -797,11 +757,6 @@ func (t *PermissionsAllow) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
-func (t *PermissionsAllow) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = PermissionsAllow{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
-}
-
 func (t *PermissionsAllow) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
 		*t = PermissionsAllow{}
@@ -978,15 +933,6 @@ func (t *PermissionsAllow) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-func (t *PermissionsCondition) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *PermissionsCondition) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -1023,11 +969,6 @@ func (t *PermissionsCondition) MarshalCBOR(w io.Writer) error {
 		}
 	}
 	return nil
-}
-
-func (t *PermissionsCondition) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = PermissionsCondition{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PermissionsCondition) UnmarshalCBOR(r io.Reader) (err error) {
@@ -1098,15 +1039,6 @@ func (t *PermissionsCondition) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-func (t *Signature) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *Signature) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -1159,11 +1091,6 @@ func (t *Signature) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *Signature) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = Signature{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Signature) UnmarshalCBOR(r io.Reader) (err error) {

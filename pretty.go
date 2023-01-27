@@ -33,7 +33,7 @@ func PrettyPrint(v Cborer) {
 // given cborer.
 // WARNING: Should be used for only for debugging as it WILL panic on error.
 func PrettySPrint(v Cborer) string {
-	b, err := v.MarshalCBORBytes()
+	b, err := MarshalCBORBytes(v)
 	if err != nil {
 		panic(fmt.Errorf("error marshaling to cbor, err: %w", err))
 	}

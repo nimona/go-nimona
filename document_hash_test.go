@@ -32,7 +32,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 	exp := "82pCJU9HhpjB1XgndtpSzby9UT13dCmdbBVFnDyWysGq"
 
 	t.Run("test marshaling", func(t *testing.T) {
-		b, err := m.MarshalCBORBytes()
+		b, err := MarshalCBORBytes(m)
 		require.NoError(t, err)
 
 		t.Run("test hashing", func(t *testing.T) {
@@ -43,13 +43,13 @@ func TestDocumentHash_Ping(t *testing.T) {
 
 		t.Run("test unmarshaling", func(t *testing.T) {
 			g := &CborFixture{}
-			err = g.UnmarshalCBORBytes(b)
+			err = UnmarshalCBORBytes(b, g)
 			require.NoError(t, err)
 			require.Equal(t, m, g)
 		})
 	})
 
-	b, err := m.MarshalCBORBytes()
+	b, err := MarshalCBORBytes(m)
 	require.NoError(t, err)
 
 	t.Run("from cbor", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 
 	t.Run("unmarshal and hash", func(t *testing.T) {
 		g := &CborFixture{}
-		err = g.UnmarshalCBORBytes(b)
+		err = UnmarshalCBORBytes(b, g)
 		require.NoError(t, err)
 
 		h, err := NewDocumentHash(g)
@@ -93,7 +93,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 
 		t.Run("test unmarshaling", func(t *testing.T) {
 			g := &CborFixture{}
-			err = g.UnmarshalCBORBytes(b)
+			err = UnmarshalCBORBytes(b, g)
 			require.NoError(t, err)
 		})
 	})

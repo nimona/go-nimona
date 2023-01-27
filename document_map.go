@@ -11,7 +11,7 @@ import (
 type DocumentMap map[string]interface{}
 
 func NewDocumentMap(c Cborer) (m DocumentMap, err error) {
-	b, err := c.MarshalCBORBytes()
+	b, err := MarshalCBORBytes(c)
 	if err != nil {
 		return m, fmt.Errorf("error marshaling cbor: %s", err)
 	}

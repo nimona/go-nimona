@@ -76,7 +76,7 @@ func ApplyStreamPatch(
 	original Cborer,
 	patches ...*StreamPatch,
 ) error {
-	oc, err := original.MarshalCBORBytes()
+	oc, err := MarshalCBORBytes(original)
 	if err != nil {
 		return fmt.Errorf("error marshaling original: %w", err)
 	}
@@ -87,7 +87,7 @@ func ApplyStreamPatch(
 		if err != nil {
 			return fmt.Errorf("error applying patch: %w", err)
 		}
-		err = original.UnmarshalCBORBytes(rc)
+		err = UnmarshalCBORBytes(rc, original)
 		if err != nil {
 			return fmt.Errorf("error unmarshaling patched: %w", err)
 		}

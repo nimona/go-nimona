@@ -16,11 +16,12 @@ func TestMetadata(t *testing.T) {
 	}
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
-		bb, err := b.MarshalCBORBytes()
+		bb, err := MarshalCBORBytes(b)
 		assert.NoError(t, err)
 
 		b1 := &DocumentBase{}
-		err = b1.UnmarshalCBORBytes(bb)
+		err = UnmarshalCBORBytes(bb, b1)
+		b1.DocumentBytes = nil
 		assert.NoError(t, err)
 		assert.EqualValues(t, b, b1)
 	})

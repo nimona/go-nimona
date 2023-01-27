@@ -22,15 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *Identity) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *Identity) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -134,11 +125,6 @@ func (t *Identity) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *Identity) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = Identity{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *Identity) UnmarshalCBOR(r io.Reader) (err error) {
@@ -247,15 +233,6 @@ func (t *Identity) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-func (t *IdentityAlias) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *IdentityAlias) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -343,11 +320,6 @@ func (t *IdentityAlias) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
-func (t *IdentityAlias) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = IdentityAlias{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
-}
-
 func (t *IdentityAlias) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
 		*t = IdentityAlias{}
@@ -421,15 +393,6 @@ func (t *IdentityAlias) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-func (t *IdentityID) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *IdentityID) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -477,11 +440,6 @@ func (t *IdentityID) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *IdentityID) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = IdentityID{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *IdentityID) UnmarshalCBOR(r io.Reader) (err error) {

@@ -73,4 +73,4 @@ require (
 	modernc.org/token v1.0.1 // indirect
 )
 
-replace github.com/whyrusleeping/cbor-gen => github.com/geoah/go-cborgen v0.0.0-20230118130725-0beb53071860
+replace github.com/whyrusleeping/cbor-gen => github.com/geoah/go-cborgen v0.0.0-20230127181625-2a1ddc8e5693

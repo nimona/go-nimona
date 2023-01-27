@@ -20,16 +20,16 @@ func TestStream_ApplyStreamPatch(t *testing.T) {
 		Int64:  42,
 	}
 
-	aCbor, err := a.MarshalCBORBytes()
+	aCbor, err := MarshalCBORBytes(a)
 	require.NoError(t, err)
 
-	bCbor, err := b.MarshalCBORBytes()
+	bCbor, err := MarshalCBORBytes(b)
 	require.NoError(t, err)
 
 	p, err := CreateStreamPatch(aCbor, bCbor)
 	require.NoError(t, err)
 
-	pCbor, err := p.MarshalCBORBytes()
+	pCbor, err := MarshalCBORBytes(p)
 	require.NoError(t, err)
 
 	m, err := NewDocumentMap(p)
@@ -54,10 +54,10 @@ func TestStream_CreateStreamPatch(t *testing.T) {
 		Int64:  42,
 	}
 
-	aCbor, err := a.MarshalCBORBytes()
+	aCbor, err := MarshalCBORBytes(a)
 	require.NoError(t, err)
 
-	bCbor, err := b.MarshalCBORBytes()
+	bCbor, err := MarshalCBORBytes(b)
 	require.NoError(t, err)
 
 	p, err := CreateStreamPatch(aCbor, bCbor)

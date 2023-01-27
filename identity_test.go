@@ -33,11 +33,11 @@ func TestIdentityAlias(t *testing.T) {
 	require.Equal(t, n0, n1)
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
-		b, err := n0.MarshalCBORBytes()
+		b, err := MarshalCBORBytes(n0)
 		require.NoError(t, err)
 
 		n1 := &IdentityAlias{}
-		err = n1.UnmarshalCBORBytes(b)
+		err = UnmarshalCBORBytes(b, n1)
 		require.NoError(t, err)
 		require.EqualValues(t, n0, n1)
 		require.Equal(t, s0, n1.String())
@@ -48,11 +48,11 @@ func TestIdentity(t *testing.T) {
 	id := NewTestIdentity(t)
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
-		b, err := id.MarshalCBORBytes()
+		b, err := MarshalCBORBytes(id)
 		require.NoError(t, err)
 
 		id1 := &Identity{}
-		err = id1.UnmarshalCBORBytes(b)
+		err = UnmarshalCBORBytes(b, id1)
 		require.NoError(t, err)
 		require.EqualValues(t, id, id1)
 		require.Equal(t, id.String(), id1.String())

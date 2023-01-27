@@ -42,7 +42,7 @@ func TestDocumentStore(t *testing.T) {
 		Uint64: 42,
 	}
 
-	docBytes, err := doc.MarshalCBORBytes()
+	docBytes, err := MarshalCBORBytes(doc)
 	require.NoError(t, err)
 
 	// Create an entry
@@ -73,7 +73,7 @@ func TestDocumentStore(t *testing.T) {
 
 	// Test unmarshaling the entry
 	gotDoc := &CborFixture{}
-	err = gotDoc.UnmarshalCBORBytes(gotEntry.DocumentBytes)
+	err = UnmarshalCBORBytes(gotEntry.DocumentBytes, gotDoc)
 	require.NoError(t, err)
 	require.Equal(t, gotDoc, doc)
 }

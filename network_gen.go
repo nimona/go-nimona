@@ -22,15 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *NetworkAlias) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *NetworkAlias) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -85,11 +76,6 @@ func (t *NetworkAlias) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *NetworkAlias) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = NetworkAlias{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *NetworkAlias) UnmarshalCBOR(r io.Reader) (err error) {
@@ -153,15 +139,6 @@ func (t *NetworkAlias) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	return nil
-}
-
-func (t *NetworkIdentity) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
 }
 
 func (t *NetworkIdentity) MarshalCBOR(w io.Writer) error {
@@ -244,11 +221,6 @@ func (t *NetworkIdentity) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
-func (t *NetworkIdentity) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = NetworkIdentity{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
-}
-
 func (t *NetworkIdentity) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
 		*t = NetworkIdentity{}
@@ -319,15 +291,6 @@ func (t *NetworkIdentity) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	return nil
-}
-
-func (t *NetworkInfo) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
 }
 
 func (t *NetworkInfo) MarshalCBOR(w io.Writer) error {
@@ -424,16 +387,17 @@ func (t *NetworkInfo) MarshalCBOR(w io.Writer) error {
 	return nil
 }
 
-func (t *NetworkInfo) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = NetworkInfo{}
-	t.RawBytes = b
-	return t.UnmarshalCBOR(bytes.NewReader(b))
-}
-
 func (t *NetworkInfo) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
 		*t = NetworkInfo{}
 	}
+	rawBytes := bytes.NewBuffer(nil)
+	r = io.TeeReader(r, rawBytes)
+	defer func() {
+		if err == nil {
+			t.RawBytes = rawBytes.Bytes()
+		}
+	}()
 
 	cr := cbg.NewCborReader(r)
 

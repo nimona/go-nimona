@@ -7,8 +7,9 @@ import (
 
 type (
 	DocumentBase struct {
-		Type     string   `cborgen:"$type"`
-		Metadata Metadata `cborgen:"$metadata,omitempty"`
+		Type          string   `cborgen:"$type"`
+		Metadata      Metadata `cborgen:"$metadata,omitempty"`
+		DocumentBytes []byte   `cborgen:"rawbytes"`
 	}
 	Metadata struct {
 		Owner       *IdentityID   `cborgen:"owner,omitempty"`

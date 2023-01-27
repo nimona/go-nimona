@@ -26,7 +26,7 @@ type (
 )
 
 func (doc *DocumentEntry) UnmarshalInto(v Cborer) error {
-	err := v.UnmarshalCBORBytes(doc.DocumentBytes)
+	err := UnmarshalCBORBytes(doc.DocumentBytes, v)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling document: %w", err)
 	}

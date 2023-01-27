@@ -85,7 +85,7 @@ func (n *NetworkInfo) NetworkIdentifier() NetworkIdentifier {
 func (n *NetworkInfo) NetworkIdentity() NetworkIdentity {
 	cborBytes := n.RawBytes
 	if cborBytes == nil {
-		cborBytes, _ = n.MarshalCBORBytes()
+		cborBytes, _ = MarshalCBORBytes(n)
 	}
 	return NetworkIdentity{
 		NetworkInfoRootID: NewDocumentIDFromCBOR(cborBytes),
@@ -97,67 +97,46 @@ func (n *NetworkInfo) String() string {
 }
 
 func (n *NetworkIdentifier) MarshalCBOR(w io.Writer) error {
-	b, err := n.MarshalCBORBytes()
-	if err != nil {
-		return fmt.Errorf("unable to marshal network identifier: %w", err)
-	}
-
-	_, err = w.Write(b)
-	if err != nil {
-		return fmt.Errorf("unable to write network identifier: %w", err)
-	}
-
-	return nil
-}
-
-func (n NetworkIdentifier) UnmarshalCBOR(r io.Reader) (err error) {
-	b, err := io.ReadAll(r)
-	if err != nil {
-		return fmt.Errorf("unable to read network identifier: %w", err)
-	}
-
-	return n.UnmarshalCBORBytes(b)
-}
-
-func (n NetworkIdentifier) MarshalCBORBytes() ([]byte, error) {
 	if n.NetworkAlias != nil {
-		return n.NetworkAlias.MarshalCBORBytes()
+		return n.NetworkAlias.MarshalCBOR(w)
 	}
 	if n.NetworkIdentity != nil {
-		return n.NetworkIdentity.MarshalCBORBytes()
+		return n.NetworkIdentity.MarshalCBOR(w)
 	}
 	if n.NetworkInfo != nil {
-		return n.NetworkInfo.MarshalCBORBytes()
+		return n.NetworkInfo.MarshalCBOR(w)
 	}
-	return nil, fmt.Errorf("unable to marshal network identifier")
+	return fmt.Errorf("unable to marshal network identifier")
 }
 
-func (n *NetworkIdentifier) UnmarshalCBORBytes(b []byte) error {
-	t, err := GetDocumentTypeFromCbor(b)
+func (n *NetworkIdentifier) UnmarshalCBOR(r io.Reader) (err error) {
+	doc := &DocumentBase{}
+	err = doc.UnmarshalCBOR(r)
 	if err != nil {
-		return fmt.Errorf("unable to find type for network identifier: %w", err)
+		return fmt.Errorf("unable to unmarshal network identifier into doc: %w", err)
 	}
-	switch t {
+
+	switch doc.Type {
 	case "core/network/alias":
 		n.NetworkAlias = &NetworkAlias{}
-		err := n.NetworkAlias.UnmarshalCBORBytes(b)
+		err := UnmarshalCBORBytes(doc.DocumentBytes, n.NetworkAlias)
 		if err != nil {
 			return fmt.Errorf("unable to unmarshal network alias: %w", err)
 		}
 	case "core/network":
 		n.NetworkIdentity = &NetworkIdentity{}
-		err := n.NetworkIdentity.UnmarshalCBORBytes(b)
+		err := UnmarshalCBORBytes(doc.DocumentBytes, n.NetworkIdentity)
 		if err != nil {
 			return fmt.Errorf("unable to unmarshal network identity: %w", err)
 		}
 	case "core/network/info":
 		n.NetworkInfo = &NetworkInfo{}
-		err := n.NetworkInfo.UnmarshalCBORBytes(b)
+		err := UnmarshalCBORBytes(doc.DocumentBytes, n.NetworkInfo)
 		if err != nil {
 			return fmt.Errorf("unable to unmarshal network info: %w", err)
 		}
 	default:
-		return fmt.Errorf("unknown network identifier type: %s", t)
+		return fmt.Errorf("unknown network identifier type: %s", doc.Type)
 	}
 	return nil
 }

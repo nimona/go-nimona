@@ -17,7 +17,7 @@ func NewTestDocument(t *testing.T) Cborer {
 
 func MustMarshal(t *testing.T, v Cborer) []byte {
 	t.Helper()
-	b, err := v.MarshalCBORBytes()
+	b, err := MarshalCBORBytes(v)
 	require.NoError(t, err)
 	return b
 }

@@ -22,15 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *PeerAddr) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *PeerAddr) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -132,11 +123,6 @@ func (t *PeerAddr) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *PeerAddr) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = PeerAddr{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *PeerAddr) UnmarshalCBOR(r io.Reader) (err error) {

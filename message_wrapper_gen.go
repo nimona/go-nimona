@@ -22,15 +22,6 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *MessageWrapper) MarshalCBORBytes() ([]byte, error) {
-	w := bytes.NewBuffer(nil)
-	err := t.MarshalCBOR(w)
-	if err != nil {
-		return nil, err
-	}
-	return w.Bytes(), nil
-}
-
 func (t *MessageWrapper) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
@@ -66,11 +57,6 @@ func (t *MessageWrapper) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 	return nil
-}
-
-func (t *MessageWrapper) UnmarshalCBORBytes(b []byte) (err error) {
-	*t = MessageWrapper{}
-	return t.UnmarshalCBOR(bytes.NewReader(b))
 }
 
 func (t *MessageWrapper) UnmarshalCBOR(r io.Reader) (err error) {

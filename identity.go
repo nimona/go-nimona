@@ -3,6 +3,7 @@ package nimona
 import (
 	"database/sql/driver"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -30,6 +31,12 @@ type (
 
 func (i *IdentityAlias) String() string {
 	return string(ShorthandIdentityAlias) + i.Network.Hostname + "/" + i.Handle
+}
+
+func (i *IdentityAlias) IdentityIdentifier() IdentityIdentifier {
+	return IdentityIdentifier{
+		IdentityAlias: i,
+	}
 }
 
 func ParseIdentityAlias(alias string) (*IdentityAlias, error) {
@@ -89,6 +96,12 @@ func (i *Identity) IdentityID() IdentityID {
 	}
 }
 
+func (i *Identity) IdentityIdentifier() IdentityIdentifier {
+	return IdentityIdentifier{
+		Identity: i,
+	}
+}
+
 func (i *IdentityID) String() string {
 	return string(ShorthandIdentity) + i.IdentityRootID.DocumentHash.String()
 }
@@ -140,29 +153,31 @@ func (i IdentityIdentifier) String() string {
 	return ""
 }
 
-func (i IdentityIdentifier) MarshalCBORBytes() ([]byte, error) {
+func (i IdentityIdentifier) MarshalCBOR(w io.Writer) error {
 	if i.IdentityAlias != nil {
-		return i.IdentityAlias.MarshalCBORBytes()
+		return i.IdentityAlias.MarshalCBOR(w)
 	}
 	if i.Identity != nil {
-		return i.Identity.MarshalCBORBytes()
+		return i.Identity.MarshalCBOR(w)
 	}
-	return nil, fmt.Errorf("unable to marshal identity identifier")
+	return fmt.Errorf("unable to marshal identity identifier")
 }
 
-func (i IdentityIdentifier) UnmarshalCBORBytes(b []byte) error {
-	t, err := GetDocumentTypeFromCbor(b)
+func (i IdentityIdentifier) UnmarshalCBOR(r io.Reader) (err error) {
+	doc := &DocumentBase{}
+	err = doc.UnmarshalCBOR(r)
 	if err != nil {
-		return fmt.Errorf("unable to find type for identity identifier: %w", err)
+		return fmt.Errorf("unable to unmarshal network identifier into doc: %w", err)
 	}
-	switch t {
+
+	switch doc.Type {
 	case "core/identity.alias":
 		i.IdentityAlias = &IdentityAlias{}
-		return i.IdentityAlias.UnmarshalCBORBytes(b)
+		return UnmarshalCBORBytes(doc.DocumentBytes, i.IdentityAlias)
 	case "core/identity":
 		i.Identity = &Identity{}
-		return i.Identity.UnmarshalCBORBytes(b)
+		return UnmarshalCBORBytes(doc.DocumentBytes, i.Identity)
 	default:
-		return fmt.Errorf("unknown identity identifier type: %s", t)
+		return fmt.Errorf("unknown identity identifier type: %s", doc.Type)
 	}
 }
