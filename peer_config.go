@@ -9,6 +9,7 @@ type PeerConfig struct {
 	privateKey PrivateKey
 	publicKey  PublicKey
 	peerInfo   *PeerInfo
+	identity   *Identity
 }
 
 func NewPeerConfig(
@@ -39,4 +40,16 @@ func (pc *PeerConfig) GetPeerInfo() *PeerInfo {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 	return pc.peerInfo
+}
+
+func (pc *PeerConfig) GetIdentity() *Identity {
+	pc.mutex.RLock()
+	defer pc.mutex.RUnlock()
+	return pc.identity
+}
+
+func (pc *PeerConfig) SetIdentity(identity *Identity) {
+	pc.mutex.Lock()
+	defer pc.mutex.Unlock()
+	pc.identity = identity
 }

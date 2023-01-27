@@ -7,6 +7,21 @@ import (
 )
 
 func TestPeerConfig(t *testing.T) {
+	pc := NewTestPeerConfig(t)
+
+	// Test GetPrivateKey()
+	require.True(t, pc.GetPrivateKey().Equal(pc.privateKey))
+
+	// Test GetPublicKey()
+	require.True(t, pc.GetPublicKey().Equal(pc.publicKey))
+
+	// Test GetPeerInfo()
+	require.EqualValues(t, pc.peerInfo, pc.GetPeerInfo())
+}
+
+func NewTestPeerConfig(t *testing.T) *PeerConfig {
+	t.Helper()
+
 	pk, sk, err := GenerateKey()
 	require.NoError(t, err)
 
@@ -22,12 +37,5 @@ func TestPeerConfig(t *testing.T) {
 	// Create a new PeerConfig
 	pc := NewPeerConfig(sk, pk, peerInfo)
 
-	// Test GetPrivateKey()
-	require.True(t, pc.GetPrivateKey().Equal(sk))
-
-	// Test GetPublicKey()
-	require.True(t, pc.GetPublicKey().Equal(pk))
-
-	// Test GetPeerInfo()
-	require.EqualValues(t, peerInfo, pc.GetPeerInfo())
+	return pc
 }
