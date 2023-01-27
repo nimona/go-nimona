@@ -1,13 +1,9 @@
 package nimona
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"nimona.io/internal/prettycbor"
 )
 
 func TestStream_ApplyStreamPatch(t *testing.T) {
@@ -28,16 +24,6 @@ func TestStream_ApplyStreamPatch(t *testing.T) {
 
 	p, err := CreateStreamPatch(aCbor, bCbor)
 	require.NoError(t, err)
-
-	pCbor, err := MarshalCBORBytes(p)
-	require.NoError(t, err)
-
-	m, err := NewDocumentMap(p)
-	require.NoError(t, err)
-	mb, err := json.MarshalIndent(m, "", "  ")
-	require.NoError(t, err)
-	fmt.Println(string(mb))
-	fmt.Println(prettycbor.Dump(pCbor))
 
 	err = ApplyStreamPatch(a, p)
 	require.NoError(t, err)
@@ -69,6 +55,4 @@ func TestStream_CreateStreamPatch(t *testing.T) {
 	p.Dependencies = []DocumentID{{
 		DocumentHash: NewRandomHash(t),
 	}}
-
-	PrettyPrint(p)
 }

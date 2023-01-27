@@ -2,7 +2,6 @@ package nimona
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -76,7 +75,6 @@ func TestDocumentMap(t *testing.T) {
 		require.NoError(t, err)
 
 		b, err := json.MarshalIndent(m, "", "  ")
-		fmt.Println(string(b))
 		require.NoError(t, err)
 		require.Equal(t, exp, string(b))
 	})
