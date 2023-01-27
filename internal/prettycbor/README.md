@@ -39,7 +39,7 @@ func Test(t *testing.T) {
     b, err := cbor.Marshal(m)
     require.NoError(t, err)
 
-    fmt.Println(Dump(b))
+    Print(b) // or SPrint to return the value
 }
 ```
 

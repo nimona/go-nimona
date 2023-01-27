@@ -2,7 +2,6 @@ package prettycbor
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -66,7 +65,6 @@ A4                                      # map(4)
 	bytes, err := hex.DecodeString(hexString)
 	require.NoError(t, err)
 
-	out := Dump(bytes)
-	fmt.Println(out)
+	out := SPrint(bytes)
 	require.Equal(t, strings.TrimSpace(expString), strings.TrimSpace(out))
 }

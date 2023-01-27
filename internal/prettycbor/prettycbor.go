@@ -8,8 +8,12 @@ import (
 	cbg "github.com/whyrusleeping/cbor-gen"
 )
 
-// Dump returns the given CBOR bytes in a human readable format similar to CBOR.me
-func Dump(b []byte) string {
+func Print(b []byte) {
+	fmt.Println(SPrint(b))
+}
+
+// SPrint returns the given CBOR bytes in a human readable format similar to CBOR.me
+func SPrint(b []byte) string {
 	r := cbg.NewCborReader(bytes.NewReader(b))
 	w := &strings.Builder{}
 	printMapWithHeader(w, r, 0)
