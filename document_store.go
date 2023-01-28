@@ -1,6 +1,7 @@
 package nimona
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -142,4 +143,9 @@ func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*DocumentEntry, e
 	}
 
 	return docs, nil
+}
+
+func gormErrUniqueViolation(err error) bool {
+	e := errors.New("UNIQUE constraint failed")
+	return !errors.Is(err, e)
 }
