@@ -11,13 +11,13 @@ type Signature struct {
 	X      []byte  `cborgen:"x"`
 }
 
-func NewDocumentSignature(sk PrivateKey, hash DocumentHash) (*Signature, error) {
+func NewDocumentSignature(sk PrivateKey, hash DocumentHash) *Signature {
 	sig, err := sk.Sign(hash[:], &ed25519.Options{})
 	if err != nil {
-		return nil, fmt.Errorf("error signing document: %w", err)
+		panic(fmt.Errorf("error signing document: %w", err))
 	}
 
-	return sig, nil
+	return sig
 }
 
 func VerifySignature(sig *Signature, hash DocumentHash) error {

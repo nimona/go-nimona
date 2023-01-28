@@ -43,20 +43,11 @@ func RequestDocument(
 		},
 		DocumentID: docID,
 	}
-	docHash, err := NewDocumentHash(req)
-	if err != nil {
-		return nil, fmt.Errorf("error creating document hash: %w", err)
-	}
 
-	docSig, err := NewDocumentSignature(
+	req.Metadata.Signature = NewDocumentSignature(
 		peerConfig.GetPrivateKey(),
-		docHash,
+		NewDocumentHash(req),
 	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating document signature: %w", err)
-	}
-
-	req.Metadata.Signature = *docSig
 
 	msgRes, err := ses.Request(ctx, req)
 	if err != nil {
