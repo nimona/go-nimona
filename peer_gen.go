@@ -29,7 +29,11 @@ func (t *PeerInfo) MarshalCBOR(w io.Writer) error {
 	}
 
 	cw := cbg.NewCborWriter(w)
-	fieldCount := 3
+	fieldCount := 4
+
+	if zero.IsZeroVal(t.Metadata) {
+		fieldCount--
+	}
 
 	if _, err := cw.Write(cbg.CborEncodeMajorType(cbg.MajMap, uint64(fieldCount))); err != nil {
 		return err
@@ -52,6 +56,25 @@ func (t *PeerInfo) MarshalCBOR(w io.Writer) error {
 	}
 	if _, err := io.WriteString(w, string("core/peer/info")); err != nil {
 		return err
+	}
+
+	// t.Metadata (nimona.Metadata) (struct)
+	if !zero.IsZeroVal(t.Metadata) {
+
+		if len("$metadata") > cbg.MaxLength {
+			return xerrors.Errorf("Value in field \"$metadata\" was too long")
+		}
+
+		if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$metadata"))); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(w, string("$metadata")); err != nil {
+			return err
+		}
+
+		if err := t.Metadata.MarshalCBOR(cw); err != nil {
+			return err
+		}
 	}
 
 	// t.PublicKey (nimona.PublicKey) (slice)
@@ -157,7 +180,17 @@ func (t *PeerInfo) UnmarshalCBOR(r io.Reader) (err error) {
 		switch name {
 		// t._ (string) (string) - ignored
 
-		// t.PublicKey (nimona.PublicKey) (slice)
+		// t.Metadata (nimona.Metadata) (struct)
+		case "$metadata":
+
+			{
+
+				if err := t.Metadata.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.Metadata: %w", err)
+				}
+
+			}
+			// t.PublicKey (nimona.PublicKey) (slice)
 		case "publicKey":
 
 			maj, extra, err = cr.ReadHeader()

@@ -19,6 +19,7 @@ type (
 	}
 	PeerInfo struct {
 		_         string     `cborgen:"$type,const=core/peer/info"`
+		Metadata  Metadata   `cborgen:"$metadata,omitempty"`
 		PublicKey PublicKey  `cborgen:"publicKey"`
 		Addresses []PeerAddr `cborgen:"addresses"`
 		RawBytes  []byte     `cborgen:"rawbytes"`
@@ -31,6 +32,10 @@ type (
 
 func (p PeerKey) String() string {
 	return string(ShorthandPeerKey) + p.PublicKey.String()
+}
+
+func (p PeerKey) IsZero() bool {
+	return p.PublicKey.IsZero()
 }
 
 func ParsePeerKey(pID string) (PeerKey, error) {
