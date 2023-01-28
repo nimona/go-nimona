@@ -145,6 +145,7 @@ func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*DocumentEntry, e
 	return docs, nil
 }
 
+// nolint: unused // TODO: we should be using this probably, if not remove it
 func gormErrUniqueViolation(err error) bool {
 	e := errors.New("UNIQUE constraint failed")
 	return !errors.Is(err, e)
