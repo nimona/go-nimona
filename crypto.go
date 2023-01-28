@@ -25,8 +25,8 @@ func (pk PublicKey) String() string {
 	return base58.Encode(pk)
 }
 
-func (p PublicKey) IsZero() bool {
-	return len(p) == 0
+func (pk PublicKey) IsZero() bool {
+	return len(pk) == 0
 }
 
 func (pk PublicKey) Equal(other PublicKey) bool {
