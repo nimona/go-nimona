@@ -63,8 +63,8 @@ func TestRequestNetworkJoin(t *testing.T) {
 			Network: "utp",
 			Address: "localhost:1234",
 		}},
-		PeerConfig:      srvPeerConfig,
-		AccountingStore: NewTestNetworkStore(t),
+		PeerConfig: srvPeerConfig,
+		Store:      NewTestNetworkStore(t),
 	}
 	srv.RegisterHandler(
 		"core/network/join.request",
@@ -126,8 +126,8 @@ func TestHandlerNetwork_ResolveHandle(t *testing.T) {
 			Network: "utp",
 			Address: "localhost:1234",
 		}},
-		PeerConfig:      srvPeerConfig,
-		AccountingStore: NewTestNetworkStore(t),
+		PeerConfig: srvPeerConfig,
+		Store:      NewTestNetworkStore(t),
 	}
 	srv.RegisterHandler(
 		"core/network/resolveHandle.request",
@@ -179,6 +179,62 @@ func TestHandlerNetwork_ResolveHandle(t *testing.T) {
 	})
 }
 
+func TestHandlerNetwork_AnnouncePeer_LookupPeer(t *testing.T) {
+	ctx := context.Background()
+
+	// Create new peer configs
+	srvPeerConfig := NewTestPeerConfig(t)
+	clnPeerConfig := NewTestPeerConfig(t)
+
+	// Create new session manager
+	srv, clt := newTestSessionManager(t)
+
+	// Construct a new HandlerNetwork
+	hnd := &HandlerNetwork{
+		Hostname: "testing.nimona.io",
+		PeerAddresses: []PeerAddr{{
+			Network: "utp",
+			Address: "localhost:1234",
+		}},
+		PeerConfig: srvPeerConfig,
+		Store:      NewTestNetworkStore(t),
+	}
+	srv.RegisterHandler(
+		"core/network/announcePeer.request",
+		hnd.HandleNetworkAnnouncePeerRequest,
+	)
+	srv.RegisterHandler(
+		"core/network/lookupPeer.request",
+		hnd.HandleNetworkLookupPeerRequest,
+	)
+
+	// Dial the server
+	ses, err := clt.Dial(context.Background(), srv.PeerAddr())
+	require.NoError(t, err)
+
+	// Create a new identity for the client
+	clnPeerConfig.SetIdentity(NewTestIdentity(t))
+
+	// Announce the client
+	t.Run("announce client's peer", func(t *testing.T) {
+		res, err := RequestNetworkAnnouncePeer(ctx, ses, clnPeerConfig)
+		require.NoError(t, err)
+		require.Empty(t, res.ErrorDescription)
+		require.False(t, res.Error)
+	})
+
+	// Lookup the client
+	t.Run("lookup client", func(t *testing.T) {
+		res, err := RequestNetworkLookupPeer(ctx, ses, *clnPeerConfig.GetPeerKey())
+		res.PeerInfo.RawBytes = nil
+		require.NoError(t, err)
+		require.Empty(t, res.ErrorDescription)
+		require.False(t, res.Error)
+		require.True(t, res.Found)
+		require.Equal(t, *clnPeerConfig.GetPeerInfo(), res.PeerInfo)
+	})
+}
+
 func NewTestNetworkStore(t *testing.T) *gorm.DB {
 	t.Helper()
 
@@ -187,7 +243,10 @@ func NewTestNetworkStore(t *testing.T) *gorm.DB {
 	})
 	require.NoError(t, err)
 
-	err = db.AutoMigrate(&NetworkAccountingModel{})
+	err = db.AutoMigrate(
+		&NetworkAccountingModel{},
+		&NetworkPeerModel{},
+	)
 	require.NoError(t, err)
 
 	return db
