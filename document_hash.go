@@ -17,7 +17,9 @@ var errDocumentHashValueIsNil = fmt.Errorf("value is nil")
 
 const hashLength = 32
 
-type DocumentHash [hashLength]byte
+type (
+	DocumentHash [hashLength]byte
+)
 
 func (h DocumentHash) String() string {
 	return base58.Encode(h[:])
@@ -53,32 +55,32 @@ func documentHashRaw(t string, b []byte) [hashLength]byte {
 	return r
 }
 
-func NewDocumentHash(c Cborer) (h DocumentHash, err error) {
+func NewDocumentHash(c Cborer) (h DocumentHash) {
 	b, err := MarshalCBORBytes(c)
 	if err != nil {
-		return h, fmt.Errorf("error marshaling cbor: %s", err)
+		panic(fmt.Errorf("error marshaling cbor: %w", err))
 	}
 
 	return NewDocumentHashFromCBOR(b)
 }
 
-func NewDocumentHashFromCBOR(b []byte) (h DocumentHash, err error) {
+func NewDocumentHashFromCBOR(b []byte) (h DocumentHash) {
 	r := cbg.NewCborReader(bytes.NewReader(b))
 	maj, n, err := r.ReadHeader()
 	if err != nil {
-		return h, fmt.Errorf("error reading header: %s", err)
+		panic(fmt.Errorf("error reading cbor header: %w", err))
 	}
 
 	if maj != cbg.MajMap {
-		return h, fmt.Errorf("cannot hash non maps")
+		panic(fmt.Errorf("cannot hash non maps"))
 	}
 
 	h, err = documentHashMap(r, n)
 	if err != nil {
-		return h, fmt.Errorf("error hashing map: %s", err)
+		panic(fmt.Errorf("error hashing map: %w", err))
 	}
 
-	return h, nil
+	return h
 }
 
 type DocumentHashEntry struct {

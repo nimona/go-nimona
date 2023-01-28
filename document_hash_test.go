@@ -36,8 +36,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("test hashing", func(t *testing.T) {
-			h, err := NewDocumentHash(m)
-			require.NoError(t, err)
+			h := NewDocumentHash(m)
 			require.Equal(t, exp, h.String())
 		})
 
@@ -53,14 +52,12 @@ func TestDocumentHash_Ping(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("from cbor", func(t *testing.T) {
-		h, err := NewDocumentHashFromCBOR(b)
-		require.NoError(t, err)
+		h := NewDocumentHashFromCBOR(b)
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("from cborer", func(t *testing.T) {
-		h, err := NewDocumentHash(m)
-		require.NoError(t, err)
+		h := NewDocumentHash(m)
 		require.Equal(t, exp, h.String())
 	})
 
@@ -69,15 +66,13 @@ func TestDocumentHash_Ping(t *testing.T) {
 		err = UnmarshalCBORBytes(b, g)
 		require.NoError(t, err)
 
-		h, err := NewDocumentHash(g)
-		require.NoError(t, err)
+		h := NewDocumentHash(g)
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("ephemeral fields should not affect hash", func(t *testing.T) {
 		m.EphemeralString = "foo"
-		h, err := NewDocumentHash(m)
-		require.NoError(t, err)
+		h := NewDocumentHash(m)
 		require.Equal(t, exp, h.String())
 	})
 
@@ -86,8 +81,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 		exp := "F31excad5AE5KndjRHFGx2gpU8XUrRuBiG19vLzC3LrK"
 
 		t.Run("test hashing", func(t *testing.T) {
-			h, err := NewDocumentHash(m)
-			require.NoError(t, err)
+			h := NewDocumentHash(m)
 			require.Equal(t, exp, h.String())
 		})
 
@@ -115,8 +109,5 @@ func NewRandomHash(t *testing.T) DocumentHash {
 		String: uuid.New().String(),
 	}
 
-	hash, err := NewDocumentHash(doc)
-	require.NoError(t, err)
-
-	return hash
+	return NewDocumentHash(doc)
 }

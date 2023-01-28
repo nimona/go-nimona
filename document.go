@@ -6,23 +6,22 @@ import (
 	"strings"
 )
 
-func NewDocumentID(v Cborer) DocumentID {
-	hash, err := NewDocumentHash(v)
-	if err != nil {
-		panic(fmt.Errorf("error creating document id: %w", err))
+type (
+	DocumentID struct {
+		_            string `cborgen:"$type,const=nimona://doc"`
+		DocumentHash DocumentHash
 	}
+)
+
+func NewDocumentID(v Cborer) DocumentID {
 	return DocumentID{
-		DocumentHash: hash,
+		DocumentHash: NewDocumentHash(v),
 	}
 }
 
 func NewDocumentIDFromCBOR(b []byte) DocumentID {
-	hash, err := NewDocumentHashFromCBOR(b)
-	if err != nil {
-		panic(fmt.Errorf("error creating document id: %w", err))
-	}
 	return DocumentID{
-		DocumentHash: hash,
+		DocumentHash: NewDocumentHashFromCBOR(b),
 	}
 }
 
@@ -39,11 +38,6 @@ func ParseDocumentID(pID string) (DocumentID, error) {
 	}
 
 	return DocumentID{DocumentHash: hash}, nil
-}
-
-type DocumentID struct {
-	_            string `cborgen:"$type,const=nimona://doc"`
-	DocumentHash DocumentHash
 }
 
 func (p DocumentID) String() string {

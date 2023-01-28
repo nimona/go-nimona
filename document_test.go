@@ -12,8 +12,7 @@ func TestDocumentHash(t *testing.T) {
 		String: "foo",
 	}
 
-	hash, err := NewDocumentHash(doc)
-	require.NoError(t, err)
+	hash := NewDocumentHash(doc)
 	require.Equal(t, "4QBmwF9dpvChi39wVAiCWi8cAKEiRpT3hRD4TNopirdT", hash.String())
 }
 
