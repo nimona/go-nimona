@@ -39,7 +39,7 @@ type (
 )
 
 // nolint: gocyclo
-func CheckPermissions(metadata *Metadata, patch *StreamPatch) bool {
+func CheckPermissions(metadata *Metadata, patch *DocumentPatch) bool {
 	for _, permission := range metadata.Permissions {
 		patchOpAllowed := false
 		for _, operation := range patch.Operations {

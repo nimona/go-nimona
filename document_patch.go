@@ -9,45 +9,37 @@ import (
 	cbg "github.com/whyrusleeping/cbor-gen"
 )
 
-type StreamID struct {
-	Hash string
-}
+type (
+	DocumentPatch struct {
+		_            string                   `cborgen:"$type,const=core/stream/patch"`
+		Metadata     Metadata                 `cborgen:"$metadata,omitempty"`
+		Dependencies []DocumentID             `cborgen:"dependencies,omitempty"`
+		Operations   []DocumentPatchOperation `cborgen:"operations,omitempty"`
+	}
+	DocumentPatchOperation struct {
+		Op    string       `cborgen:"op"`
+		Path  string       `cborgen:"path"`
+		From  string       `cborgen:"from,omitempty"`
+		Value cbg.Deferred `cborgen:"value,omitempty"`
+	}
+)
 
-type StreamInfo struct {
-	StreamID   StreamID
-	Operations []StreamOperation
-}
-
-type StreamOperation struct {
-	Op    string       `cborgen:"op"`
-	Path  string       `cborgen:"path"`
-	From  string       `cborgen:"from,omitempty"`
-	Value cbg.Deferred `cborgen:"value,omitempty"`
-}
-
-type StreamPatch struct {
-	_            string            `cborgen:"$type,const=core/stream/patch"`
-	Metadata     Metadata          `cborgen:"$metadata,omitempty"`
-	Dependencies []DocumentID      `cborgen:"dependencies,omitempty"`
-	Operations   []StreamOperation `cborgen:"operations,omitempty"`
-}
-
-func streamPatchFromCBORPatch(cp cborpatch.Patch) *StreamPatch {
-	ops := make([]StreamOperation, len(cp))
+func documentPatchFromCBORPatch(cp cborpatch.Patch) *DocumentPatch {
+	ops := make([]DocumentPatchOperation, len(cp))
 	for i, op := range cp {
-		ops[i] = StreamOperation{
+		ops[i] = DocumentPatchOperation{
 			Op:    op.Op,
 			Path:  op.Path,
 			From:  op.From,
 			Value: cbg.Deferred{Raw: op.Value},
 		}
 	}
-	return &StreamPatch{
+	return &DocumentPatch{
 		Operations: ops,
 	}
 }
 
-func streamPatchToCBORPatch(p *StreamPatch) cborpatch.Patch {
+func documentPatchToCBORPatch(p *DocumentPatch) cborpatch.Patch {
 	ops := make([]cborpatch.Operation, len(p.Operations))
 	for i, op := range p.Operations {
 		ops[i] = cborpatch.Operation{
@@ -60,21 +52,21 @@ func streamPatchToCBORPatch(p *StreamPatch) cborpatch.Patch {
 	return ops
 }
 
-func CreateStreamPatch(
+func CreateDocumentPatch(
 	originalCbor []byte,
 	updatedCbor []byte,
-) (*StreamPatch, error) {
+) (*DocumentPatch, error) {
 	p, err := createCBORPatch(originalCbor, updatedCbor)
 	if err != nil {
 		return nil, fmt.Errorf("error creating json patch: %w", err)
 	}
 
-	return streamPatchFromCBORPatch(p), nil
+	return documentPatchFromCBORPatch(p), nil
 }
 
-func ApplyStreamPatch(
+func ApplyDocumentPatch(
 	original Cborer,
-	patches ...*StreamPatch,
+	patches ...*DocumentPatch,
 ) error {
 	oc, err := MarshalCBORBytes(original)
 	if err != nil {
@@ -82,7 +74,7 @@ func ApplyStreamPatch(
 	}
 
 	for _, sp := range patches {
-		p := streamPatchToCBORPatch(sp)
+		p := documentPatchToCBORPatch(sp)
 		rc, err := p.Apply(oc)
 		if err != nil {
 			return fmt.Errorf("error applying patch: %w", err)

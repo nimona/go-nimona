@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStream_ApplyStreamPatch(t *testing.T) {
+func TestStream_ApplyDocumentPatch(t *testing.T) {
 	a := &CborFixture{
 		String: "foo",
 	}
@@ -22,15 +22,15 @@ func TestStream_ApplyStreamPatch(t *testing.T) {
 	bCbor, err := MarshalCBORBytes(b)
 	require.NoError(t, err)
 
-	p, err := CreateStreamPatch(aCbor, bCbor)
+	p, err := CreateDocumentPatch(aCbor, bCbor)
 	require.NoError(t, err)
 
-	err = ApplyStreamPatch(a, p)
+	err = ApplyDocumentPatch(a, p)
 	require.NoError(t, err)
 	require.Equal(t, b, a)
 }
 
-func TestStream_CreateStreamPatch(t *testing.T) {
+func TestStream_CreateDocumentPatch(t *testing.T) {
 	a := &CborFixture{
 		String: "foo",
 	}
@@ -46,7 +46,7 @@ func TestStream_CreateStreamPatch(t *testing.T) {
 	bCbor, err := MarshalCBORBytes(b)
 	require.NoError(t, err)
 
-	p, err := CreateStreamPatch(aCbor, bCbor)
+	p, err := CreateDocumentPatch(aCbor, bCbor)
 	require.NoError(t, err)
 
 	id := NewTestIdentity(t)

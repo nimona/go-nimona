@@ -30,7 +30,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 	tests := []struct {
 		name     string
 		metadata Metadata
-		patch    StreamPatch
+		patch    DocumentPatch
 		want     bool
 	}{{
 		name: "read permission granted",
@@ -42,8 +42,8 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 				},
 			}},
 		},
-		patch: StreamPatch{
-			Operations: []StreamOperation{{
+		patch: DocumentPatch{
+			Operations: []DocumentPatchOperation{{
 				Op:   "read",
 				Path: "/path/test",
 			}},
@@ -64,8 +64,8 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 				},
 			}},
 		},
-		patch: StreamPatch{
-			Operations: []StreamOperation{{
+		patch: DocumentPatch{
+			Operations: []DocumentPatchOperation{{
 				Op:   "read",
 				Path: "/path/test",
 			}},
@@ -81,8 +81,8 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 				},
 			}},
 		},
-		patch: StreamPatch{
-			Operations: []StreamOperation{{
+		patch: DocumentPatch{
+			Operations: []DocumentPatchOperation{{
 				Op:   "add",
 				Path: "/path/test",
 			}},
@@ -98,8 +98,8 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 				},
 			}},
 		},
-		patch: StreamPatch{
-			Operations: []StreamOperation{{
+		patch: DocumentPatch{
+			Operations: []DocumentPatchOperation{{
 				Op:   "add",
 				Path: "/path/test",
 			}},
@@ -115,8 +115,8 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 				},
 			}},
 		},
-		patch: StreamPatch{
-			Operations: []StreamOperation{{
+		patch: DocumentPatch{
+			Operations: []DocumentPatchOperation{{
 				Op:   "remove",
 				Path: "/path/test",
 			}},
@@ -132,8 +132,8 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 				},
 			}},
 		},
-		patch: StreamPatch{
-			Operations: []StreamOperation{{
+		patch: DocumentPatch{
+			Operations: []DocumentPatchOperation{{
 				Op:   "remove",
 				Path: "/path/test",
 			}},
