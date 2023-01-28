@@ -17,6 +17,14 @@ func NewPeerConfig(
 	publicKey PublicKey,
 	peerInfo *PeerInfo,
 ) *PeerConfig {
+	// TODO(@geoah): Should we create an identity for the peer by default?
+	// Sign peer info, if provided and not signed
+	if peerInfo != nil && peerInfo.Metadata.Signature == nil {
+		peerInfo.Metadata.Signature = NewDocumentSignature(
+			privateKey,
+			NewDocumentHash(peerInfo),
+		)
+	}
 	return &PeerConfig{
 		privateKey: privateKey,
 		publicKey:  publicKey,
@@ -40,6 +48,14 @@ func (pc *PeerConfig) GetPeerInfo() *PeerInfo {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 	return pc.peerInfo
+}
+
+func (pc *PeerConfig) GetPeerKey() *PeerKey {
+	pc.mutex.RLock()
+	defer pc.mutex.RUnlock()
+	return &PeerKey{
+		PublicKey: pc.publicKey,
+	}
 }
 
 func (pc *PeerConfig) GetIdentity() *Identity {
