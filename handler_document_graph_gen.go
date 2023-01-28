@@ -22,7 +22,7 @@ var _ = math.E
 var _ = sort.Sort
 var _ = zero.IsZeroVal
 
-func (t *StreamRequest) MarshalCBOR(w io.Writer) error {
+func (t *DocumentGraphRequest) MarshalCBOR(w io.Writer) error {
 	if t == nil {
 		_, err := w.Write(cbg.CborNull)
 		return err
@@ -46,179 +46,34 @@ func (t *StreamRequest) MarshalCBOR(w io.Writer) error {
 		return err
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/stream/request"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/document/graph.request"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("core/stream/request")); err != nil {
-		return err
-	}
-
-	// t.RootID (nimona.DocumentID) (struct)
-	if len("RootID") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"RootID\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RootID"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("RootID")); err != nil {
-		return err
-	}
-
-	if err := t.RootID.MarshalCBOR(cw); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (t *StreamRequest) UnmarshalCBOR(r io.Reader) (err error) {
-	if t == nil {
-		*t = StreamRequest{}
-	}
-
-	cr := cbg.NewCborReader(r)
-
-	maj, extra, err := cr.ReadHeader()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err == io.EOF {
-			err = io.ErrUnexpectedEOF
-		}
-	}()
-
-	if maj != cbg.MajMap {
-		return fmt.Errorf("cbor input should be of type map")
-	}
-
-	if extra > cbg.MaxLength {
-		return fmt.Errorf("StreamRequest: map struct too large (%d)", extra)
-	}
-
-	var name string
-	n := extra
-
-	for i := uint64(0); i < n; i++ {
-
-		{
-			sval, err := cbg.ReadString(cr)
-			if err != nil {
-				return err
-			}
-
-			name = string(sval)
-		}
-
-		switch name {
-		// t.Type (string) (string)
-		case "$type":
-
-			{
-				sval, err := cbg.ReadString(cr)
-				if err != nil {
-					return err
-				}
-
-				t.Type = string(sval)
-			}
-			// t.RootID (nimona.DocumentID) (struct)
-		case "RootID":
-
-			{
-
-				if err := t.RootID.UnmarshalCBOR(cr); err != nil {
-					return xerrors.Errorf("unmarshaling t.RootID: %w", err)
-				}
-
-			}
-
-		default:
-			// Field doesn't exist on this type, so ignore it
-			cbg.ScanForLinks(r, func(cid.Cid) {})
-		}
-	}
-
-	return nil
-}
-
-func (t *StreamResponse) MarshalCBOR(w io.Writer) error {
-	if t == nil {
-		_, err := w.Write(cbg.CborNull)
-		return err
-	}
-
-	cw := cbg.NewCborWriter(w)
-
-	if _, err := cw.Write([]byte{163}); err != nil {
-		return err
-	}
-
-	// t.Type (string) (string)
-	if len("$type") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"$type\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("$type")); err != nil {
-		return err
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/stream/response"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("core/stream/response")); err != nil {
+	if _, err := io.WriteString(w, string("core/document/graph.request")); err != nil {
 		return err
 	}
 
 	// t.RootDocumentID (nimona.DocumentID) (struct)
-	if len("RootDocumentID") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"RootDocumentID\" was too long")
+	if len("rootDocument") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"rootDocument\" was too long")
 	}
 
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("RootDocumentID"))); err != nil {
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("rootDocument"))); err != nil {
 		return err
 	}
-	if _, err := io.WriteString(w, string("RootDocumentID")); err != nil {
+	if _, err := io.WriteString(w, string("rootDocument")); err != nil {
 		return err
 	}
 
 	if err := t.RootDocumentID.MarshalCBOR(cw); err != nil {
 		return err
 	}
-
-	// t.PatchDocumentIDs ([]nimona.DocumentID) (slice)
-	if len("PatchDocumentIDs") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"PatchDocumentIDs\" was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("PatchDocumentIDs"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("PatchDocumentIDs")); err != nil {
-		return err
-	}
-
-	if len(t.PatchDocumentIDs) > cbg.MaxLength {
-		return xerrors.Errorf("Slice value in field t.PatchDocumentIDs was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajArray, uint64(len(t.PatchDocumentIDs))); err != nil {
-		return err
-	}
-	for _, v := range t.PatchDocumentIDs {
-		if err := v.MarshalCBOR(cw); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
-func (t *StreamResponse) UnmarshalCBOR(r io.Reader) (err error) {
+func (t *DocumentGraphRequest) UnmarshalCBOR(r io.Reader) (err error) {
 	if t == nil {
-		*t = StreamResponse{}
+		*t = DocumentGraphRequest{}
 	}
 
 	cr := cbg.NewCborReader(r)
@@ -238,7 +93,7 @@ func (t *StreamResponse) UnmarshalCBOR(r io.Reader) (err error) {
 	}
 
 	if extra > cbg.MaxLength {
-		return fmt.Errorf("StreamResponse: map struct too large (%d)", extra)
+		return fmt.Errorf("DocumentGraphRequest: map struct too large (%d)", extra)
 	}
 
 	var name string
@@ -268,7 +123,152 @@ func (t *StreamResponse) UnmarshalCBOR(r io.Reader) (err error) {
 				t.Type = string(sval)
 			}
 			// t.RootDocumentID (nimona.DocumentID) (struct)
-		case "RootDocumentID":
+		case "rootDocument":
+
+			{
+
+				if err := t.RootDocumentID.UnmarshalCBOR(cr); err != nil {
+					return xerrors.Errorf("unmarshaling t.RootDocumentID: %w", err)
+				}
+
+			}
+
+		default:
+			// Field doesn't exist on this type, so ignore it
+			cbg.ScanForLinks(r, func(cid.Cid) {})
+		}
+	}
+
+	return nil
+}
+
+func (t *DocumentGraphResponse) MarshalCBOR(w io.Writer) error {
+	if t == nil {
+		_, err := w.Write(cbg.CborNull)
+		return err
+	}
+
+	cw := cbg.NewCborWriter(w)
+
+	if _, err := cw.Write([]byte{163}); err != nil {
+		return err
+	}
+
+	// t.Type (string) (string)
+	if len("$type") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"$type\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("$type"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("$type")); err != nil {
+		return err
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("core/document/graph.response"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("core/document/graph.response")); err != nil {
+		return err
+	}
+
+	// t.RootDocumentID (nimona.DocumentID) (struct)
+	if len("rootDocumentID") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"rootDocumentID\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("rootDocumentID"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("rootDocumentID")); err != nil {
+		return err
+	}
+
+	if err := t.RootDocumentID.MarshalCBOR(cw); err != nil {
+		return err
+	}
+
+	// t.PatchDocumentIDs ([]nimona.DocumentID) (slice)
+	if len("patchDocumentIDs") > cbg.MaxLength {
+		return xerrors.Errorf("Value in field \"patchDocumentIDs\" was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len("patchDocumentIDs"))); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, string("patchDocumentIDs")); err != nil {
+		return err
+	}
+
+	if len(t.PatchDocumentIDs) > cbg.MaxLength {
+		return xerrors.Errorf("Slice value in field t.PatchDocumentIDs was too long")
+	}
+
+	if err := cw.WriteMajorTypeHeader(cbg.MajArray, uint64(len(t.PatchDocumentIDs))); err != nil {
+		return err
+	}
+	for _, v := range t.PatchDocumentIDs {
+		if err := v.MarshalCBOR(cw); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *DocumentGraphResponse) UnmarshalCBOR(r io.Reader) (err error) {
+	if t == nil {
+		*t = DocumentGraphResponse{}
+	}
+
+	cr := cbg.NewCborReader(r)
+
+	maj, extra, err := cr.ReadHeader()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
+
+	if maj != cbg.MajMap {
+		return fmt.Errorf("cbor input should be of type map")
+	}
+
+	if extra > cbg.MaxLength {
+		return fmt.Errorf("DocumentGraphResponse: map struct too large (%d)", extra)
+	}
+
+	var name string
+	n := extra
+
+	for i := uint64(0); i < n; i++ {
+
+		{
+			sval, err := cbg.ReadString(cr)
+			if err != nil {
+				return err
+			}
+
+			name = string(sval)
+		}
+
+		switch name {
+		// t.Type (string) (string)
+		case "$type":
+
+			{
+				sval, err := cbg.ReadString(cr)
+				if err != nil {
+					return err
+				}
+
+				t.Type = string(sval)
+			}
+			// t.RootDocumentID (nimona.DocumentID) (struct)
+		case "rootDocumentID":
 
 			{
 
@@ -278,7 +278,7 @@ func (t *StreamResponse) UnmarshalCBOR(r io.Reader) (err error) {
 
 			}
 			// t.PatchDocumentIDs ([]nimona.DocumentID) (slice)
-		case "PatchDocumentIDs":
+		case "patchDocumentIDs":
 
 			maj, extra, err = cr.ReadHeader()
 			if err != nil {

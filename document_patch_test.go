@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStream_ApplyDocumentPatch(t *testing.T) {
+func TestDocumentPatch_ApplyDocumentPatch(t *testing.T) {
 	a := &CborFixture{
 		String: "foo",
 	}
@@ -30,7 +30,7 @@ func TestStream_ApplyDocumentPatch(t *testing.T) {
 	require.Equal(t, b, a)
 }
 
-func TestStream_CreateDocumentPatch(t *testing.T) {
+func TestDocumentPatch_CreateDocumentPatch(t *testing.T) {
 	a := &CborFixture{
 		String: "foo",
 	}

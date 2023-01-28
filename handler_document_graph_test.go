@@ -12,12 +12,12 @@ func TestHandlerStream(t *testing.T) {
 
 	docStore := NewTestDocumentStore(t)
 
-	hnd := &HandlerStream{
+	hnd := &HandlerDocumentGraph{
 		DocumentStore: docStore,
 	}
 	srv.RegisterHandler(
-		"core/stream/request",
-		hnd.HandleStreamRequest,
+		"core/document/graph.request",
+		hnd.HandleDocumentGraphRequest,
 	)
 
 	// create documents
@@ -53,7 +53,7 @@ func TestHandlerStream(t *testing.T) {
 
 	// ask for stream
 	ctx := context.Background()
-	res, err := RequestStream(ctx, ses, rootDocID)
+	res, err := RequestDocumentGraph(ctx, ses, rootDocID)
 	require.NoError(t, err)
 	require.Len(t, res.PatchDocumentIDs, 1)
 	require.Equal(t, rootDocID, res.RootDocumentID)

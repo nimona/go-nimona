@@ -6,30 +6,30 @@ import (
 )
 
 type (
-	StreamRequest struct {
-		Type   string     `cborgen:"$type,const=core/stream/request"`
-		RootID DocumentID `cbor:"rootDocument"`
+	DocumentGraphRequest struct {
+		Type           string     `cborgen:"$type,const=core/document/graph.request"`
+		RootDocumentID DocumentID `cborgen:"rootDocument"`
 	}
-	StreamResponse struct {
-		Type             string       `cborgen:"$type,const=core/stream/response"`
-		RootDocumentID   DocumentID   `cbor:"rootDocument"`
-		PatchDocumentIDs []DocumentID `cbor:"patches,omitempty"`
+	DocumentGraphResponse struct {
+		Type             string       `cborgen:"$type,const=core/document/graph.response"`
+		RootDocumentID   DocumentID   `cborgen:"rootDocumentID"`
+		PatchDocumentIDs []DocumentID `cborgen:"patchDocumentIDs"`
 	}
 )
 
-type HandlerStream struct {
+type HandlerDocumentGraph struct {
 	DocumentStore *DocumentStore
 }
 
-func RequestStream(
+func RequestDocumentGraph(
 	ctx context.Context,
 	ses *Session,
 	rootID DocumentID,
-) (*StreamResponse, error) {
-	req := &StreamRequest{
-		RootID: rootID,
+) (*DocumentGraphResponse, error) {
+	req := &DocumentGraphRequest{
+		RootDocumentID: rootID,
 	}
-	res := &StreamResponse{}
+	res := &DocumentGraphResponse{}
 	msgRes, err := ses.Request(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
@@ -41,20 +41,20 @@ func RequestStream(
 	return res, nil
 }
 
-func (h *HandlerStream) HandleStreamRequest(
+func (h *HandlerDocumentGraph) HandleDocumentGraphRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &StreamRequest{}
+	req := &DocumentGraphRequest{}
 	err := msg.Decode(req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
-	if msg.Type != "core/stream/request" {
+	if msg.Type != "core/document/graph.request" {
 		return fmt.Errorf("invalid request type: %s", msg.Type)
 	}
 
-	docs, err := h.DocumentStore.GetDocumentsByRootID(req.RootID)
+	docs, err := h.DocumentStore.GetDocumentsByRootID(req.RootDocumentID)
 	if err != nil {
 		return fmt.Errorf("error getting documents: %w", err)
 	}
@@ -64,8 +64,8 @@ func (h *HandlerStream) HandleStreamRequest(
 		patchIDs = append(patchIDs, doc.DocumentID)
 	}
 
-	res := &StreamResponse{
-		RootDocumentID:   req.RootID,
+	res := &DocumentGraphResponse{
+		RootDocumentID:   req.RootDocumentID,
 		PatchDocumentIDs: patchIDs,
 	}
 	err = msg.Respond(res)
