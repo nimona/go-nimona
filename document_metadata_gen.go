@@ -186,7 +186,7 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 		fieldCount--
 	}
 
-	if zero.IsZeroVal(t.Signature) {
+	if t.Signature == nil {
 		fieldCount--
 	}
 
@@ -261,7 +261,7 @@ func (t *Metadata) MarshalCBOR(w io.Writer) error {
 	}
 
 	// t.Signature (nimona.Signature) (struct)
-	if !zero.IsZeroVal(t.Signature) {
+	if t.Signature != nil {
 
 		if len("_signature") > cbg.MaxLength {
 			return xerrors.Errorf("Value in field \"_signature\" was too long")
@@ -386,8 +386,18 @@ func (t *Metadata) UnmarshalCBOR(r io.Reader) (err error) {
 
 			{
 
-				if err := t.Signature.UnmarshalCBOR(cr); err != nil {
-					return xerrors.Errorf("unmarshaling t.Signature: %w", err)
+				b, err := cr.ReadByte()
+				if err != nil {
+					return err
+				}
+				if b != cbg.CborNull[0] {
+					if err := cr.UnreadByte(); err != nil {
+						return err
+					}
+					t.Signature = new(Signature)
+					if err := t.Signature.UnmarshalCBOR(cr); err != nil {
+						return xerrors.Errorf("unmarshaling t.Signature pointer: %w", err)
+					}
 				}
 
 			}

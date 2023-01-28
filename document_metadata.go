@@ -15,7 +15,7 @@ type (
 		Owner       *Identity     `cborgen:"owner,omitempty"`
 		Permissions []Permissions `cborgen:"permissions,omitempty"`
 		Timestamp   cbg.CborTime  `cborgen:"timestamp,omitempty"`
-		Signature   Signature     `cborgen:"_signature,omitempty"`
+		Signature   *Signature    `cborgen:"_signature,omitempty"`
 	}
 	Permissions struct {
 		Paths      []string             `cborgen:"paths"`
