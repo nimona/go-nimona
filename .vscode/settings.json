@@ -32,6 +32,7 @@
     "explorer.fileNesting.patterns": {
         "*.go": "${capture}_test.go,${capture}_mock.go,${capture}_gen.go",
         "go.mod": "go.sum",
+        "README.md": "README.*.md",
     },
     "files.exclude": {
         ".vscode": true,
