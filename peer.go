@@ -45,7 +45,7 @@ func ParsePeerKey(pID string) (PeerKey, error) {
 	}
 
 	pID = strings.TrimPrefix(pID, prefix)
-	key, err := PublicKeyFromBase58(pID)
+	key, err := ParsePublicKey(pID)
 	if err != nil {
 		return PeerKey{}, fmt.Errorf("invalid public key")
 	}

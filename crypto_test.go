@@ -12,7 +12,7 @@ func TestPublicKeyToBase58(t *testing.T) {
 
 	b58 := pk0.String()
 
-	pk1, err := PublicKeyFromBase58(b58)
+	pk1, err := ParsePublicKey(b58)
 	require.NoError(t, err)
 
 	require.True(t, pk0.Equal(pk1))

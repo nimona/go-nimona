@@ -32,7 +32,7 @@ func ParsePeerAddr(addr string) (*PeerAddr, error) {
 	a := &PeerAddr{}
 	if publicKey != "" {
 		publicKey = strings.TrimSuffix(publicKey, "@")
-		key, err := PublicKeyFromBase58(publicKey)
+		key, err := ParsePublicKey(publicKey)
 		if err != nil {
 			return nil, fmt.Errorf("invalid public key, %w", err)
 		}

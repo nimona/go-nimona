@@ -41,7 +41,7 @@ func (pk PublicKey) X25519() ([]byte, error) {
 	return px, nil
 }
 
-func PublicKeyFromBase58(pk string) (PublicKey, error) {
+func ParsePublicKey(pk string) (PublicKey, error) {
 	return base58.Decode(pk)
 }
 
@@ -68,4 +68,8 @@ func (sk PrivateKey) Public() PublicKey {
 func (sk PrivateKey) X25519() ([]byte, error) {
 	sx := x25519.EdPrivateKeyToX25519(ed25519.PrivateKey(sk))
 	return sx, nil
+}
+
+func ParsePrivateKey(sk string) (PrivateKey, error) {
+	return base58.Decode(sk)
 }
