@@ -10,6 +10,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/ipfs/go-cid v0.3.2
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/ldclabs/cbor-patch v1.1.3
 	github.com/mr-tron/base58 v1.2.0
 	github.com/neilalexander/utp v0.1.0
