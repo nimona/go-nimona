@@ -8,20 +8,14 @@ import (
 
 type (
 	DocumentID struct {
-		_            string `cborgen:"$type,const=nimona://doc"`
-		DocumentHash DocumentHash
+		_            string       `nimona:"$type,type=core/document/id"`
+		DocumentHash DocumentHash `nimona:"hash,omitempty"`
 	}
 )
 
-func NewDocumentID(v Cborer) DocumentID {
+func NewDocumentID(m DocumentMapper) DocumentID {
 	return DocumentID{
-		DocumentHash: NewDocumentHash(v),
-	}
-}
-
-func NewDocumentIDFromCBOR(b []byte) DocumentID {
-	return DocumentID{
-		DocumentHash: NewDocumentHashFromCBOR(b),
+		DocumentHash: NewDocumentHash(m),
 	}
 }
 

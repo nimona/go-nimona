@@ -107,12 +107,17 @@ tasks:
     cmds:
       - task: generate-mocks
       - task: generate-cbor
+      - task: generate-docs
 
   generate-mocks:
     deps:
       - install-mock-tools
     cmds:
       - go generate ./...
+
+  generate-docs:
+    cmds:
+      - go run cmd/docgen/main.go
 
   generate-cbor:
     cmds:

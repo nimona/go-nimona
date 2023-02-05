@@ -1,0 +1,17 @@
+{
+  "CloudConfig": {
+    "Platform": "do",
+    "BucketName": "nimona-ops",
+    "Zone": "fra1"
+  },
+  "Env": {
+    "NIMONA_ADDRESS_PUBLIC": "atwood.testing.nimona.io",
+    "NIMONA_STORE_TYPE": "postgres",
+    "NIMONA_STORE_HOSTNAME": "nimona-ping-do-user-4255594-0.b.db.ondigitalocean.com",
+    "NIMONA_STORE_PORT": "25060",
+    "NIMONA_STORE_USERNAME": "doadmin",
+    "NIMONA_STORE_PASSWORD": "AVNS_s9TEOPUQFXBnyj9GBGu",
+    "NIMONA_PEER_PUBLIC_KEY": "",
+    "NIMONA_PEER_PRIVATE_KEY": ""
+  }
+}

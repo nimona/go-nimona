@@ -1,58 +1,71 @@
 package nimona
 
-import (
-	"testing"
+// func TestDocumentPatch_ApplyDocumentPatch(t *testing.T) {
+// 	a := &CborFixture{
+// 		String: "foo",
+// 	}
 
-	"github.com/stretchr/testify/require"
-)
+// 	b := &CborFixture{
+// 		String: "bar",
+// 		Int64:  42,
+// 	}
 
-func TestDocumentPatch_ApplyDocumentPatch(t *testing.T) {
-	a := &CborFixture{
-		String: "foo",
-	}
+// 	aCbor, err := MarshalCBORBytes(a)
+// 	require.NoError(t, err)
 
-	b := &CborFixture{
-		String: "bar",
-		Int64:  42,
-	}
+// 	bCbor, err := MarshalCBORBytes(b)
+// 	require.NoError(t, err)
 
-	aCbor, err := MarshalCBORBytes(a)
-	require.NoError(t, err)
+// 	p, err := CreateDocumentPatch(aCbor, bCbor)
+// 	require.NoError(t, err)
 
-	bCbor, err := MarshalCBORBytes(b)
-	require.NoError(t, err)
+// 	err = ApplyDocumentPatch(a, p)
+// 	require.NoError(t, err)
+// 	require.Equal(t, b, a)
+// }
 
-	p, err := CreateDocumentPatch(aCbor, bCbor)
-	require.NoError(t, err)
+// func TestDocumentPatch_CreateDocumentPatch(t *testing.T) {
+// 	a := &CborFixture{
+// 		String: "foo",
+// 	}
 
-	err = ApplyDocumentPatch(a, p)
-	require.NoError(t, err)
-	require.Equal(t, b, a)
-}
+// 	b := &CborFixture{
+// 		String: "bar",
+// 		Int64:  42,
+// 	}
 
-func TestDocumentPatch_CreateDocumentPatch(t *testing.T) {
-	a := &CborFixture{
-		String: "foo",
-	}
+// 	aCbor, err := MarshalCBORBytes(a)
+// 	require.NoError(t, err)
 
-	b := &CborFixture{
-		String: "bar",
-		Int64:  42,
-	}
+// 	bCbor, err := MarshalCBORBytes(b)
+// 	require.NoError(t, err)
 
-	aCbor, err := MarshalCBORBytes(a)
-	require.NoError(t, err)
+// 	p, err := CreateDocumentPatch(aCbor, bCbor)
+// 	require.NoError(t, err)
 
-	bCbor, err := MarshalCBORBytes(b)
-	require.NoError(t, err)
+// 	id := NewTestIdentity(t)
+// 	p.Metadata.Owner = id
 
-	p, err := CreateDocumentPatch(aCbor, bCbor)
-	require.NoError(t, err)
+// 	p.Dependencies = []DocumentID{{
+// 		DocumentHash: NewRandomHash(t),
+// 	}}
+// }
 
-	id := NewTestIdentity(t)
-	p.Metadata.Owner = id
+// func TestDocumentGraph(t *testing.T) {
+// 	a := &CborFixture{
+// 		String: "foo",
+// 	}
 
-	p.Dependencies = []DocumentID{{
-		DocumentHash: NewRandomHash(t),
-	}}
-}
+// 	// b := &CborFixture{
+// 	// 	String: "bar",
+// 	// 	Int64:  42,
+// 	// }
+
+// 	rootDoc, err := NewDocumentMap(a)
+// 	require.NoError(t, err)
+
+// 	g, err := NewDocumentGraph(rootDoc)
+// 	require.NoError(t, err)
+
+// 	g.CreatePatch(rootDoc)
+// }

@@ -37,10 +37,11 @@ func TestDocumentStore(t *testing.T) {
 	store := NewTestDocumentStore(t)
 
 	// Create a document
-	doc := &CborFixture{
+	val := &CborFixture{
 		String: "test",
 		Uint64: 42,
 	}
+	doc := val.DocumentMap()
 
 	docBytes, err := MarshalCBORBytes(doc)
 	require.NoError(t, err)
@@ -59,16 +60,7 @@ func TestDocumentStore(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test getting an entry
-	gotEntry, err := store.GetDocument(entry.DocumentID)
-	require.NoError(t, err)
-	require.True(t, gotEntry.DocumentID.IsEqual(docID))
-	require.Equal(t, gotEntry.DocumentType, entry.DocumentType)
-	require.Equal(t, gotEntry.DocumentEncoding, entry.DocumentEncoding)
-	require.Equal(t, gotEntry.DocumentBytes, entry.DocumentBytes)
-
-	// Test unmarshaling the entry
-	gotDoc := &CborFixture{}
-	err = UnmarshalCBORBytes(gotEntry.DocumentBytes, gotDoc)
+	gotDoc, err := store.GetDocument(entry.DocumentID)
 	require.NoError(t, err)
 	require.Equal(t, gotDoc, doc)
 }

@@ -20,7 +20,7 @@ func TestMetadata(t *testing.T) {
 
 		b1 := &DocumentBase{}
 		err = UnmarshalCBORBytes(bb, b1)
-		b1.DocumentBytes = nil
+
 		assert.NoError(t, err)
 		assert.EqualValues(t, b, b1)
 	})

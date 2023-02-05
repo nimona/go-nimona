@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/jimeh/undent"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDocumentMap(t *testing.T) {
-	m := &CborFixture{
+	fix := &CborFixture{
 		String: "foo",
 		Uint64: 42,
 		Int64:  -42,
@@ -29,53 +30,74 @@ func TestDocumentMap(t *testing.T) {
 		}},
 	}
 
-	exp := `{
-  "$type": "test/fixture",
-  "bool": true,
-  "bytes": "YmFy",
-  "int64": -42,
-  "map": {
-    "$type": "test/fixture",
-    "string": "foo"
-  },
-  "repeatedbytes": [
-    "Zm9v",
-    "YmFy"
-  ],
-  "repeatedint64": [
-    -1,
-    -2,
-    -3
-  ],
-  "repeatedmap": [
-    {
-      "$type": "test/fixture",
-      "string": "foo"
-    },
-    {
-      "$type": "test/fixture",
-      "string": "bar"
-    }
-  ],
-  "repeatedstring": [
-    "foo",
-    "bar"
-  ],
-  "repeateduint64": [
-    1,
-    2,
-    3
-  ],
-  "string": "foo",
-  "uint64": 42
-}`
+	// "repeatedbool": [
+	//     true,
+	//     false
+	//   ],
+
+	exp := `
+	{
+	  "$type": "test/fixture",
+	  "bool": true,
+	  "bytes": "YmFy",
+	  "int64": -42,
+	  "map": {
+	    "$type": "test/fixture",
+	    "string": "foo"
+	  },
+	  "repeatedbytes": [
+	    "Zm9v",
+	    "YmFy"
+	  ],
+	  "repeatedint64": [
+	    -1,
+	    -2,
+	    -3
+	  ],
+	  "repeatedmap": [
+	    {
+	      "$type": "test/fixture",
+	      "string": "foo"
+	    },
+	    {
+	      "$type": "test/fixture",
+	      "string": "bar"
+	    }
+	  ],
+	  "repeatedstring": [
+	    "foo",
+	    "bar"
+	  ],
+	  "repeateduint64": [
+	    1,
+	    2,
+	    3
+	  ],
+	  "string": "foo",
+	  "uint64": 42
+	}`
+
+	fixMap := fix.DocumentMap()
 
 	t.Run("test converting to map", func(t *testing.T) {
-		m, err := NewDocumentMap(m)
+		b, err := json.MarshalIndent(fixMap, "", "  ")
+		require.NoError(t, err)
+		require.Equal(t, undent.String(exp), string(b))
+	})
+
+	t.Run("test converting from map", func(t *testing.T) {
+		g := &CborFixture{}
+		g.FromDocumentMap(fixMap)
+		require.Equal(t, fix, g)
+	})
+
+	t.Run("test CBOR encoding", func(t *testing.T) {
+		b, err := cborEncoder.Marshal(fixMap)
 		require.NoError(t, err)
 
-		b, err := json.MarshalIndent(m, "", "  ")
+		g := DocumentMap{}
+		err = g.UnmarshalCBOR(b)
 		require.NoError(t, err)
-		require.Equal(t, exp, string(b))
+		require.EqualValues(t, fixMap, g)
 	})
 }

@@ -33,7 +33,7 @@ func TestSessionManager(t *testing.T) {
 	msg := &Pong{}
 	res, err := rpc.Request(context.Background(), req)
 	require.NoError(t, err)
-	err = res.Decode(msg)
+	err = res.Codec.Decode(res.Body, msg)
 	require.NoError(t, err)
 	require.Equal(t, expRes, msg)
 }

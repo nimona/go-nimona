@@ -3,25 +3,23 @@ package nimona
 import (
 	"database/sql/driver"
 	"fmt"
-	"io"
 	"strings"
 )
 
 type (
 	IdentityAlias struct {
-		_       string       `cborgen:"$type,const=core/identity.alias"`
-		Network NetworkAlias `cborgen:"network,omitempty"`
-		Handle  string       `cborgen:"handle,omitempty"`
+		Metadata Metadata     `nimona:"$metadata,omitempty,type=core/identity.alias"`
+		Network  NetworkAlias `nimona:"network,omitempty"`
+		Handle   string       `nimona:"handle,omitempty"`
 	}
 	KeyGraph struct {
-		_        string    `cborgen:"$type,const=core/identity"`
-		Metadata Metadata  `cborgen:"$metadata,omitempty"`
-		Keys     PublicKey `cborgen:"keys"`
-		Next     PublicKey `cborgen:"next"`
+		Metadata Metadata  `nimona:"$metadata,omitempty,type=core/identity"`
+		Keys     PublicKey `nimona:"keys"`
+		Next     PublicKey `nimona:"next"`
 	}
 	Identity struct {
-		_          string     `cborgen:"$type,const=core/identity/id"`
-		KeyGraphID DocumentID `cborgen:"keyGraphID"`
+		Metadata   Metadata   `nimona:"$metadata,omitempty,type=core/identity/id"`
+		KeyGraphID DocumentID `nimona:"keyGraphID"`
 	}
 	IdentityIdentifier struct {
 		IdentityAlias *IdentityAlias
@@ -134,31 +132,52 @@ func (i IdentityIdentifier) String() string {
 	return ""
 }
 
-func (i IdentityIdentifier) MarshalCBOR(w io.Writer) error {
+// func (i IdentityIdentifier) MarshalCBOR(w io.Writer) error {
+// 	if i.IdentityAlias != nil {
+// 		return i.IdentityAlias.MarshalCBOR(w)
+// 	}
+// 	if i.Identity != nil {
+// 		return i.Identity.MarshalCBOR(w)
+// 	}
+// 	return fmt.Errorf("unable to marshal identity identifier")
+// }
+
+// func (i IdentityIdentifier) UnmarshalCBOR(r io.Reader) (err error) {
+// 	doc := &DocumentBase{}
+// 	err = doc.UnmarshalCBOR(r)
+// 	if err != nil {
+// 		return fmt.Errorf("unable to unmarshal network identifier into doc: %w", err)
+// 	}
+
+// 	switch doc.Type {
+// 	case "core/identity.alias":
+// 		i.IdentityAlias = &IdentityAlias{}
+// 		return UnmarshalCBORBytes(doc.DocumentBytes, i.IdentityAlias)
+// 	case "core/identity":
+// 		i.Identity = &Identity{}
+// 		return UnmarshalCBORBytes(doc.DocumentBytes, i.Identity)
+// 	default:
+// 		return fmt.Errorf("unknown identity identifier type: %s", doc.Type)
+// 	}
+// }
+
+func (i *IdentityIdentifier) DocumentMap() DocumentMap {
 	if i.IdentityAlias != nil {
-		return i.IdentityAlias.MarshalCBOR(w)
+		return i.IdentityAlias.DocumentMap()
 	}
 	if i.Identity != nil {
-		return i.Identity.MarshalCBOR(w)
+		return i.Identity.DocumentMap()
 	}
-	return fmt.Errorf("unable to marshal identity identifier")
+	return DocumentMap{}
 }
 
-func (i IdentityIdentifier) UnmarshalCBOR(r io.Reader) (err error) {
-	doc := &DocumentBase{}
-	err = doc.UnmarshalCBOR(r)
-	if err != nil {
-		return fmt.Errorf("unable to unmarshal network identifier into doc: %w", err)
-	}
-
-	switch doc.Type {
+func (i *IdentityIdentifier) FromDocumentMap(m DocumentMap) {
+	switch m["$type"].(string) {
 	case "core/identity.alias":
 		i.IdentityAlias = &IdentityAlias{}
-		return UnmarshalCBORBytes(doc.DocumentBytes, i.IdentityAlias)
+		i.IdentityAlias.FromDocumentMap(m)
 	case "core/identity":
 		i.Identity = &Identity{}
-		return UnmarshalCBORBytes(doc.DocumentBytes, i.Identity)
-	default:
-		return fmt.Errorf("unknown identity identifier type: %s", doc.Type)
+		i.Identity.FromDocumentMap(m)
 	}
 }

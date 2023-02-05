@@ -10,8 +10,10 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/ipfs/go-cid v0.3.2
+	github.com/jimeh/undent v1.1.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/ldclabs/cbor-patch v1.1.3
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/neilalexander/utp v0.1.0
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20221003100820-41fad3beba17
@@ -23,6 +25,7 @@ require (
 	golang.org/x/exp v0.0.0-20221230185412-738e83a70c30
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	gopkg.in/evanphx/json-patch.v5 v5.6.0
+	gopkg.in/yaml.v2 v2.2.5
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.3
 	modernc.org/sqlite v1.20.2

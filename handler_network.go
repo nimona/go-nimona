@@ -12,55 +12,55 @@ import (
 
 type (
 	NetworkInfoRequest struct {
-		_ string `cborgen:"$type,const=core/network/info.request"`
+		_ string `nimona:"$type,type=core/network/info.request"`
 	}
 	NetworkJoinRequest struct {
-		_               string   `cborgen:"$type,const=core/network/join.request"`
-		Metadata        Metadata `cborgen:"$metadata,omitempty"`
-		RequestedHandle string   `cborgen:"requestedHandle,omitempty"`
+		_               string   `nimona:"$type,type=core/network/join.request"`
+		Metadata        Metadata `nimona:"$metadata,omitempty"`
+		RequestedHandle string   `nimona:"requestedHandle,omitempty"`
 	}
 	NetworkJoinResponse struct {
-		_                string `cborgen:"$type,const=core/network/join.response"`
-		Handle           string `cborgen:"handle,omitempty"`
-		Accepted         bool   `cborgen:"accepted"`
-		Error            bool   `cborgen:"error,omitempty"`
-		ErrorDescription string `cborgen:"errorDescription,omitempty"`
+		_                string `nimona:"$type,type=core/network/join.response"`
+		Handle           string `nimona:"handle,omitempty"`
+		Accepted         bool   `nimona:"accepted"`
+		Error            bool   `nimona:"error,omitempty"`
+		ErrorDescription string `nimona:"errorDescription,omitempty"`
 	}
 	NetworkResolveHandleRequest struct {
-		_      string `cborgen:"$type,const=core/network/resolveHandle.request"`
-		Handle string `cborgen:"handle,omitempty"`
+		_      string `nimona:"$type,type=core/network/resolveHandle.request"`
+		Handle string `nimona:"handle,omitempty"`
 	}
 	NetworkResolveHandleResponse struct {
-		_                string     `cborgen:"$type,const=core/network/resolveHandle.response"`
-		IdentityID       Identity   `cborgen:"identityID,omitempty"`
-		PeerAddresses    []PeerAddr `cborgen:"peerAddresses,omitempty"`
-		Found            bool       `cborgen:"found,omitempty"`
-		Error            bool       `cborgen:"error,omitempty"`
-		ErrorDescription string     `cborgen:"errorDescription,omitempty"`
+		_                string     `nimona:"$type,type=core/network/resolveHandle.response"`
+		IdentityID       Identity   `nimona:"identityID,omitempty"`
+		PeerAddresses    []PeerAddr `nimona:"peerAddresses,omitempty"`
+		Found            bool       `nimona:"found,omitempty"`
+		Error            bool       `nimona:"error,omitempty"`
+		ErrorDescription string     `nimona:"errorDescription,omitempty"`
 	}
 	NetworkAnnouncePeerRequest struct {
-		_        string   `cborgen:"$type,const=core/network/announcePeer.request"`
-		Metadata Metadata `cborgen:"$metadata,omitempty"`
-		PeerInfo PeerInfo `cborgen:"peerInfo,omitempty"`
+		_        string   `nimona:"$type,type=core/network/announcePeer.request"`
+		Metadata Metadata `nimona:"$metadata,omitempty"`
+		PeerInfo PeerInfo `nimona:"peerInfo,omitempty"`
 	}
 	NetworkAnnouncePeerResponse struct {
-		_                string   `cborgen:"$type,const=core/network/announcePeer.response"`
-		Metadata         Metadata `cborgen:"$metadata,omitempty"`
-		Error            bool     `cborgen:"error,omitempty"`
-		ErrorDescription string   `cborgen:"errorDescription,omitempty"`
+		_                string   `nimona:"$type,type=core/network/announcePeer.response"`
+		Metadata         Metadata `nimona:"$metadata,omitempty"`
+		Error            bool     `nimona:"error,omitempty"`
+		ErrorDescription string   `nimona:"errorDescription,omitempty"`
 	}
 	NetworkLookupPeerRequest struct {
-		_        string   `cborgen:"$type,const=core/network/lookupPeer.request"`
-		Metadata Metadata `cborgen:"$metadata,omitempty"`
-		PeerKey  PeerKey  `cborgen:"peerKey,omitempty"`
+		_        string   `nimona:"$type,type=core/network/lookupPeer.request"`
+		Metadata Metadata `nimona:"$metadata,omitempty"`
+		PeerKey  PeerKey  `nimona:"peerKey,omitempty"`
 	}
 	NetworkLookupPeerResponse struct {
-		_                string   `cborgen:"$type,const=core/network/lookupPeer.response"`
-		Metadata         Metadata `cborgen:"$metadata,omitempty"`
-		PeerInfo         PeerInfo `cborgen:"peerInfo,omitempty"`
-		Found            bool     `cborgen:"found,omitempty"`
-		Error            bool     `cborgen:"error,omitempty"`
-		ErrorDescription string   `cborgen:"errorDescription,omitempty"`
+		_                string   `nimona:"$type,type=core/network/lookupPeer.response"`
+		Metadata         Metadata `nimona:"$metadata,omitempty"`
+		PeerInfo         PeerInfo `nimona:"peerInfo,omitempty"`
+		Found            bool     `nimona:"found,omitempty"`
+		Error            bool     `nimona:"error,omitempty"`
+		ErrorDescription string   `nimona:"errorDescription,omitempty"`
 	}
 )
 
@@ -95,7 +95,7 @@ func RequestNetworkInfo(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Decode(res)
+	err = msgRes.Codec.Decode(msgRes.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -106,8 +106,8 @@ func (h *HandlerNetwork) HandleNetworkInfoRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &NetworkInfoRequest{}
-	err := msg.Decode(req)
+	req := NetworkInfoRequest{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -142,7 +142,7 @@ func RequestNetworkJoin(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Decode(res)
+	err = msgRes.Codec.Decode(msgRes.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -153,8 +153,8 @@ func (h *HandlerNetwork) HandleNetworkJoinRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &NetworkJoinRequest{}
-	err := msg.Decode(req)
+	req := NetworkJoinRequest{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -233,7 +233,7 @@ func RequestNetworkResolveHandle(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Decode(res)
+	err = msgRes.Codec.Decode(msgRes.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -244,8 +244,8 @@ func (h *HandlerNetwork) HandleNetworkResolveHandleRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &NetworkResolveHandleRequest{}
-	err := msg.Decode(req)
+	req := NetworkResolveHandleRequest{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -304,7 +304,7 @@ func RequestNetworkAnnouncePeer(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Decode(res)
+	err = msgRes.Codec.Decode(msgRes.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -315,8 +315,8 @@ func (h *HandlerNetwork) HandleNetworkAnnouncePeerRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &NetworkAnnouncePeerRequest{}
-	err := msg.Decode(req)
+	req := NetworkAnnouncePeerRequest{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -337,11 +337,16 @@ func (h *HandlerNetwork) HandleNetworkAnnouncePeerRequest(
 		return respondWithError("no owner specified")
 	}
 
+	peerInfoBytes, err := MarshalCBORBytes(&req.PeerInfo)
+	if err != nil {
+		return fmt.Errorf("error marshaling peerInfo: %w", err)
+	}
+
 	peer := &NetworkPeerModel{
 		PeerKey: PeerKey{
 			PublicKey: req.PeerInfo.PublicKey,
 		},
-		PeerInfoBytes: req.PeerInfo.RawBytes,
+		PeerInfoBytes: peerInfoBytes,
 	}
 
 	cls := clause.OnConflict{UpdateAll: true}
@@ -363,15 +368,15 @@ func RequestNetworkLookupPeer(
 	ses *Session,
 	peerKey PeerKey,
 ) (*NetworkLookupPeerResponse, error) {
-	req := &NetworkLookupPeerRequest{
+	req := NetworkLookupPeerRequest{
 		PeerKey: peerKey,
 	}
 	res := &NetworkLookupPeerResponse{}
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, &req)
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Decode(res)
+	err = msgRes.Codec.Decode(msgRes.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -382,8 +387,8 @@ func (h *HandlerNetwork) HandleNetworkLookupPeerRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &NetworkLookupPeerRequest{}
-	err := msg.Decode(req)
+	req := NetworkLookupPeerRequest{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}

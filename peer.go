@@ -14,15 +14,14 @@ func NewPeerKey(key PublicKey) PeerKey {
 
 type (
 	PeerKey struct {
-		_         string `cborgen:"$type,const=core/peer/key"`
-		PublicKey PublicKey
+		_         string    `nimona:"$type,type=core/peer/key"`
+		PublicKey PublicKey `nimona:"publicKey,omitempty"`
 	}
 	PeerInfo struct {
-		_         string     `cborgen:"$type,const=core/peer/info"`
-		Metadata  Metadata   `cborgen:"$metadata,omitempty"`
-		PublicKey PublicKey  `cborgen:"publicKey"`
-		Addresses []PeerAddr `cborgen:"addresses"`
-		RawBytes  []byte     `cborgen:"rawbytes"`
+		_         string     `nimona:"$type,type=core/peer/info"`
+		Metadata  Metadata   `nimona:"$metadata,omitempty"`
+		PublicKey PublicKey  `nimona:"publicKey,omitempty"`
+		Addresses []PeerAddr `nimona:"addresses,omitempty"`
 	}
 	PeerIdentifier struct {
 		PeerKey  *PeerKey

@@ -41,11 +41,8 @@ func TestIdentityAlias(t *testing.T) {
 	require.Equal(t, n0, n1)
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
-		b, err := MarshalCBORBytes(n0)
-		require.NoError(t, err)
-
 		n1 := &IdentityAlias{}
-		err = UnmarshalCBORBytes(b, n1)
+		n1.FromDocumentMap(n0.DocumentMap())
 		require.NoError(t, err)
 		require.EqualValues(t, n0, n1)
 		require.Equal(t, s0, n1.String())
@@ -55,13 +52,14 @@ func TestIdentityAlias(t *testing.T) {
 func TestKeyGraph(t *testing.T) {
 	kg := NewTestKeyGraph(t)
 
-	t.Run("marshal unmarshal", func(t *testing.T) {
-		b, err := MarshalCBORBytes(kg)
-		require.NoError(t, err)
+	t.Run("test hash", func(t *testing.T) {
+		h := NewDocumentHash(kg)
+		require.NotEmpty(t, h)
+	})
 
+	t.Run("marshal unmarshal", func(t *testing.T) {
 		kg1 := &KeyGraph{}
-		err = UnmarshalCBORBytes(b, kg1)
-		require.NoError(t, err)
+		kg1.FromDocumentMap(kg.DocumentMap())
 		require.EqualValues(t, kg, kg1)
 	})
 }

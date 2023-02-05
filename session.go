@@ -30,6 +30,21 @@ type Session struct {
 	skipRPC bool
 }
 
+type Request struct {
+	Type        string
+	Codec       Codec
+	DocumentRaw []byte
+	DocumentMap DocumentMap
+	Respond     func(DocumentMapper) error
+}
+
+type Response struct {
+	Type  string
+	Map   DocumentMap
+	Body  []byte
+	Codec Codec
+}
+
 // NewSession returns a new Session that wraps the given net.Conn.
 func NewSession(conn net.Conn) *Session {
 	s := &Session{
@@ -215,10 +230,16 @@ func (s *Session) write(data []byte) (int, error) {
 
 func (s *Session) Request(
 	ctx context.Context,
-	req Cborer,
+	req DocumentMapper,
 ) (*Response, error) {
+	// Check if the request is a valid document
+	reqMap := req.DocumentMap()
+	if reqMap.Type() == "" {
+		return nil, fmt.Errorf("request document is missing a $type field")
+	}
+
 	// Encode the request
-	b, err := s.codec.Encode(req)
+	b, err := s.codec.Encode(reqMap)
 	if err != nil {
 		return nil, fmt.Errorf("unable to encode request: %w", err)
 	}
@@ -230,24 +251,26 @@ func (s *Session) Request(
 	}
 
 	// Decode the response
+	resMap := DocumentMap{}
 	codec := s.codec
-	res := &Response{}
-	err = codec.Decode(resBytes, res)
+	err = codec.Decode(resBytes, &resMap)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode response: %w", err)
 	}
 
-	res.Body = resBytes
-	res.Codec = codec
-	res.Decode = messageDecoder(codec, resBytes)
+	docType, ok := resMap["$type"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing $type field")
+	}
+
+	res := &Response{
+		Map:   resMap,
+		Type:  docType,
+		Body:  resBytes,
+		Codec: codec,
+	}
 
 	return res, nil
-}
-
-func messageDecoder(c Codec, b []byte) func(Cborer) error {
-	return func(v Cborer) error {
-		return c.Decode(b, v)
-	}
 }
 
 func (s *Session) Read() (*Request, error) {
@@ -257,30 +280,37 @@ func (s *Session) Read() (*Request, error) {
 		return nil, fmt.Errorf("unable to read message: %w", err)
 	}
 
-	codec := s.codec
-	msgReq := &Request{}
-	err = codec.Decode(req, msgReq)
+	docMap := DocumentMap{}
+	err = s.codec.Decode(req, &docMap)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode message: %w", err)
 	}
 
-	msgReq.Body = req
-	msgReq.Codec = codec
-	msgReq.Decode = messageDecoder(codec, req)
-	msgReq.Respond = func(res Cborer) error {
-		// Encode the response
-		b, err := codec.Encode(res)
-		if err != nil {
-			return fmt.Errorf("unable to encode response: %w", err)
-		}
+	docType, ok := docMap["$type"].(string)
+	if !ok {
+		return nil, fmt.Errorf("missing $type field")
+	}
 
-		// Send the response
-		err = cb(b)
-		if err != nil {
-			return fmt.Errorf("unable to send response: %w", err)
-		}
+	msgReq := &Request{
+		Type:        docType,
+		Codec:       s.codec,
+		DocumentRaw: req,
+		DocumentMap: docMap,
+		Respond: func(res DocumentMapper) error {
+			// Encode the response
+			b, err := s.codec.Encode(res)
+			if err != nil {
+				return fmt.Errorf("unable to encode response: %w", err)
+			}
 
-		return nil
+			// Send the response
+			err = cb(b)
+			if err != nil {
+				return fmt.Errorf("unable to send response: %w", err)
+			}
+
+			return nil
+		},
 	}
 
 	return msgReq, nil

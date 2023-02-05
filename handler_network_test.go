@@ -226,7 +226,6 @@ func TestHandlerNetwork_AnnouncePeer_LookupPeer(t *testing.T) {
 	// Lookup the client
 	t.Run("lookup client", func(t *testing.T) {
 		res, err := RequestNetworkLookupPeer(ctx, ses, *clnPeerConfig.GetPeerKey())
-		res.PeerInfo.RawBytes = nil
 		require.NoError(t, err)
 		require.Empty(t, res.ErrorDescription)
 		require.False(t, res.Error)

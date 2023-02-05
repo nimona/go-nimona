@@ -1,49 +1,59 @@
 package nimona
 
 import (
-	"bytes"
 	"fmt"
 )
 
 //go:generate ./bin/mockgen -package=nimona -source=codec.go -destination=codec_mock.go
 
-// TODO(geoah): consider refactoring to use io.Reader and io.Writer
-type Codec interface {
-	// Encode encodes the given value into a byte slice.
-	Encode(v Cborer) ([]byte, error)
-	// Decode decodes the given byte slice into the given value.
-	Decode(b []byte, v Cborer) error
-}
+type (
+	CodecType string
+	Codec     interface {
+		// Encode encodes the given value into a byte slice.
+		Encode(v DocumentMapper) ([]byte, error)
+		// Decode decodes the given byte slice into the given value.
+		Decode(b []byte, v DocumentMapper) error
+	}
+)
+
+const (
+	CodecTypeCBOR CodecType = "cbor"
+	CodecTypeJSON CodecType = "json"
+	CodecTypeYAML CodecType = "yaml"
+)
 
 // CodecCBOR is a codec that uses CBOR for encoding and decoding.
 type CodecCBOR struct{}
 
-func (c *CodecCBOR) Encode(v Cborer) ([]byte, error) {
+func (c *CodecCBOR) Encode(v DocumentMapper) ([]byte, error) {
 	return MarshalCBORBytes(v)
 }
 
-func (c *CodecCBOR) Decode(b []byte, v Cborer) error {
+func (c *CodecCBOR) Decode(b []byte, v DocumentMapper) error {
 	return UnmarshalCBORBytes(b, v)
 }
 
-func UnmarshalCBORBytes(b []byte, c Cborer) error {
-	err := c.UnmarshalCBOR(bytes.NewReader(b))
+func UnmarshalCBORBytes(b []byte, c DocumentMapper) error {
+	m := DocumentMap{}
+	err := m.UnmarshalCBOR(b)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling cbor: %s", err)
 	}
+
+	// TODO(geoah): check error
+	c.FromDocumentMap(m)
 	return nil
 }
 
-func MarshalCBORBytes(v Cborer) ([]byte, error) {
-	w := new(bytes.Buffer)
-	err := v.MarshalCBOR(w)
+func MarshalCBORBytes(v DocumentMapper) ([]byte, error) {
+	b, err := v.DocumentMap().MarshalCBOR()
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling cbor: %s", err)
 	}
-	return w.Bytes(), nil
+	return b, nil
 }
 
-func MustMarshalCBORBytes(v Cborer) []byte {
+func MustMarshalCBORBytes(v DocumentMapper) []byte {
 	b, err := MarshalCBORBytes(v)
 	if err != nil {
 		panic(err)

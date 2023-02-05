@@ -7,8 +7,8 @@ import (
 )
 
 type Signature struct {
-	Signer PeerKey `cborgen:"signer"`
-	X      []byte  `cborgen:"x"`
+	Signer PeerKey `nimona:"signer"`
+	X      []byte  `nimona:"x"`
 }
 
 func NewDocumentSignature(sk PrivateKey, hash DocumentHash) *Signature {

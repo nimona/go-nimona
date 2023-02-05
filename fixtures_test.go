@@ -7,15 +7,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func NewTestDocument(t *testing.T) Cborer {
+func NewTestDocument(t *testing.T) DocumentMap {
 	t.Helper()
 	doc := &CborFixture{
 		String: uuid.New().String(),
 	}
-	return doc
+	return doc.DocumentMap()
 }
 
-func MustMarshal(t *testing.T, v Cborer) []byte {
+func MustMarshal(t *testing.T, v DocumentMapper) []byte {
 	t.Helper()
 	b, err := MarshalCBORBytes(v)
 	require.NoError(t, err)

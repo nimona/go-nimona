@@ -3,26 +3,23 @@ package nimona
 import (
 	"database/sql/driver"
 	"fmt"
-	"io"
 	"strings"
 )
 
 type (
 	NetworkAlias struct {
-		_        string `cborgen:"$type,const=core/network/alias"`
-		Hostname string `cborgen:"hostname"`
+		_        string `nimona:"$type,type=core/network/alias"`
+		Hostname string `nimona:"hostname"`
 	}
 	NetworkIdentity struct {
-		_                 string       `cborgen:"$type,const=core/network"`
-		NetworkInfoRootID DocumentID   `cborgen:"networkInfoRootID,omitempty"`
-		NetworkAlias      NetworkAlias `cborgen:"networkAlias,omitempty"`
+		_                 string       `nimona:"$type,type=core/network/identity"`
+		NetworkInfoRootID DocumentID   `nimona:"networkInfoRootID,omitempty"`
+		NetworkAlias      NetworkAlias `nimona:"networkAlias,omitempty"`
 	}
 	NetworkInfo struct {
-		_             string       `cborgen:"$type,const=core/network/info"`
-		Metadata      Metadata     `cborgen:"metadata"`
-		NetworkAlias  NetworkAlias `cborgen:"networkAlias"`
-		PeerAddresses []PeerAddr   `cborgen:"peerAddresses"`
-		RawBytes      []byte       `cborgen:"rawbytes"`
+		Metadata      Metadata     `nimona:"$metadata,omitempty,type=core/network/info"`
+		NetworkAlias  NetworkAlias `nimona:"networkAlias"`
+		PeerAddresses []PeerAddr   `nimona:"peerAddresses"`
 	}
 	NetworkIdentifier struct {
 		NetworkAlias    *NetworkAlias
@@ -83,12 +80,8 @@ func (n *NetworkInfo) NetworkIdentifier() NetworkIdentifier {
 }
 
 func (n *NetworkInfo) NetworkIdentity() NetworkIdentity {
-	cborBytes := n.RawBytes
-	if cborBytes == nil {
-		cborBytes, _ = MarshalCBORBytes(n)
-	}
 	return NetworkIdentity{
-		NetworkInfoRootID: NewDocumentIDFromCBOR(cborBytes),
+		NetworkInfoRootID: NewDocumentID(n.DocumentMap()),
 	}
 }
 
@@ -96,49 +89,32 @@ func (n *NetworkInfo) String() string {
 	return n.NetworkAlias.String()
 }
 
-func (n *NetworkIdentifier) MarshalCBOR(w io.Writer) error {
+func (n *NetworkIdentifier) DocumentMap() DocumentMap {
 	if n.NetworkAlias != nil {
-		return n.NetworkAlias.MarshalCBOR(w)
+		return n.NetworkAlias.DocumentMap()
 	}
 	if n.NetworkIdentity != nil {
-		return n.NetworkIdentity.MarshalCBOR(w)
+		return n.NetworkIdentity.DocumentMap()
 	}
 	if n.NetworkInfo != nil {
-		return n.NetworkInfo.MarshalCBOR(w)
+		return n.NetworkInfo.DocumentMap()
 	}
-	return fmt.Errorf("unable to marshal network identifier")
+	return DocumentMap{}
 }
 
-func (n *NetworkIdentifier) UnmarshalCBOR(r io.Reader) (err error) {
-	doc := &DocumentBase{}
-	err = doc.UnmarshalCBOR(r)
-	if err != nil {
-		return fmt.Errorf("unable to unmarshal network identifier into doc: %w", err)
-	}
-
-	switch doc.Type {
+func (n *NetworkIdentifier) FromDocumentMap(m DocumentMap) {
+	docType := m.Type()
+	switch docType {
 	case "core/network/alias":
 		n.NetworkAlias = &NetworkAlias{}
-		err := UnmarshalCBORBytes(doc.DocumentBytes, n.NetworkAlias)
-		if err != nil {
-			return fmt.Errorf("unable to unmarshal network alias: %w", err)
-		}
-	case "core/network":
+		n.NetworkAlias.FromDocumentMap(m)
+	case "core/network/identity":
 		n.NetworkIdentity = &NetworkIdentity{}
-		err := UnmarshalCBORBytes(doc.DocumentBytes, n.NetworkIdentity)
-		if err != nil {
-			return fmt.Errorf("unable to unmarshal network identity: %w", err)
-		}
+		n.NetworkIdentity.FromDocumentMap(m)
 	case "core/network/info":
 		n.NetworkInfo = &NetworkInfo{}
-		err := UnmarshalCBORBytes(doc.DocumentBytes, n.NetworkInfo)
-		if err != nil {
-			return fmt.Errorf("unable to unmarshal network info: %w", err)
-		}
-	default:
-		return fmt.Errorf("unknown network identifier type: %s", doc.Type)
+		n.NetworkInfo.FromDocumentMap(m)
 	}
-	return nil
 }
 
 func (n NetworkIdentifier) Hostname() string {

@@ -7,13 +7,13 @@ import (
 
 type (
 	DocumentGraphRequest struct {
-		Type           string     `cborgen:"$type,const=core/document/graph.request"`
-		RootDocumentID DocumentID `cborgen:"rootDocument"`
+		_              string     `nimona:"$type,type=core/document/graph.request"`
+		RootDocumentID DocumentID `nimona:"rootDocument"`
 	}
 	DocumentGraphResponse struct {
-		Type             string       `cborgen:"$type,const=core/document/graph.response"`
-		RootDocumentID   DocumentID   `cborgen:"rootDocumentID"`
-		PatchDocumentIDs []DocumentID `cborgen:"patchDocumentIDs"`
+		_                string       `nimona:"$type,type=core/document/graph.response"`
+		RootDocumentID   DocumentID   `nimona:"rootDocumentID"`
+		PatchDocumentIDs []DocumentID `nimona:"patchDocumentIDs"`
 	}
 )
 
@@ -29,24 +29,24 @@ func RequestDocumentGraph(
 	req := &DocumentGraphRequest{
 		RootDocumentID: rootID,
 	}
-	res := &DocumentGraphResponse{}
+	res := DocumentGraphResponse{}
 	msgRes, err := ses.Request(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Decode(res)
+	err = msgRes.Codec.Decode(msgRes.Body, &res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
-	return res, nil
+	return &res, nil
 }
 
 func (h *HandlerDocumentGraph) HandleDocumentGraphRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &DocumentGraphRequest{}
-	err := msg.Decode(req)
+	req := DocumentGraphRequest{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}

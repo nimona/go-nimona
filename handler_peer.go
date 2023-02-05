@@ -7,10 +7,10 @@ import (
 
 type (
 	PeerCapabilitiesRequest struct {
-		Type string `cborgen:"$type,const=core/peer/capabilities.request"`
+		_ string `nimona:"$type,type=core/peer/capabilities.request"`
 	}
 	PeerCapabilitiesResponse struct {
-		Type         string   `cborgen:"$type,const=core/peer/capabilities.response"`
+		_            string   `nimona:"$type,type=core/peer/capabilities.response"`
 		Capabilities []string `cbor:"capabilities"`
 	}
 )
@@ -29,7 +29,7 @@ func RequestPeerCapabilities(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Decode(res)
+	err = msgRes.Codec.Decode(msgRes.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -40,8 +40,8 @@ func (h *HandlerPeerCapabilities) HandlePeerCapabilitiesRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &PeerCapabilitiesRequest{}
-	err := msg.Decode(req)
+	req := PeerCapabilitiesRequest{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}

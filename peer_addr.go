@@ -8,10 +8,10 @@ import (
 )
 
 type PeerAddr struct {
-	_         string    `cborgen:"$type,const=core/node.address"`
-	Address   string    `cborgen:"address"`
-	Network   string    `cborgen:"network"` // TODO: rename to transport
-	PublicKey PublicKey `cborgen:"publicKey"`
+	_         string    `nimona:"$type,type=core/node.address"`
+	Address   string    `nimona:"address,omitempty"`
+	Network   string    `nimona:"network,omitempty"` // TODO: rename to transport
+	PublicKey PublicKey `nimona:"publicKey,omitempty"`
 }
 
 func ParsePeerAddr(addr string) (*PeerAddr, error) {

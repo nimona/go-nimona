@@ -8,12 +8,12 @@ import (
 
 type (
 	Ping struct {
-		_     string `cborgen:"$type,const=test/ping"`
-		Nonce string `cborgen:"nonce"`
+		_     string `nimona:"$type,type=test/ping"`
+		Nonce string `nimona:"nonce"`
 	}
 	Pong struct {
-		_     string `cborgen:"$type,const=test/pong"`
-		Nonce string `cborgen:"nonce"`
+		_     string `nimona:"$type,type=test/pong"`
+		Nonce string `nimona:"nonce"`
 	}
 )
 
@@ -33,7 +33,7 @@ func RequestPing(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Decode(res)
+	err = msgRes.Codec.Decode(msgRes.Body, res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -44,8 +44,8 @@ func (h *HandlerPing) HandlePingRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &Ping{}
-	err := msg.Decode(req)
+	req := Ping{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}

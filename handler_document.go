@@ -3,23 +3,23 @@ package nimona
 import (
 	"context"
 	"fmt"
-
-	cbg "github.com/whyrusleeping/cbor-gen"
 )
+
+var ErrDocumentNotFound = fmt.Errorf("document not found")
 
 type (
 	DocumentRequest struct {
-		_          string     `cborgen:"$type,const=core/document.request"`
-		Metadata   Metadata   `cborgen:"$metadata,omitempty"`
-		DocumentID DocumentID `cborgen:"documentID"`
+		_          string     `nimona:"$type,type=core/document.request"`
+		Metadata   Metadata   `nimona:"$metadata,omitempty"`
+		DocumentID DocumentID `nimona:"documentID"`
 	}
 	DocumentResponse struct {
-		_                string       `cborgen:"$type,const=core/document.response"`
-		Metadata         Metadata     `cborgen:"$metadata,omitempty"`
-		Document         cbg.Deferred `cborgen:"document"`
-		Found            bool         `cborgen:"found"`
-		Error            bool         `cborgen:"error,omitempty"`
-		ErrorDescription string       `cborgen:"errorDescription,omitempty"`
+		_                string      `nimona:"$type,type=core/document.response"`
+		Metadata         Metadata    `nimona:"$metadata,omitempty"`
+		Document         DocumentMap `nimona:"document"`
+		Found            bool        `nimona:"found"`
+		Error            bool        `nimona:"error,omitempty"`
+		ErrorDescription string      `nimona:"errorDescription,omitempty"`
 	}
 )
 
@@ -36,7 +36,7 @@ func RequestDocument(
 	ses *Session,
 	peerConfig *PeerConfig,
 	docID DocumentID,
-) (*DocumentBase, error) {
+) (*DocumentMap, error) {
 	req := &DocumentRequest{
 		Metadata: Metadata{
 			Owner: peerConfig.GetIdentity(),
@@ -54,27 +54,29 @@ func RequestDocument(
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
 
-	res := &DocumentResponse{}
-	err = msgRes.Decode(res)
+	res := DocumentResponse{}
+	err = msgRes.Codec.Decode(msgRes.Body, &res)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
 
-	doc := &DocumentBase{}
-	err = UnmarshalCBORBytes(res.Document.Raw, doc)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling document: %w", err)
+	if !res.Found {
+		return nil, fmt.Errorf("got error: %w", ErrDocumentNotFound)
 	}
 
-	return doc, nil
+	if res.ErrorDescription != "" {
+		return nil, fmt.Errorf("got error: %s", res.ErrorDescription)
+	}
+
+	return &res.Document, nil
 }
 
 func (h *HandlerDocument) HandleDocumentRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := &DocumentRequest{}
-	err := msg.Decode(req)
+	req := DocumentRequest{}
+	err := msg.Codec.Decode(msg.DocumentRaw, &req)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -91,19 +93,18 @@ func (h *HandlerDocument) HandleDocumentRequest(
 		return nil
 	}
 
-	docEntry, err := h.DocumentStore.GetDocument(req.DocumentID)
+	doc, err := h.DocumentStore.GetDocument(req.DocumentID)
 	if err != nil {
 		return fmt.Errorf("error getting document: %w", err)
 	}
-	if docEntry == nil {
+
+	if doc == nil {
 		return respondWithError("document not found")
 	}
 
 	res := &DocumentResponse{
-		Found: true,
-		Document: cbg.Deferred{
-			Raw: docEntry.DocumentBytes,
-		},
+		Found:    true,
+		Document: doc,
 	}
 	err = msg.Respond(res)
 	if err != nil {

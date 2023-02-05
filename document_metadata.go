@@ -2,39 +2,37 @@ package nimona
 
 import (
 	"github.com/gobwas/glob"
-	cbg "github.com/whyrusleeping/cbor-gen"
 )
 
 type (
 	DocumentBase struct {
-		Type          string   `cborgen:"$type"`
-		Metadata      Metadata `cborgen:"$metadata,omitempty"`
-		DocumentBytes []byte   `cborgen:"rawbytes"`
+		Type     string   `nimona:"$type"`
+		Metadata Metadata `nimona:"$metadata,omitempty"`
 	}
 	Metadata struct {
-		Owner       *Identity     `cborgen:"owner,omitempty"`
-		Permissions []Permissions `cborgen:"permissions,omitempty"`
-		Timestamp   cbg.CborTime  `cborgen:"timestamp,omitempty"`
-		Signature   *Signature    `cborgen:"_signature,omitempty"`
+		Owner       *Identity     `nimona:"owner,omitempty"`
+		Permissions []Permissions `nimona:"permissions,omitempty"`
+		Timestamp   uint          `nimona:"timestamp,omitempty"` // TODO: use time.Time
+		Signature   *Signature    `nimona:"_signature,omitempty"`
 	}
 	Permissions struct {
-		Paths      []string             `cborgen:"paths"`
-		Operations PermissionsAllow     `cborgen:"operations"`
-		Conditions PermissionsCondition `cborgen:"conditions"`
+		Paths      []string             `nimona:"paths"`
+		Operations PermissionsAllow     `nimona:"operations"`
+		Conditions PermissionsCondition `nimona:"conditions"`
 	}
 	PermissionsAllow struct {
 		// generic ops
-		Read bool `cborgen:"read,omitempty"`
+		Read bool `nimona:"read,omitempty"`
 		// json patch
-		Add     bool `cborgen:"add,omitempty"`
-		Remove  bool `cborgen:"remove,omitempty"`
-		Replace bool `cborgen:"replace,omitempty"`
-		Move    bool `cborgen:"move,omitempty"`
-		Copy    bool `cborgen:"copy,omitempty"`
-		Test    bool `cborgen:"test,omitempty"`
+		Add     bool `nimona:"add,omitempty"`
+		Remove  bool `nimona:"remove,omitempty"`
+		Replace bool `nimona:"replace,omitempty"`
+		Move    bool `nimona:"move,omitempty"`
+		Copy    bool `nimona:"copy,omitempty"`
+		Test    bool `nimona:"test,omitempty"`
 	}
 	PermissionsCondition struct {
-		IsOwner bool `cborgen:"isOwner,omitempty"`
+		IsOwner bool `nimona:"isOwner,omitempty"`
 	}
 )
 

@@ -1,7 +1,6 @@
 package nimona
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -37,25 +36,4 @@ func TestPeerAddr(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, a, g)
 	})
-}
-
-func TestPeerAddr_Marshal(t *testing.T) {
-	pk, _, err := GenerateKey()
-	require.NoError(t, err)
-
-	na := &PeerAddr{
-		Network:   "utp",
-		Address:   "localhost:1234",
-		PublicKey: pk,
-	}
-
-	cb := new(bytes.Buffer)
-	err = na.MarshalCBOR(cb)
-	require.NoError(t, err)
-
-	ga := &PeerAddr{}
-	err = ga.UnmarshalCBOR(cb)
-	require.NoError(t, err)
-
-	require.Equal(t, na, ga)
 }

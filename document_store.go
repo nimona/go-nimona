@@ -26,7 +26,7 @@ type (
 	}
 )
 
-func (doc *DocumentEntry) UnmarshalInto(v Cborer) error {
+func (doc *DocumentEntry) UnmarshalInto(v DocumentMapper) error {
 	err := UnmarshalCBORBytes(doc.DocumentBytes, v)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling document: %w", err)
@@ -49,23 +49,18 @@ func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 	return s, nil
 }
 
-func (s *DocumentStore) PutDocument(v Cborer) error {
-	docBytes, err := MarshalCBORBytes(v)
+func (s *DocumentStore) PutDocument(doc DocumentMapper) error {
+	docMap := doc.DocumentMap()
+	docBytes, err := MarshalCBORBytes(docMap)
 	if err != nil {
 		return fmt.Errorf("error marshaling document: %w", err)
 	}
 
-	doc := &DocumentBase{}
-	err = UnmarshalCBORBytes(docBytes, doc)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling document: %w", err)
-	}
-
-	docID := NewDocumentIDFromCBOR(docBytes)
+	docID := NewDocumentID(docMap)
 
 	entry := &DocumentEntry{
 		DocumentID:       docID,
-		DocumentType:     doc.Type,
+		DocumentType:     docMap.Type(),
 		DocumentEncoding: "cbor",
 		DocumentBytes:    docBytes,
 		// RootDocumentID:   doc.Metadata.Parent,
@@ -103,7 +98,7 @@ func (s *DocumentStore) PutDocumentEntry(entry *DocumentEntry) error {
 	return nil
 }
 
-func (s *DocumentStore) GetDocument(id DocumentID) (*DocumentEntry, error) {
+func (s *DocumentStore) GetDocument(id DocumentID) (DocumentMap, error) {
 	doc := &DocumentEntry{}
 	err := s.db.
 		Where("document_id = ?", id).
@@ -113,7 +108,13 @@ func (s *DocumentStore) GetDocument(id DocumentID) (*DocumentEntry, error) {
 		return nil, fmt.Errorf("error getting document: %w", err)
 	}
 
-	return doc, nil
+	m := DocumentMap{}
+	err = m.UnmarshalCBOR(doc.DocumentBytes)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling document: %w", err)
+	}
+
+	return m, nil
 }
 
 func (s *DocumentStore) GetDocumentsByType(docType string) ([]*DocumentEntry, error) {

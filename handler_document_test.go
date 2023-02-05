@@ -23,11 +23,9 @@ func TestHandlerDocument(t *testing.T) {
 	// Create new document
 	doc := NewTestDocument(t)
 	docID := NewDocumentID(doc)
-	docBytes, err := MarshalCBORBytes(doc)
-	require.NoError(t, err)
 
 	// Add document to store
-	err = store.PutDocument(doc)
+	err := store.PutDocument(doc)
 	require.NoError(t, err)
 
 	// Construct a new HandlerDocument
@@ -46,8 +44,7 @@ func TestHandlerDocument(t *testing.T) {
 	require.NoError(t, err)
 
 	// Request document
-	res, err := RequestDocument(ctx, ses, clnPeerConfig, docID)
+	gotDoc, err := RequestDocument(ctx, ses, clnPeerConfig, docID)
 	require.NoError(t, err)
-	require.Equal(t, "test/fixture", res.Type)
-	require.Equal(t, docBytes, res.DocumentBytes)
+	require.Equal(t, doc, *gotDoc)
 }

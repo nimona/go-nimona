@@ -90,10 +90,10 @@ func TestSession_E2E_RPC(t *testing.T) {
 		req, err := srv.Read()
 		require.NoError(t, err)
 
-		msg := &Ping{}
-		err = req.Decode(msg)
+		msg := Ping{}
+		err = req.Codec.Decode(req.DocumentRaw, &msg)
 		require.NoError(t, err)
-		require.EqualValues(t, messagePing, msg)
+		require.EqualValues(t, *messagePing, msg)
 
 		err = req.Respond(messagePong)
 		require.NoError(t, err)
@@ -103,7 +103,8 @@ func TestSession_E2E_RPC(t *testing.T) {
 	msg := &Pong{}
 	res, err := cln.Request(ctx, messagePing)
 	require.NoError(t, err)
-	err = res.Decode(msg)
+
+	err = res.Codec.Decode(res.Body, msg)
 	require.NoError(t, err)
 	require.EqualValues(t, messagePong, msg)
 

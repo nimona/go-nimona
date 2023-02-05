@@ -38,7 +38,7 @@ func TestNetworkIdentifier(t *testing.T) {
 	networkInfoRootID := NewTestRandomDocumentID(t)
 	tests := []struct {
 		name    string
-		cborer  Cborer
+		cborer  DocumentMapper
 		want    *NetworkIdentifier
 		wantErr bool
 	}{{
