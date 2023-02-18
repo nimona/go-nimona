@@ -4,355 +4,384 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *codegenFixture) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *codegenFixture) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "foo"
+		m.Set("$type", tilde.String("foo"))
 	}
 
 	// # t.Bool
 	//
-	// Type: bool, Kind: bool
+	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Bool) {
-			m["bool"] = t.Bool
+			m.Set("bool", tilde.Bool(t.Bool))
 		}
 	}
 
 	// # t.Bytes
 	//
-	// Type: []uint8, Kind: slice
+	// Type: []uint8, Kind: slice, TildeKind: Bytes
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: uint8, ElemKind: uint8
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.Bytes) {
-			m["bytes"] = []byte(t.Bytes)
+			m.Set("bytes", tilde.Bytes(t.Bytes))
 		}
 	}
 
 	// # t.Int64
 	//
-	// Type: int64, Kind: int64
+	// Type: int64, Kind: int64, TildeKind: Int64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Int64) {
-			m["int64"] = t.Int64
+			m.Set("int64", tilde.Int64(t.Int64))
 		}
 	}
 
 	// # t.MapPtr
 	//
-	// Type: nimona.codegenFixture, Kind: struct
+	// Type: nimona.codegenFixture, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
 		if !zero.IsZeroVal(t.MapPtr) {
-			m["mapPtr"] = t.MapPtr.DocumentMap()
+			m.Set("mapPtr", t.MapPtr.DocumentMap().m)
 		}
 	}
 
 	// # t.Metadata
 	//
-	// Type: nimona.Metadata, Kind: struct
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m["$metadata"] = t.Metadata.DocumentMap()
+			m.Set("$metadata", t.Metadata.DocumentMap().m)
 		}
 	}
 
 	// # t.RepeatedBool
 	//
-	// Type: []bool, Kind: slice
+	// Type: []bool, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: bool, ElemKind: bool
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.RepeatedBool) {
-			s := make([]any, len(t.RepeatedBool))
+			s := make(tilde.List, len(t.RepeatedBool))
 			for i, v := range t.RepeatedBool {
-				s[i] = v
+				s[i] = tilde.Bool(v)
 			}
-			m["repeatedbool"] = s
+			m.Set("repeatedbool", s)
 		}
 	}
 
 	// # t.RepeatedBytes
 	//
-	// Type: [][]uint8, Kind: slice
+	// Type: [][]uint8, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: []uint8, ElemKind: slice
 	// IsElemSlice: true, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.RepeatedBytes) {
-			s := make([]any, len(t.RepeatedBytes))
+			s := make(tilde.List, len(t.RepeatedBytes))
 			for i, v := range t.RepeatedBytes {
-				s[i] = v
+				s[i] = tilde.Bytes(v)
 			}
-			m["repeatedbytes"] = s
+			m.Set("repeatedbytes", s)
 		}
 	}
 
 	// # t.RepeatedInt64
 	//
-	// Type: []int64, Kind: slice
+	// Type: []int64, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: int64, ElemKind: int64
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.RepeatedInt64) {
-			s := make([]any, len(t.RepeatedInt64))
+			s := make(tilde.List, len(t.RepeatedInt64))
 			for i, v := range t.RepeatedInt64 {
-				s[i] = v
+				s[i] = tilde.Int64(v)
 			}
-			m["repeatedint64"] = s
+			m.Set("repeatedint64", s)
 		}
 	}
 
 	// # t.RepeatedMap
 	//
-	// Type: []nimona.codegenFixture, Kind: slice
+	// Type: []nimona.codegenFixture, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: nimona.codegenFixture, ElemKind: struct
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.RepeatedMap) {
-			sm := []any{}
+			sm := tilde.List{}
 			for _, v := range t.RepeatedMap {
 				if !zero.IsZeroVal(t.RepeatedMap) {
-					sm = append(sm, v.DocumentMap())
+					sm = append(sm, v.DocumentMap().m)
 				}
 			}
-			m["repeatedmap"] = sm
+			m.Set("repeatedmap", sm)
 		}
 	}
 
 	// # t.RepeatedMapPtr
 	//
-	// Type: []*nimona.codegenFixture, Kind: slice
+	// Type: []*nimona.codegenFixture, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: nimona.codegenFixture, ElemKind: struct
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: true
 	{
 		if !zero.IsZeroVal(t.RepeatedMapPtr) {
-			sm := []any{}
+			sm := tilde.List{}
 			for _, v := range t.RepeatedMapPtr {
 				if !zero.IsZeroVal(t.RepeatedMapPtr) {
-					sm = append(sm, v.DocumentMap())
+					sm = append(sm, v.DocumentMap().m)
 				}
 			}
-			m["repeatedmapPtr"] = sm
+			m.Set("repeatedmapPtr", sm)
 		}
 	}
 
 	// # t.RepeatedString
 	//
-	// Type: []string, Kind: slice
+	// Type: []string, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: string, ElemKind: string
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.RepeatedString) {
-			s := make([]any, len(t.RepeatedString))
+			s := make(tilde.List, len(t.RepeatedString))
 			for i, v := range t.RepeatedString {
-				s[i] = v
+				s[i] = tilde.String(v)
 			}
-			m["repeatedstring"] = s
+			m.Set("repeatedstring", s)
 		}
 	}
 
 	// # t.RepeatedUint64
 	//
-	// Type: []uint64, Kind: slice
+	// Type: []uint64, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: uint64, ElemKind: uint64
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.RepeatedUint64) {
-			s := make([]any, len(t.RepeatedUint64))
+			s := make(tilde.List, len(t.RepeatedUint64))
 			for i, v := range t.RepeatedUint64 {
-				s[i] = v
+				s[i] = tilde.Uint64(v)
 			}
-			m["repeateduint64"] = s
+			m.Set("repeateduint64", s)
 		}
 	}
 
 	// # t.String
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.String) {
-			m["string"] = t.String
+			m.Set("string", tilde.String(t.String))
 		}
 	}
 
 	// # t.StringConst
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["stringConst"] = "foo"
+		m.Set("stringConst", tilde.String("foo"))
 	}
 
 	// # t.Uint64
 	//
-	// Type: uint64, Kind: uint64
+	// Type: uint64, Kind: uint64, TildeKind: Uint64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Uint64) {
-			m["uint64"] = t.Uint64
+			m.Set("uint64", tilde.Uint64(t.Uint64))
 		}
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *codegenFixture) FromDocumentMap(m DocumentMap) {
+func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	*t = codegenFixture{}
 
 	// # t.Bool
 	//
-	// Type: bool, Kind: bool
+	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["bool"].(bool); ok {
-			t.Bool = v
+		if v, err := d.m.Get("bool"); err == nil {
+			if v, ok := v.(tilde.Bool); ok {
+				t.Bool = bool(v)
+			}
 		}
 	}
 
 	// # t.Bytes
 	//
-	// Type: []uint8, Kind: slice
+	// Type: []uint8, Kind: slice, TildeKind: Bytes
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: uint8, ElemKind: uint8
+	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["bytes"].([]byte); ok {
-			t.Bytes = v
+		if v, err := d.m.Get("bytes"); err == nil {
+			if v, ok := v.(tilde.Bytes); ok {
+				t.Bytes = []byte(v)
+			}
 		}
 	}
 
 	// # t.Int64
 	//
-	// Type: int64, Kind: int64
+	// Type: int64, Kind: int64, TildeKind: Int64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["int64"].(int64); ok {
-			t.Int64 = v
+		if v, err := d.m.Get("int64"); err == nil {
+			if v, ok := v.(tilde.Int64); ok {
+				t.Int64 = int64(v)
+			}
 		}
 	}
 
 	// # t.MapPtr
 	//
-	// Type: nimona.codegenFixture, Kind: struct
+	// Type: nimona.codegenFixture, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
-		if v, ok := m["mapPtr"].(DocumentMap); ok {
-			e := codegenFixture{}
-			e.FromDocumentMap(v)
-			t.MapPtr = &e
+		if v, err := d.m.Get("mapPtr"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := codegenFixture{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.MapPtr = &e
+			}
 		}
 	}
 
 	// # t.Metadata
 	//
-	// Type: nimona.Metadata, Kind: struct
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, ok := m["$metadata"].(DocumentMap); ok {
-			e := Metadata{}
-			e.FromDocumentMap(v)
-			t.Metadata = e
+		if v, err := d.m.Get("$metadata"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := Metadata{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.Metadata = e
+			}
 		}
 	}
 
 	// # t.RepeatedBool
 	//
-	// Type: []bool, Kind: slice
+	// Type: []bool, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: bool, ElemKind: bool
+	// ElemType: bool, ElemKind: bool, ElemTildeKind: Bool
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["repeatedbool"].([]any); ok {
-			s := make([]bool, len(v))
-			for i, vi := range v {
-				s[i] = vi.(bool)
+		if v, err := d.m.Get("repeatedbool"); err == nil {
+			if v, ok := v.(tilde.List); ok {
+				s := make([]bool, len(v))
+				for i, vi := range v {
+					if vi, ok := vi.(tilde.Bool); ok {
+						s[i] = bool(vi)
+					}
+				}
+				t.RepeatedBool = s
 			}
-			t.RepeatedBool = s
 		}
 	}
 
 	// # t.RepeatedBytes
 	//
-	// Type: [][]uint8, Kind: slice
+	// Type: [][]uint8, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: []uint8, ElemKind: slice
+	// ElemType: []uint8, ElemKind: slice, ElemTildeKind: Bytes
 	// IsElemSlice: true, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["repeatedbytes"].([]any); ok {
-			s := make([][]byte, len(v))
-			for i, vi := range v {
-				s[i] = vi.([]byte)
+		if v, err := d.m.Get("repeatedbytes"); err == nil {
+			if v, ok := v.(tilde.List); ok {
+				s := make([][]uint8, len(v))
+				for i, vi := range v {
+					if vi, ok := vi.(tilde.Bytes); ok {
+						s[i] = []uint8(vi)
+					}
+				}
+				t.RepeatedBytes = s
 			}
-			t.RepeatedBytes = s
 		}
 	}
 
 	// # t.RepeatedInt64
 	//
-	// Type: []int64, Kind: slice
+	// Type: []int64, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: int64, ElemKind: int64
+	// ElemType: int64, ElemKind: int64, ElemTildeKind: Int64
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["repeatedint64"].([]any); ok {
-			s := make([]int64, len(v))
-			for i, vi := range v {
-				s[i] = vi.(int64)
+		if v, err := d.m.Get("repeatedint64"); err == nil {
+			if v, ok := v.(tilde.List); ok {
+				s := make([]int64, len(v))
+				for i, vi := range v {
+					if vi, ok := vi.(tilde.Int64); ok {
+						s[i] = int64(vi)
+					}
+				}
+				t.RepeatedInt64 = s
 			}
-			t.RepeatedInt64 = s
 		}
 	}
 
 	// # t.RepeatedMap
 	//
-	// Type: []nimona.codegenFixture, Kind: slice
+	// Type: []nimona.codegenFixture, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: nimona.codegenFixture, ElemKind: struct
+	// ElemType: nimona.codegenFixture, ElemKind: struct, ElemTildeKind: Map
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []codegenFixture{}
-		if vs, ok := m["repeatedmap"].([]any); ok {
-			for _, vi := range vs {
-				v, ok := vi.(DocumentMap)
-				if ok {
-					e := codegenFixture{}
-					e.FromDocumentMap(v)
-					sm = append(sm, e)
+		if vs, err := d.m.Get("repeatedmap"); err == nil {
+			if vs, ok := vs.(tilde.List); ok {
+				for _, vi := range vs {
+					if v, ok := vi.(tilde.Map); ok {
+						e := codegenFixture{}
+						d := NewDocumentMap(v)
+						e.FromDocumentMap(d)
+						sm = append(sm, e)
+					}
 				}
 			}
 		}
@@ -363,20 +392,22 @@ func (t *codegenFixture) FromDocumentMap(m DocumentMap) {
 
 	// # t.RepeatedMapPtr
 	//
-	// Type: []*nimona.codegenFixture, Kind: slice
+	// Type: []*nimona.codegenFixture, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: nimona.codegenFixture, ElemKind: struct
+	// ElemType: nimona.codegenFixture, ElemKind: struct, ElemTildeKind: Map
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: true
 	{
 		sm := []*codegenFixture{} // codegenFixture
-		if vs, ok := m["repeatedmapPtr"].([]any); ok {
-			for _, vi := range vs {
-				v, ok := vi.(DocumentMap)
-				if ok {
-					e := &codegenFixture{}
-					e.FromDocumentMap(v)
-					sm = append(sm, e)
+		if vs, err := d.m.Get("repeatedmapPtr"); err == nil {
+			if vs, ok := vs.(tilde.List); ok {
+				for _, vi := range vs {
+					if v, ok := vi.(tilde.Map); ok {
+						e := &codegenFixture{}
+						d := NewDocumentMap(v)
+						e.FromDocumentMap(d)
+						sm = append(sm, e)
+					}
 				}
 			}
 		}
@@ -387,94 +418,110 @@ func (t *codegenFixture) FromDocumentMap(m DocumentMap) {
 
 	// # t.RepeatedString
 	//
-	// Type: []string, Kind: slice
+	// Type: []string, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: string, ElemKind: string
+	// ElemType: string, ElemKind: string, ElemTildeKind: String
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["repeatedstring"].([]any); ok {
-			s := make([]string, len(v))
-			for i, vi := range v {
-				s[i] = vi.(string)
+		if v, err := d.m.Get("repeatedstring"); err == nil {
+			if v, ok := v.(tilde.List); ok {
+				s := make([]string, len(v))
+				for i, vi := range v {
+					if vi, ok := vi.(tilde.String); ok {
+						s[i] = string(vi)
+					}
+				}
+				t.RepeatedString = s
 			}
-			t.RepeatedString = s
 		}
 	}
 
 	// # t.RepeatedUint64
 	//
-	// Type: []uint64, Kind: slice
+	// Type: []uint64, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: uint64, ElemKind: uint64
+	// ElemType: uint64, ElemKind: uint64, ElemTildeKind: Uint64
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["repeateduint64"].([]any); ok {
-			s := make([]uint64, len(v))
-			for i, vi := range v {
-				s[i] = vi.(uint64)
+		if v, err := d.m.Get("repeateduint64"); err == nil {
+			if v, ok := v.(tilde.List); ok {
+				s := make([]uint64, len(v))
+				for i, vi := range v {
+					if vi, ok := vi.(tilde.Uint64); ok {
+						s[i] = uint64(vi)
+					}
+				}
+				t.RepeatedUint64 = s
 			}
-			t.RepeatedUint64 = s
 		}
 	}
 
 	// # t.String
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["string"].(string); ok {
-			t.String = v
+		if v, err := d.m.Get("string"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.String = string(v)
+			}
 		}
 	}
 
 	// # t.Uint64
 	//
-	// Type: uint64, Kind: uint64
+	// Type: uint64, Kind: uint64, TildeKind: Uint64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["uint64"].(uint64); ok {
-			t.Uint64 = v
+		if v, err := d.m.Get("uint64"); err == nil {
+			if v, ok := v.(tilde.Uint64); ok {
+				t.Uint64 = uint64(v)
+			}
 		}
 	}
 
+	return nil
 }
-func (t *codegenFixtureWithType) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *codegenFixtureWithType) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "foobar"
+		m.Set("$type", tilde.String("foobar"))
 	}
 
 	// # t.String
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.String) {
-			m["string"] = t.String
+			m.Set("string", tilde.String(t.String))
 		}
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *codegenFixtureWithType) FromDocumentMap(m DocumentMap) {
+func (t *codegenFixtureWithType) FromDocumentMap(d *DocumentMap) error {
 	*t = codegenFixtureWithType{}
 
 	// # t.String
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["string"].(string); ok {
-			t.String = v
+		if v, err := d.m.Get("string"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.String = string(v)
+			}
 		}
 	}
 
+	return nil
 }

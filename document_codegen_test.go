@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"nimona.io/internal/tilde"
 )
 
 func TestDocumentCodegen_WriteToFile(t *testing.T) {
@@ -37,7 +39,9 @@ func TestDocumentCodegen(t *testing.T) {
 
 	m1 := f1.DocumentMap()
 
-	require.Equal(t, "foo", m1["stringConst"])
+	gotConst, err := m1.m.Get("stringConst")
+	require.NoError(t, err)
+	require.Equal(t, tilde.String("foo"), gotConst)
 
 	b1, err := json.MarshalIndent(m1, "", "  ")
 	require.NoError(t, err)
@@ -58,7 +62,9 @@ func TestDocumentCodegen_WithType(t *testing.T) {
 
 	m1 := f1.DocumentMap()
 
-	require.Equal(t, "foobar", m1["$type"])
+	gotType, err := m1.m.Get("$type")
+	require.NoError(t, err)
+	require.Equal(t, tilde.String("foobar"), gotType)
 
 	b1, err := json.MarshalIndent(m1, "", "  ")
 	require.NoError(t, err)

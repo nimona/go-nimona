@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+
+	"nimona.io/internal/tilde"
 )
 
 // Notes on the code generation:
@@ -24,18 +26,21 @@ type (
 		Tag  Tag
 		Name string
 
-		SkipUnmarshal bool
+		SkipUnmarshal            bool
+		ImplementsDocumentValuer bool
 
 		Type      reflect.Type
 		Pkg       string
 		IsPointer bool
 		IsStruct  bool
 		IsSlice   bool
+		TildeKind tilde.ValueKind
 
 		ElemType      reflect.Type
 		IsElemPointer bool
 		IsElemStruct  bool
 		IsElemSlice   bool
+		ElemTildeKind tilde.ValueKind
 	}
 	Tag struct {
 		Name      string
@@ -152,6 +157,36 @@ func documentType(i interface{}) (*DocumentInfo, error) {
 		Name: t.Name(),
 	}
 
+	typeDocumentValuer := reflect.TypeOf((*DocumentValuer)(nil)).Elem()
+
+	typeToTildeKind := func(t reflect.Type) (tilde.ValueKind, error) {
+		switch t.Kind() {
+		case reflect.Map, reflect.Struct:
+			return tilde.KindMap, nil
+		case reflect.String:
+			return tilde.KindString, nil
+		case reflect.Bool:
+			return tilde.KindBool, nil
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return tilde.KindInt64, nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return tilde.KindUint64, nil
+		case reflect.Float32, reflect.Float64:
+			return tilde.KindInvalid, fmt.Errorf("floats are not supported")
+		case reflect.Slice:
+			if t.Elem().Kind() == reflect.Uint8 {
+				return tilde.KindBytes, nil
+			}
+			return tilde.KindList, nil
+		}
+
+		if t.Name() == "DocumentHash" {
+			return tilde.KindRef, nil
+		}
+
+		return tilde.KindInvalid, fmt.Errorf("unsupported type %s", t)
+	}
+
 	for i := 0; i < t.NumField(); i++ {
 		refField := t.Field(i)
 		if !nameIsExported(refField.Name) {
@@ -197,6 +232,10 @@ func documentType(i interface{}) (*DocumentInfo, error) {
 
 		docField.Tag = tag
 
+		docField.ImplementsDocumentValuer = docField.Type.Implements(
+			typeDocumentValuer,
+		)
+
 		switch docField.Type.Kind() {
 		case reflect.Struct:
 			docField.IsStruct = true
@@ -214,6 +253,21 @@ func documentType(i interface{}) (*DocumentInfo, error) {
 				docField.IsElemSlice = true
 			}
 		}
+
+		tildeKind, err := typeToTildeKind(docField.Type)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert type to tilde kind: %w", err)
+		}
+		docField.TildeKind = tildeKind
+
+		if docField.TildeKind == tilde.KindList {
+			tildeKind, err := typeToTildeKind(docField.ElemType)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert type to tilde kind: %w", err)
+			}
+			docField.ElemTildeKind = tildeKind
+		}
+
 		out.Fields = append(out.Fields, &docField)
 	}
 
@@ -278,17 +332,20 @@ import (
 	{{ range $pkgPath, $pkgAlias := .Imports }}
 	"{{ $pkgPath }}"
 	{{ end }}
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
 {{- range .Types }}
-func (t *{{ .Name }}) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *{{ .Name }}) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 	{{ range .Fields }}
 		// # t.{{ .Name }}
 		//
-		// Type: {{ .Type }}, Kind: {{ .Type.Kind }}
+		// Type: {{ .Type }}, Kind: {{ .Type.Kind }}, TildeKind: {{ .TildeKind.Name }}
 		// IsSlice: {{ .IsSlice }}, IsStruct: {{ .IsStruct }}, IsPointer: {{ .IsPointer }}
 		{{- if .ElemType }}
 		//
@@ -297,7 +354,7 @@ func (t *{{ .Name }}) DocumentMap() DocumentMap {
 		{{- end }}
 		{{- if .Tag.Const }}
 			{
-				m["{{ .Tag.Name }}"] = {{ .Tag.Const | printf "%q" }}
+				m.Set("{{ .Tag.Name }}", tilde.String({{ .Tag.Const | printf "%q" }}))
 			}
 			{{ continue }}
 		{{- end }}
@@ -305,36 +362,38 @@ func (t *{{ .Name }}) DocumentMap() DocumentMap {
 		{{- if .Tag.OmitEmpty }}
 		if !zero.IsZeroVal(t.{{ .Name }}) {
 		{{- end }}
-		{{- if and .IsSlice .IsElemStruct }}
-			sm := []any{}
+		{{- if eq .Type.String "nimona.DocumentHash" }}
+			m.Set("{{ .Tag.Name }}", tilde.Ref(t.{{ .Name }}[:]))
+		{{- else if and .IsSlice .IsElemStruct }}
+			sm := tilde.List{}
 			for _, v := range t.{{ .Name }} {
 				if !zero.IsZeroVal(t.{{ .Name }}) {
-					sm = append(sm, v.DocumentMap())
+					sm = append(sm, v.DocumentMap().m)
 				}
 			}
-			m["{{ .Tag.Name }}"] = sm
+			m.Set("{{ .Tag.Name }}", sm)
 		{{- else if .IsStruct }}
-			m["{{ .Tag.Name }}"] = t.{{ .Name }}.DocumentMap()
+			m.Set("{{ .Tag.Name }}", t.{{ .Name }}.DocumentMap().m)
 		{{- else if and (.IsSlice) (eq .ElemType.String "uint8") }}
-			m["{{ .Tag.Name }}"] = []byte(t.{{ .Name }})
+			m.Set("{{ .Tag.Name }}", tilde.{{ .TildeKind.Name }}(t.{{ .Name }}))
 		{{- else if .IsSlice }}
-			s := make([]any, len(t.{{ .Name }}))
+			s := make(tilde.List, len(t.{{ .Name }}))
 			for i, v := range t.{{ .Name }} {
-				s[i] = v
+				s[i] = tilde.{{ .ElemTildeKind.Name }}(v)
 			}
-			m["{{ .Tag.Name }}"] = s
+			m.Set("{{ .Tag.Name }}", s)
 		{{- else }}
-			m["{{ .Tag.Name }}"] = t.{{ .Name }}
+			m.Set("{{ .Tag.Name }}", tilde.{{ .TildeKind.Name }}(t.{{ .Name }}))
 		{{- end }}
 		{{- if .Tag.OmitEmpty }}
 		}
 		{{- end }}
 		}
 	{{ end }}
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *{{ .Name }}) FromDocumentMap(m DocumentMap) {
+func (t *{{ .Name }}) FromDocumentMap(d *DocumentMap) error {
 	*t = {{ .Name }}{}
 	{{ range .Fields }}
 		{{- if .Tag.Const }}
@@ -345,11 +404,11 @@ func (t *{{ .Name }}) FromDocumentMap(m DocumentMap) {
 		{{- end }}
 		// # t.{{ .Name }}
 		//
-		// Type: {{ .Type }}, Kind: {{ .Type.Kind }}
+		// Type: {{ .Type }}, Kind: {{ .Type.Kind }}, TildeKind: {{ .TildeKind.Name }}
 		// IsSlice: {{ .IsSlice }}, IsStruct: {{ .IsStruct }}, IsPointer: {{ .IsPointer }}
 		{{- if .ElemType }}
 		//
-		// ElemType: {{ .ElemType }}, ElemKind: {{ .ElemType.Kind }}
+		// ElemType: {{ .ElemType }}, ElemKind: {{ .ElemType.Kind }}, ElemTildeKind: {{ .ElemTildeKind.Name }}
 		// IsElemSlice: {{ .IsElemSlice }}, IsElemStruct: {{ .IsElemStruct }}, IsElemPointer: {{ .IsElemPointer }}
 		{{- end }}
 		{
@@ -359,137 +418,79 @@ func (t *{{ .Name }}) FromDocumentMap(m DocumentMap) {
 			{{- else }}
 			sm := []{{ typeName .ElemType }}{}
 			{{- end }}
-			if vs, ok := m["{{ .Tag.Name }}"].([]any); ok {
-				for _, vi := range vs {
-					v, ok := vi.(DocumentMap)
-					if ok {
-						{{- if .IsElemPointer }}
-							e := &{{ typeName .ElemType }}{}
-						{{- else }}
-							e := {{ typeName .ElemType }}{}
-						{{- end }}
-						e.FromDocumentMap(v)
-						sm = append(sm, e)
+			if vs, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+				if vs, ok := vs.(tilde.List); ok {
+					for _, vi := range vs {
+						if v, ok := vi.(tilde.Map); ok {
+							{{- if .IsElemPointer }}
+								e := &{{ typeName .ElemType }}{}
+							{{- else }}
+								e := {{ typeName .ElemType }}{}
+							{{- end }}
+							d := NewDocumentMap(v)
+							e.FromDocumentMap(d)
+							sm = append(sm, e)
+						}
 					}
 				}
 			}
 			if len(sm) > 0 {
 				t.{{ .Name }} = sm
 			}
+		{{- else if eq .Type.String "nimona.DocumentMap" }}
+			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+				if v, ok := v.(tilde.Map); ok {
+					t.{{ .Name }} = *NewDocumentMap(v)
+				}
+			}
 		{{- else if .IsStruct }}
-			if v, ok := m["{{ .Tag.Name }}"].(DocumentMap); ok {
-				e := {{ typeName .Type }}{}
-				e.FromDocumentMap(v)
-				{{- if .IsPointer }}
-					t.{{ .Name }} = &e
-				{{- else }}
-					t.{{ .Name }} = e
-				{{- end }}
-			}
-		{{- else if eq .Type.String "string" }}
-			if v, ok := m["{{ .Tag.Name }}"].(string); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "int" }}
-			if v, ok := m["{{ .Tag.Name }}"].(int); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "int64" }}
-			if v, ok := m["{{ .Tag.Name }}"].(int64); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "uint64" }}
-			if v, ok := m["{{ .Tag.Name }}"].(uint64); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "float64" }}
-			if v, ok := m["{{ .Tag.Name }}"].(float64); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "bool" }}
-			if v, ok := m["{{ .Tag.Name }}"].(bool); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[]byte" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]byte); ok {
-				t.{{ .Name }} = v
-			}
-		{{/*- else if eq .Type.String "[]uint8" */}}
-		{{- else if and (.IsSlice) (eq .ElemType.String "uint8") }}
-			if v, ok := m["{{ .Tag.Name }}"].([]byte); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[][]uint8" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]any); ok {
-				s := make([][]byte, len(v))
-				for i, vi := range v {
-					s[i] = vi.([]byte)
+			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+				if v, ok := v.(tilde.Map); ok {
+					e := {{ typeName .Type }}{}
+					d := NewDocumentMap(v)
+					e.FromDocumentMap(d)
+					{{- if .IsPointer }}
+						t.{{ .Name }} = &e
+					{{- else }}
+						t.{{ .Name }} = e
+					{{- end }}
 				}
-				t.{{ .Name }} = s
-			}
-		{{- else if .IsSlice }}
-			if v, ok := m["{{ .Tag.Name }}"].([]any); ok {
-				s := make([]{{ typeName .ElemType }}, len(v))
-				for i, vi := range v {
-					s[i] = vi.({{ typeName .ElemType }})
-				}
-				t.{{ .Name }} = s
-			}
-		{{- else if eq .Type.String "[]string" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]string); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[]int" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]int); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[]int64" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]int64); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[]uint64" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]uint64); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[]float64" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]float64); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[]bool" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]bool); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[][]byte" }}
-			if v, ok := m["{{ .Tag.Name }}"].([][]byte); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if eq .Type.String "[][]uint8" }}
-			if v, ok := m["{{ .Tag.Name }}"].([][]uint8); ok {
-				t.{{ .Name }} = [][]byte(v)
-			}
-		{{- else if and (.IsSlice) (eq .ElemType.String "uint8") }}
-			if v, ok := m["{{ .Tag.Name }}"].([]byte); ok {
-				t.{{ .Name }} = v
-			}
-		{{- else if .IsSlice }}
-			if v, ok := m["{{ .Tag.Name }}"].([]{{ .ElemType }}); ok {
-				t.{{ .Name }} = v
 			}
 		{{- else if eq .Type.String "nimona.DocumentHash" }}
-			if v, ok := m["{{ .Tag.Name }}"].([]uint8); ok {
-				copy(t.DocumentHash[:], v)
+			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+				if v, ok := v.(tilde.Ref); ok {
+					copy(t.{{ .Name }}[:], v)
+				}
 			}
-		{{- else if eq .Type.String "nimona.DocumentMap" }}
-			if v, ok := m["{{ .Tag.Name }}"].(DocumentMap); ok {
-				t.{{ .Name }} = v
-			} else if v, ok := m["{{ .Tag.Name }}"].(map[string]any); ok {
-				t.{{ .Name }} = DocumentMap(v)
+		{{- else if eq .Type.String "[]uint8" }}
+			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+				if v, ok := v.(tilde.Bytes); ok {
+					t.{{ .Name }} = []byte(v)
+				}
+			}
+		{{- else if eq .TildeKind.Name "List" }}
+			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+				if v, ok := v.(tilde.{{ .TildeKind.Name }}); ok {
+					s := make({{ .Type }}, len(v))
+					for i, vi := range v {
+						if vi, ok := vi.(tilde.{{ .ElemTildeKind.Name }}); ok {
+							s[i] = {{ .ElemType }}(vi)
+						}
+					}
+					t.{{ .Name }} = s
+				}
 			}
 		{{- else }}
-			// TODO: Unsupported type {{ .Type.String }}
+			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+				if v, ok := v.(tilde.{{ .TildeKind.Name }}); ok {
+					t.{{ .Name }} = {{ typeName .Type }}(v)
+				}
+			}
 		{{- end }}
 		}
 	{{ end }}
+
+	return nil
 }
 {{- end }}
 
