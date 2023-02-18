@@ -2,10 +2,8 @@ package tilde
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 )
 
@@ -63,26 +61,18 @@ var testMap = Map{
 }
 
 var testMapComplete = Map{
-	"string": String("bar"),
-	"int64":  Int64(-42),
-	"uint64": Uint64(42),
-	"bool":   Bool(true),
-	"bytes":  Bytes([]byte("bar")),
-	"ref":    Ref("foo"),
-	"map": Map{
-		"string": String("qux"),
+	"s": String("bar"),
+	"i": Int64(-42),
+	"u": Uint64(42),
+	"b": Bool(true),
+	"d": Bytes([]byte("bar")),
+	"r": Ref("foo"),
+	"m": Map{
+		"s": String("qux"),
 	},
 	"as": List{
 		String("quux"),
 		String("quuz"),
-	},
-	"aas": List{
-		List{
-			String("quux"),
-		},
-		List{
-			String("quuz"),
-		},
 	},
 	"ai": List{
 		Int64(-1),
@@ -100,18 +90,129 @@ var testMapComplete = Map{
 		Bytes([]byte("foo")),
 		Bytes([]byte("bar")),
 	},
-	// "ar": List{
-	// 	Ref("foo"),
-	// 	Ref("bar"),
-	// },
-	// "am": List{
-	// 	Map{
-	// 		"string": String("qux"),
-	// 	},
-	// 	Map{
-	// 		"string": String("quux"),
-	// 	},
-	// },
+	"ar": List{
+		Ref("foo"),
+		Ref("bar"),
+	},
+	"am": List{
+		Map{
+			"s": String("qux"),
+			"i": Int64(-42),
+		},
+		Map{
+			"s": String("quux"),
+			"u": Uint64(42),
+		},
+	},
+	"aas": List{
+		List{
+			String("quux"),
+			String("quuz"),
+		},
+		List{
+			String("quuz"),
+			String("qux"),
+		},
+	},
+	"aai": List{
+		List{
+			Int64(-1),
+			Int64(-2),
+		},
+		List{
+			Int64(-2),
+			Int64(-1),
+		},
+	},
+	"aau": List{
+		List{
+			Uint64(1),
+			Uint64(2),
+		},
+		List{
+			Uint64(2),
+			Uint64(1),
+		},
+	},
+	"aab": List{
+		List{
+			Bool(true),
+			Bool(false),
+		},
+		List{
+			Bool(false),
+			Bool(true),
+		},
+	},
+	"aad": List{
+		List{
+			Bytes([]byte("foo")),
+			Bytes([]byte("bar")),
+		},
+		List{
+			Bytes([]byte("bar")),
+			Bytes([]byte("foo")),
+		},
+	},
+	"aar": List{
+		List{
+			Ref("foo"),
+			Ref("bar"),
+		},
+		List{
+			Ref("bar"),
+			Ref("foo"),
+		},
+		List{
+			Ref("foobar"),
+			Ref("foobaz"),
+		},
+	},
+	"aam": List{
+		List{
+			Map{
+				"s": String("qux"),
+				"m": Map{
+					"aaaas": List{
+						List{
+							List{
+								List{
+									List{
+										String("qux"),
+										String("quux"),
+										String("quuz"),
+									},
+								},
+							},
+						},
+					},
+				},
+				"aab": List{
+					List{
+						Bool(true),
+						Bool(false),
+					},
+				},
+			},
+		},
+		List{
+			Map{
+				"s": String("quux"),
+				"m": Map{
+					"am": List{
+						Map{
+							"s": String("qux"),
+							"i": Int64(-42),
+						},
+						Map{
+							"s": String("quux"),
+							"u": Uint64(42),
+						},
+					},
+				},
+			},
+		},
+	},
 }
 
 func TestGetters(t *testing.T) {
@@ -340,14 +441,9 @@ func TestJSON_Unmarshal(t *testing.T) {
 	testJSON, err := json.MarshalIndent(testMapComplete, "", "  ")
 	require.NoError(t, err)
 
-	fmt.Println(string(testJSON))
-
 	t.Run("Unmarshal", func(t *testing.T) {
 		var got Map
 		err := json.Unmarshal(testJSON, &got)
-
-		spew.Dump(got)
-
 		require.NoError(t, err)
 		require.EqualValues(t, testMapComplete, got)
 	})

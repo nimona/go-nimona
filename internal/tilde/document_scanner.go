@@ -59,29 +59,67 @@ func (s *Scanner) Scan() (Map, error) {
 	return nm.(Map), nil
 }
 
-func unmarshalValue(v *fastjson.Value) (Value, error) {
+func unmarshalValue(v *fastjson.Value, nextHints ...Hint) (Value, error) {
 	switch v.Type() {
 	case fastjson.TypeString:
-		s, err := v.StringBytes()
-		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling string: %w", err)
+		if len(nextHints) == 0 {
+			nextHints = []Hint{HintString}
 		}
-		return String(s), nil
+		switch nextHints[0] {
+		case HintRef:
+			nb, err := v.StringBytes()
+			if err != nil {
+				return nil, fmt.Errorf("error unmarshaling ref: %w", err)
+			}
+			nb, err = base64.StdEncoding.DecodeString(string(nb))
+			if err != nil {
+				return nil, fmt.Errorf("error unmarshaling ref: %w", err)
+			}
+			return Ref(nb), nil
+		case HintBytes:
+			nb, err := v.StringBytes()
+			if err != nil {
+				return nil, fmt.Errorf("error unmarshaling bytes: %w", err)
+			}
+			nb, err = base64.StdEncoding.DecodeString(string(nb))
+			if err != nil {
+				return nil, fmt.Errorf("error unmarshaling bytes: %w", err)
+			}
+			return Bytes(nb), nil
+		case HintString:
+			s, err := v.StringBytes()
+			if err != nil {
+				return nil, fmt.Errorf("error unmarshaling string: %w", err)
+			}
+			return String(s), nil
+		default:
+			return nil, fmt.Errorf("unknown string type: %s", string(nextHints[0]))
+		}
 	case fastjson.TypeNumber:
-		f, err := v.Float64()
-		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling float64: %w", err)
+		if len(nextHints) == 0 {
+			nextHints = []Hint{HintInt64}
 		}
-		if f < 0 {
-			return Int64(int64(f)), nil
+		switch nextHints[0] {
+		case HintInt64:
+			nb, err := v.Float64()
+			if err != nil {
+				return nil, fmt.Errorf("error unmarshaling int64: %w", err)
+			}
+			return Int64(int64(nb)), nil
+		case HintUint64:
+			nb, err := v.Float64()
+			if err != nil {
+				return nil, fmt.Errorf("error unmarshaling uint64: %w", err)
+			}
+			return Uint64(uint64(nb)), nil
+		default:
+			return nil, fmt.Errorf("unknown number type: %s", string(nextHints[0]))
 		}
-		return Uint64(uint64(f)), nil
 	case fastjson.TypeTrue:
 		return Bool(true), nil
 	case fastjson.TypeFalse:
 		return Bool(false), nil
 	case fastjson.TypeNull:
-		// do nothing
 		return nil, nil
 	case fastjson.TypeObject:
 		o, err := v.Object()
@@ -91,8 +129,15 @@ func unmarshalValue(v *fastjson.Value) (Value, error) {
 		nm := Map{}
 		var errs error
 		o.Visit(func(k []byte, v *fastjson.Value) {
-			var nv Value
-			nv, err = unmarshalValue(v)
+			ck, hs, err := getKindHints(string(k))
+			if err != nil {
+				errs = multierror.Append(
+					errs,
+					fmt.Errorf("error unmarshaling object key '%s': %w", string(k), err),
+				)
+				return
+			}
+			nv, err := unmarshalValue(v, hs...)
 			if err != nil {
 				errs = multierror.Append(
 					errs,
@@ -103,68 +148,7 @@ func unmarshalValue(v *fastjson.Value) (Value, error) {
 			if nv == nil {
 				return
 			}
-			// Check hints
-			ck, kind := getKindHint(string(k))
-			switch kind {
-			case KindRef:
-				nb, err := v.StringBytes()
-				if err != nil {
-					errs = multierror.Append(
-						errs,
-						fmt.Errorf("error unmarshaling object value '%s': %w", string(k), err),
-					)
-					return
-				}
-				nb, err = base64.StdEncoding.DecodeString(string(nb))
-				if err != nil {
-					errs = multierror.Append(
-						errs,
-						fmt.Errorf("error unmarshaling object value '%s': %w", string(k), err),
-					)
-					return
-				}
-				nv = Ref(nb)
-			case KindBytes:
-				nb, err := v.StringBytes()
-				if err != nil {
-					errs = multierror.Append(
-						errs,
-						fmt.Errorf("error unmarshaling object value '%s': %w", string(k), err),
-					)
-					return
-				}
-				nb, err = base64.StdEncoding.DecodeString(string(nb))
-				if err != nil {
-					errs = multierror.Append(
-						errs,
-						fmt.Errorf("error unmarshaling object value '%s': %w", string(k), err),
-					)
-					return
-				}
-				nv = Bytes(nb)
-			case KindInt64:
-				nb, err := v.Float64()
-				if err != nil {
-					errs = multierror.Append(
-						errs,
-						fmt.Errorf("error unmarshaling object value '%s': %w", string(k), err),
-					)
-					return
-				}
-				nv = Int64(int64(nb))
-			case KindUint64:
-				nb, err := v.Float64()
-				if err != nil {
-					errs = multierror.Append(
-						errs,
-						fmt.Errorf("error unmarshaling object value '%s': %w", string(k), err),
-					)
-					return
-				}
-				nv = Uint64(uint64(nb))
-			}
 			nm[ck] = nv
-			fmt.Printf("key: %s, value: %v\n", ck, nv)
 		})
 		if errs != nil {
 			return nil, errs
@@ -177,7 +161,11 @@ func unmarshalValue(v *fastjson.Value) (Value, error) {
 		}
 		nl := List{}
 		for _, v := range nv {
-			ne, err := unmarshalValue(v)
+			remainingHints := nextHints
+			if len(remainingHints) > 0 {
+				remainingHints = remainingHints[1:]
+			}
+			ne, err := unmarshalValue(v, remainingHints...)
 			if err != nil {
 				return nil, fmt.Errorf("error unmarshaling list value: %w", err)
 			}
@@ -191,31 +179,35 @@ func unmarshalValue(v *fastjson.Value) (Value, error) {
 	return nil, fmt.Errorf("unknown type %s", v.Type())
 }
 
-func getKindHint(k string) (string, ValueKind) {
-	ck, hint, _ := strings.Cut(k, ":")
-	if hint == "" {
-		return k, KindInvalid
+func getKindHints(k string) (string, []Hint, error) {
+	ck, hintString, _ := strings.Cut(k, ":")
+	if hintString == "" {
+		return k, nil, nil
 	}
 
-	switch hint {
-	case "s":
-		return ck, KindString
-	case "b":
-		return ck, KindBool
-	case "i":
-		return ck, KindInt64
-	case "u":
-		return ck, KindUint64
-	case "d":
-		return ck, KindBytes
-	case "r":
-		return ck, KindRef
-	case "a":
-		// TODO: support nested arrays
-		return ck, KindList
-	case "m":
-		return ck, KindMap
-	default:
-		return ck, KindInvalid
+	hints := []Hint{}
+	for _, hintRune := range hintString {
+		switch Hint(hintRune) {
+		case HintString:
+			hints = append(hints, HintString)
+		case HintBool:
+			hints = append(hints, HintBool)
+		case HintInt64:
+			hints = append(hints, HintInt64)
+		case HintUint64:
+			hints = append(hints, HintUint64)
+		case HintBytes:
+			hints = append(hints, HintBytes)
+		case HintRef:
+			hints = append(hints, HintRef)
+		case HintList:
+			hints = append(hints, HintList)
+		case HintMap:
+			hints = append(hints, HintMap)
+		default:
+			return ck, nil, fmt.Errorf("unknown hint: %s", string(hintRune))
+		}
 	}
+
+	return ck, hints, nil
 }
