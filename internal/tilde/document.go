@@ -403,7 +403,7 @@ func (m Map) MarshalJSON() ([]byte, error) {
 			hints := []Hint{
 				cv.hint(),
 			}
-			for len(cv) != 0 {
+			for len(cv) != 0 && cv[0] != nil {
 				hints = append(hints, cv[0].hint())
 				if cv[0].hint() != HintList {
 					break
