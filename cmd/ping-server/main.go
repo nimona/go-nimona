@@ -31,7 +31,7 @@ func main() {
 	var publicKey nimona.PublicKey
 	var privateKey nimona.PrivateKey
 
-	if cfg.PeerPublicKey != "" && cfg.PeerPrivateKey != "" {
+	if cfg.PeerPublicKey == "" || cfg.PeerPrivateKey == "" {
 		publicKey, privateKey, err = nimona.GenerateKey()
 		if err != nil {
 			panic(fmt.Errorf("error generating key: %w", err))
