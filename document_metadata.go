@@ -5,10 +5,6 @@ import (
 )
 
 type (
-	DocumentBase struct {
-		Type     string   `nimona:"$type"`
-		Metadata Metadata `nimona:"$metadata,omitempty"`
-	}
 	Metadata struct {
 		Owner       *Identity     `nimona:"owner,omitempty"`
 		Permissions []Permissions `nimona:"permissions,omitempty"`

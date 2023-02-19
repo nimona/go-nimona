@@ -4,35 +4,41 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *MessageWrapper) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *MessageWrapper) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.Type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = t.Type
+		m.Set("$type", tilde.String(t.Type))
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *MessageWrapper) FromDocumentMap(m DocumentMap) {
+func (t *MessageWrapper) FromDocumentMap(d *DocumentMap) error {
 	*t = MessageWrapper{}
 
 	// # t.Type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["$type"].(string); ok {
-			t.Type = v
+		if v, err := d.m.Get("$type"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Type = string(v)
+			}
 		}
 	}
 
+	return nil
 }

@@ -46,5 +46,5 @@ func TestHandlerDocument(t *testing.T) {
 	// Request document
 	gotDoc, err := RequestDocument(ctx, ses, clnPeerConfig, docID)
 	require.NoError(t, err)
-	require.Equal(t, doc, *gotDoc)
+	require.Equal(t, doc, gotDoc)
 }

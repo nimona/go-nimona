@@ -4,200 +4,221 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *NetworkAlias) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *NetworkAlias) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/network/alias"
+		m.Set("$type", tilde.String("core/network/alias"))
 	}
 
 	// # t.Hostname
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["hostname"] = t.Hostname
+		m.Set("hostname", tilde.String(t.Hostname))
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *NetworkAlias) FromDocumentMap(m DocumentMap) {
+func (t *NetworkAlias) FromDocumentMap(d *DocumentMap) error {
 	*t = NetworkAlias{}
 
 	// # t.Hostname
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["hostname"].(string); ok {
-			t.Hostname = v
+		if v, err := d.m.Get("hostname"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Hostname = string(v)
+			}
 		}
 	}
 
+	return nil
 }
-func (t *NetworkIdentity) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *NetworkIdentity) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/network/identity"
+		m.Set("$type", tilde.String("core/network/identity"))
 	}
 
 	// # t.NetworkAlias
 	//
-	// Type: nimona.NetworkAlias, Kind: struct
+	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.NetworkAlias) {
-			m["networkAlias"] = t.NetworkAlias.DocumentMap()
+			m.Set("networkAlias", t.NetworkAlias.DocumentMap().m)
 		}
 	}
 
 	// # t.NetworkInfoRootID
 	//
-	// Type: nimona.DocumentID, Kind: struct
+	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.NetworkInfoRootID) {
-			m["networkInfoRootID"] = t.NetworkInfoRootID.DocumentMap()
+			m.Set("networkInfoRootID", t.NetworkInfoRootID.DocumentMap().m)
 		}
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *NetworkIdentity) FromDocumentMap(m DocumentMap) {
+func (t *NetworkIdentity) FromDocumentMap(d *DocumentMap) error {
 	*t = NetworkIdentity{}
 
 	// # t.NetworkAlias
 	//
-	// Type: nimona.NetworkAlias, Kind: struct
+	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, ok := m["networkAlias"].(DocumentMap); ok {
-			e := NetworkAlias{}
-			e.FromDocumentMap(v)
-			t.NetworkAlias = e
+		if v, err := d.m.Get("networkAlias"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := NetworkAlias{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.NetworkAlias = e
+			}
 		}
 	}
 
 	// # t.NetworkInfoRootID
 	//
-	// Type: nimona.DocumentID, Kind: struct
+	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, ok := m["networkInfoRootID"].(DocumentMap); ok {
-			e := DocumentID{}
-			e.FromDocumentMap(v)
-			t.NetworkInfoRootID = e
+		if v, err := d.m.Get("networkInfoRootID"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := DocumentID{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.NetworkInfoRootID = e
+			}
 		}
 	}
 
+	return nil
 }
-func (t *NetworkInfo) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *NetworkInfo) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/network/info"
+		m.Set("$type", tilde.String("core/network/info"))
 	}
 
 	// # t.Metadata
 	//
-	// Type: nimona.Metadata, Kind: struct
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m["$metadata"] = t.Metadata.DocumentMap()
+			m.Set("$metadata", t.Metadata.DocumentMap().m)
 		}
 	}
 
 	// # t.NetworkAlias
 	//
-	// Type: nimona.NetworkAlias, Kind: struct
+	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m["networkAlias"] = t.NetworkAlias.DocumentMap()
+		m.Set("networkAlias", t.NetworkAlias.DocumentMap().m)
 	}
 
 	// # t.PeerAddresses
 	//
-	// Type: []nimona.PeerAddr, Kind: slice
+	// Type: []nimona.PeerAddr, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: nimona.PeerAddr, ElemKind: struct
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
-		sm := []any{}
+		sm := tilde.List{}
 		for _, v := range t.PeerAddresses {
 			if !zero.IsZeroVal(t.PeerAddresses) {
-				sm = append(sm, v.DocumentMap())
+				sm = append(sm, v.DocumentMap().m)
 			}
 		}
-		m["peerAddresses"] = sm
+		m.Set("peerAddresses", sm)
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *NetworkInfo) FromDocumentMap(m DocumentMap) {
+func (t *NetworkInfo) FromDocumentMap(d *DocumentMap) error {
 	*t = NetworkInfo{}
 
 	// # t.Metadata
 	//
-	// Type: nimona.Metadata, Kind: struct
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, ok := m["$metadata"].(DocumentMap); ok {
-			e := Metadata{}
-			e.FromDocumentMap(v)
-			t.Metadata = e
+		if v, err := d.m.Get("$metadata"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := Metadata{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.Metadata = e
+			}
 		}
 	}
 
 	// # t.NetworkAlias
 	//
-	// Type: nimona.NetworkAlias, Kind: struct
+	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, ok := m["networkAlias"].(DocumentMap); ok {
-			e := NetworkAlias{}
-			e.FromDocumentMap(v)
-			t.NetworkAlias = e
+		if v, err := d.m.Get("networkAlias"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := NetworkAlias{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.NetworkAlias = e
+			}
 		}
 	}
 
 	// # t.PeerAddresses
 	//
-	// Type: []nimona.PeerAddr, Kind: slice
+	// Type: []nimona.PeerAddr, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: nimona.PeerAddr, ElemKind: struct
+	// ElemType: nimona.PeerAddr, ElemKind: struct, ElemTildeKind: Map
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []PeerAddr{}
-		if vs, ok := m["peerAddresses"].([]any); ok {
-			for _, vi := range vs {
-				v, ok := vi.(DocumentMap)
-				if ok {
-					e := PeerAddr{}
-					e.FromDocumentMap(v)
-					sm = append(sm, e)
+		if vs, err := d.m.Get("peerAddresses"); err == nil {
+			if vs, ok := vs.(tilde.List); ok {
+				for _, vi := range vs {
+					if v, ok := vi.(tilde.Map); ok {
+						e := PeerAddr{}
+						d := NewDocumentMap(v)
+						e.FromDocumentMap(d)
+						sm = append(sm, e)
+					}
 				}
 			}
 		}
@@ -206,4 +227,5 @@ func (t *NetworkInfo) FromDocumentMap(m DocumentMap) {
 		}
 	}
 
+	return nil
 }

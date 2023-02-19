@@ -29,7 +29,7 @@ func RequestPeerCapabilities(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = msgRes.Codec.Decode(msgRes.Body, res)
+	err = res.FromDocumentMap(msgRes.DocumentMap)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -41,7 +41,7 @@ func (h *HandlerPeerCapabilities) HandlePeerCapabilitiesRequest(
 	msg *Request,
 ) error {
 	req := PeerCapabilitiesRequest{}
-	err := msg.Codec.Decode(msg.DocumentRaw, &req)
+	err := req.FromDocumentMap(msg.DocumentMap)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}

@@ -12,7 +12,7 @@ func TestDocumentHash(t *testing.T) {
 		String: "foo",
 	}
 
-	hash := NewDocumentHash(doc)
+	hash := NewDocumentHash(doc.DocumentMap())
 	require.Equal(t, "4QBmwF9dpvChi39wVAiCWi8cAKEiRpT3hRD4TNopirdT", hash.String())
 }
 
@@ -32,5 +32,5 @@ func NewTestRandomDocumentID(t *testing.T) DocumentID {
 		String: uuid.New().String(),
 	}
 
-	return NewDocumentID(doc)
+	return NewDocumentID(doc.DocumentMap())
 }

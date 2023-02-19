@@ -4,75 +4,84 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *PeerCapabilitiesRequest) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *PeerCapabilitiesRequest) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/peer/capabilities.request"
+		m.Set("$type", tilde.String("core/peer/capabilities.request"))
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *PeerCapabilitiesRequest) FromDocumentMap(m DocumentMap) {
+func (t *PeerCapabilitiesRequest) FromDocumentMap(d *DocumentMap) error {
 	*t = PeerCapabilitiesRequest{}
 
+	return nil
 }
-func (t *PeerCapabilitiesResponse) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *PeerCapabilitiesResponse) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/peer/capabilities.response"
+		m.Set("$type", tilde.String("core/peer/capabilities.response"))
 	}
 
 	// # t.Capabilities
 	//
-	// Type: []string, Kind: slice
+	// Type: []string, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: string, ElemKind: string
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		s := make([]any, len(t.Capabilities))
+		s := make(tilde.List, len(t.Capabilities))
 		for i, v := range t.Capabilities {
-			s[i] = v
+			s[i] = tilde.String(v)
 		}
-		m[""] = s
+		m.Set("", s)
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *PeerCapabilitiesResponse) FromDocumentMap(m DocumentMap) {
+func (t *PeerCapabilitiesResponse) FromDocumentMap(d *DocumentMap) error {
 	*t = PeerCapabilitiesResponse{}
 
 	// # t.Capabilities
 	//
-	// Type: []string, Kind: slice
+	// Type: []string, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: string, ElemKind: string
+	// ElemType: string, ElemKind: string, ElemTildeKind: String
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m[""].([]any); ok {
-			s := make([]string, len(v))
-			for i, vi := range v {
-				s[i] = vi.(string)
+		if v, err := d.m.Get(""); err == nil {
+			if v, ok := v.(tilde.List); ok {
+				s := make([]string, len(v))
+				for i, vi := range v {
+					if vi, ok := vi.(tilde.String); ok {
+						s[i] = string(vi)
+					}
+				}
+				t.Capabilities = s
 			}
-			t.Capabilities = s
 		}
 	}
 
+	return nil
 }

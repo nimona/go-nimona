@@ -43,7 +43,7 @@ func TestDocumentStore(t *testing.T) {
 	}
 	doc := val.DocumentMap()
 
-	docBytes, err := MarshalCBORBytes(doc)
+	docBytes, err := doc.MarshalJSON()
 	require.NoError(t, err)
 
 	// Create an entry
@@ -62,7 +62,7 @@ func TestDocumentStore(t *testing.T) {
 	// Test getting an entry
 	gotDoc, err := store.GetDocument(entry.DocumentID)
 	require.NoError(t, err)
-	require.Equal(t, gotDoc, doc)
+	require.EqualValues(t, gotDoc, doc)
 }
 
 func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {

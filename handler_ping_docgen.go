@@ -4,79 +4,88 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *Ping) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *Ping) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "test/ping"
+		m.Set("$type", tilde.String("test/ping"))
 	}
 
 	// # t.Nonce
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["nonce"] = t.Nonce
+		m.Set("nonce", tilde.String(t.Nonce))
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *Ping) FromDocumentMap(m DocumentMap) {
+func (t *Ping) FromDocumentMap(d *DocumentMap) error {
 	*t = Ping{}
 
 	// # t.Nonce
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["nonce"].(string); ok {
-			t.Nonce = v
+		if v, err := d.m.Get("nonce"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Nonce = string(v)
+			}
 		}
 	}
 
+	return nil
 }
-func (t *Pong) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *Pong) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "test/pong"
+		m.Set("$type", tilde.String("test/pong"))
 	}
 
 	// # t.Nonce
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["nonce"] = t.Nonce
+		m.Set("nonce", tilde.String(t.Nonce))
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *Pong) FromDocumentMap(m DocumentMap) {
+func (t *Pong) FromDocumentMap(d *DocumentMap) error {
 	*t = Pong{}
 
 	// # t.Nonce
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["nonce"].(string); ok {
-			t.Nonce = v
+		if v, err := d.m.Get("nonce"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Nonce = string(v)
+			}
 		}
 	}
 
+	return nil
 }

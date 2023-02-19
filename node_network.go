@@ -72,7 +72,7 @@ func (n *Node) JoinNetwork(ctx context.Context, nIDs NetworkIdentifier) (*Networ
 		networkInfo: *netInfo,
 	})
 
-	err := n.config.DocumentStore.PutDocument(netInfo)
+	err := n.config.DocumentStore.PutDocument(netInfo.DocumentMap())
 	if err != nil {
 		return nil, fmt.Errorf("error storing network info: %w", err)
 	}

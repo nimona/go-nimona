@@ -46,7 +46,7 @@ func RequestDocument(
 
 	req.Metadata.Signature = NewDocumentSignature(
 		peerConfig.GetPrivateKey(),
-		NewDocumentHash(req),
+		NewDocumentHash(req.DocumentMap()),
 	)
 
 	msgRes, err := ses.Request(ctx, req)
@@ -54,8 +54,8 @@ func RequestDocument(
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
 
-	res := DocumentResponse{}
-	err = msgRes.Codec.Decode(msgRes.Body, &res)
+	res := &DocumentResponse{}
+	err = res.FromDocumentMap(msgRes.DocumentMap)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -75,8 +75,8 @@ func (h *HandlerDocument) HandleDocumentRequest(
 	ctx context.Context,
 	msg *Request,
 ) error {
-	req := DocumentRequest{}
-	err := msg.Codec.Decode(msg.DocumentRaw, &req)
+	req := &DocumentRequest{}
+	err := req.FromDocumentMap(msg.DocumentMap)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -104,7 +104,7 @@ func (h *HandlerDocument) HandleDocumentRequest(
 
 	res := &DocumentResponse{
 		Found:    true,
-		Document: doc,
+		Document: doc.DocumentMap(),
 	}
 	err = msg.Respond(res)
 	if err != nil {

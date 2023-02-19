@@ -1,6 +1,7 @@
 package nimona
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -32,36 +33,42 @@ func TestDocumentHash_Ping(t *testing.T) {
 	exp := "82pCJU9HhpjB1XgndtpSzby9UT13dCmdbBVFnDyWysGq"
 
 	t.Run("hash", func(t *testing.T) {
-		h := NewDocumentHash(m)
+		h := NewDocumentHash(m.DocumentMap())
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("unmarshal and hash", func(t *testing.T) {
-		b, err := MarshalCBORBytes(m)
+		b, err := m.DocumentMap().MarshalJSON()
+		require.NoError(t, err)
+
+		fmt.Println(string(b))
+
+		gm := &DocumentMap{}
+		err = gm.UnmarshalJSON(b)
 		require.NoError(t, err)
 
 		g := &CborFixture{}
-		err = UnmarshalCBORBytes(b, g)
+		err = g.FromDocumentMap(gm)
 
 		require.NoError(t, err)
 		require.Equal(t, m, g)
 
-		h := NewDocumentHash(g)
+		h := NewDocumentHash(g.DocumentMap())
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("ephemeral fields should not affect hash", func(t *testing.T) {
 		m.EphemeralString = "foo"
-		h := NewDocumentHash(m)
+		h := NewDocumentHash(m.DocumentMap())
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("add document id", func(t *testing.T) {
-		m.DocumentID = NewDocumentID(m)
+		m.DocumentID = NewDocumentID(m.DocumentMap())
 		exp := "2VMpDXUXnj4cX4UYpQK441x2UKCGn5cCswkxmYWvtyGr"
 
 		t.Run("test hashing", func(t *testing.T) {
-			h := NewDocumentHash(m)
+			h := NewDocumentHash(m.DocumentMap())
 			require.Equal(t, exp, h.String())
 		})
 	})
@@ -83,5 +90,5 @@ func NewRandomHash(t *testing.T) DocumentHash {
 		String: uuid.New().String(),
 	}
 
-	return NewDocumentHash(doc)
+	return NewDocumentHash(doc.DocumentMap())
 }

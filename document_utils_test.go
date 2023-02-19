@@ -15,7 +15,7 @@ package nimona
 // 	}}
 // 	for _, tt := range tests {
 // 		t.Run(tt.name, func(t *testing.T) {
-// 			cborBytes, err := MarshalCBORBytes(tt.cborer)
+// 			cborBytes, err := MarshalJSON(tt.cborer)
 // 			require.NoError(t, err)
 
 // 			got, err := GetDocumentTypeFromCbor(cborBytes)

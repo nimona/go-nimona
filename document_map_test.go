@@ -37,44 +37,44 @@ func TestDocumentMap(t *testing.T) {
 
 	exp := `
 	{
-	  "$type": "test/fixture",
-	  "bool": true,
-	  "bytes": "YmFy",
-	  "int64": -42,
-	  "map": {
-	    "$type": "test/fixture",
-	    "string": "foo"
+	  "$type:s": "test/fixture",
+	  "bool:b": true,
+	  "bytes:d": "YmFy",
+	  "int64:i": -42,
+	  "map:m": {
+	    "$type:s": "test/fixture",
+	    "string:s": "foo"
 	  },
-	  "repeatedbytes": [
+	  "repeatedbytes:ad": [
 	    "Zm9v",
 	    "YmFy"
 	  ],
-	  "repeatedint64": [
+	  "repeatedint64:ai": [
 	    -1,
 	    -2,
 	    -3
 	  ],
-	  "repeatedmap": [
+	  "repeatedmap:am": [
 	    {
-	      "$type": "test/fixture",
-	      "string": "foo"
+	      "$type:s": "test/fixture",
+	      "string:s": "foo"
 	    },
 	    {
-	      "$type": "test/fixture",
-	      "string": "bar"
+	      "$type:s": "test/fixture",
+	      "string:s": "bar"
 	    }
 	  ],
-	  "repeatedstring": [
+	  "repeatedstring:as": [
 	    "foo",
 	    "bar"
 	  ],
-	  "repeateduint64": [
+	  "repeateduint64:au": [
 	    1,
 	    2,
 	    3
 	  ],
-	  "string": "foo",
-	  "uint64": 42
+	  "string:s": "foo",
+	  "uint64:u": 42
 	}`
 
 	fixMap := fix.DocumentMap()
@@ -89,15 +89,5 @@ func TestDocumentMap(t *testing.T) {
 		g := &CborFixture{}
 		g.FromDocumentMap(fixMap)
 		require.Equal(t, fix, g)
-	})
-
-	t.Run("test CBOR encoding", func(t *testing.T) {
-		b, err := cborEncoder.Marshal(fixMap)
-		require.NoError(t, err)
-
-		g := DocumentMap{}
-		err = g.UnmarshalCBOR(b)
-		require.NoError(t, err)
-		require.EqualValues(t, fixMap, g)
 	})
 }

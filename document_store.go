@@ -1,6 +1,7 @@
 package nimona
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -27,10 +28,12 @@ type (
 )
 
 func (doc *DocumentEntry) UnmarshalInto(v DocumentMapper) error {
-	err := UnmarshalCBORBytes(doc.DocumentBytes, v)
+	m := &DocumentMap{}
+	err := json.Unmarshal(doc.DocumentBytes, m)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling document: %w", err)
 	}
+	v.FromDocumentMap(m)
 	return nil
 }
 
@@ -49,9 +52,8 @@ func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 	return s, nil
 }
 
-func (s *DocumentStore) PutDocument(doc DocumentMapper) error {
-	docMap := doc.DocumentMap()
-	docBytes, err := MarshalCBORBytes(docMap)
+func (s *DocumentStore) PutDocument(docMap *DocumentMap) error {
+	docBytes, err := docMap.MarshalJSON()
 	if err != nil {
 		return fmt.Errorf("error marshaling document: %w", err)
 	}
@@ -98,7 +100,7 @@ func (s *DocumentStore) PutDocumentEntry(entry *DocumentEntry) error {
 	return nil
 }
 
-func (s *DocumentStore) GetDocument(id DocumentID) (DocumentMap, error) {
+func (s *DocumentStore) GetDocument(id DocumentID) (*DocumentMap, error) {
 	doc := &DocumentEntry{}
 	err := s.db.
 		Where("document_id = ?", id).
@@ -108,8 +110,8 @@ func (s *DocumentStore) GetDocument(id DocumentID) (DocumentMap, error) {
 		return nil, fmt.Errorf("error getting document: %w", err)
 	}
 
-	m := DocumentMap{}
-	err = m.UnmarshalCBOR(doc.DocumentBytes)
+	m := &DocumentMap{}
+	err = m.UnmarshalJSON(doc.DocumentBytes)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling document: %w", err)
 	}

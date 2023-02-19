@@ -6,26 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMetadata(t *testing.T) {
-	b := &DocumentBase{
-		Type: "test/fixture",
-		Metadata: Metadata{
-			Owner: NewTestIdentity(t),
-		},
-	}
-
-	t.Run("marshal unmarshal", func(t *testing.T) {
-		bb, err := MarshalCBORBytes(b)
-		assert.NoError(t, err)
-
-		b1 := &DocumentBase{}
-		err = UnmarshalCBORBytes(bb, b1)
-
-		assert.NoError(t, err)
-		assert.EqualValues(t, b, b1)
-	})
-}
-
 func TestMetadata_CheckPermissions(t *testing.T) {
 	tests := []struct {
 		name     string

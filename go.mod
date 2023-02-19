@@ -9,21 +9,19 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/golang-lru/v2 v2.0.1
-	github.com/ipfs/go-cid v0.3.2
 	github.com/jimeh/undent v1.1.1
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/ldclabs/cbor-patch v1.1.3
+	github.com/mitchellh/go-linereader v0.0.0-20190213213312-1b945b3263eb
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mr-tron/base58 v1.2.0
 	github.com/neilalexander/utp v0.1.0
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20221003100820-41fad3beba17
 	github.com/stretchr/testify v1.8.1
+	github.com/valyala/fastjson v1.6.4
 	github.com/vikyd/zero v0.0.0-20190921142904-0f738d0bc858
 	github.com/wI2L/jsondiff v0.3.0
 	github.com/whyrusleeping/cbor-gen v0.0.0-20221220214510-0333c149dec0
 	golang.org/x/crypto v0.4.0
-	golang.org/x/exp v0.0.0-20221230185412-738e83a70c30
-	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	gopkg.in/evanphx/json-patch.v5 v5.6.0
 	gopkg.in/yaml.v2 v2.2.5
 	gorm.io/driver/sqlite v1.4.4
@@ -41,6 +39,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
+	github.com/ipfs/go-cid v0.3.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
@@ -64,6 +63,7 @@ require (
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect

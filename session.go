@@ -34,21 +34,21 @@ type Request struct {
 	Type        string
 	Codec       Codec
 	DocumentRaw []byte
-	DocumentMap DocumentMap
+	DocumentMap *DocumentMap
 	Respond     func(DocumentMapper) error
 }
 
 type Response struct {
-	Type  string
-	Map   DocumentMap
-	Body  []byte
-	Codec Codec
+	Type        string
+	Body        []byte
+	Codec       Codec
+	DocumentMap *DocumentMap
 }
 
 // NewSession returns a new Session that wraps the given net.Conn.
 func NewSession(conn net.Conn) *Session {
 	s := &Session{
-		codec: &CodecCBOR{},
+		codec: &CodecJSON{},
 		conn:  conn,
 	}
 	return s
@@ -239,7 +239,7 @@ func (s *Session) Request(
 	}
 
 	// Encode the request
-	b, err := s.codec.Encode(reqMap)
+	b, err := s.codec.Marshal(reqMap)
 	if err != nil {
 		return nil, fmt.Errorf("unable to encode request: %w", err)
 	}
@@ -251,23 +251,23 @@ func (s *Session) Request(
 	}
 
 	// Decode the response
-	resMap := DocumentMap{}
+	resMap := &DocumentMap{}
 	codec := s.codec
-	err = codec.Decode(resBytes, &resMap)
+	err = codec.Unmarshal(resBytes, resMap)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode response: %w", err)
 	}
 
-	docType, ok := resMap["$type"].(string)
-	if !ok {
+	docType := resMap.Type()
+	if docType == "" {
 		return nil, fmt.Errorf("missing $type field")
 	}
 
 	res := &Response{
-		Map:   resMap,
-		Type:  docType,
-		Body:  resBytes,
-		Codec: codec,
+		DocumentMap: resMap,
+		Type:        docType,
+		Body:        resBytes,
+		Codec:       s.codec,
 	}
 
 	return res, nil
@@ -280,14 +280,14 @@ func (s *Session) Read() (*Request, error) {
 		return nil, fmt.Errorf("unable to read message: %w", err)
 	}
 
-	docMap := DocumentMap{}
-	err = s.codec.Decode(req, &docMap)
+	docMap := &DocumentMap{}
+	err = s.codec.Unmarshal(req, docMap)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode message: %w", err)
 	}
 
-	docType, ok := docMap["$type"].(string)
-	if !ok {
+	docType := docMap.Type()
+	if docType == "" {
 		return nil, fmt.Errorf("missing $type field")
 	}
 
@@ -298,7 +298,8 @@ func (s *Session) Read() (*Request, error) {
 		DocumentMap: docMap,
 		Respond: func(res DocumentMapper) error {
 			// Encode the response
-			b, err := s.codec.Encode(res)
+			docMap := res.DocumentMap()
+			b, err := s.codec.Marshal(docMap)
 			if err != nil {
 				return fmt.Errorf("unable to encode response: %w", err)
 			}

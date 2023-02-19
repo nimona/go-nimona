@@ -77,7 +77,7 @@ func (i *KeyGraph) Identity() *Identity {
 		return nil
 	}
 	return &Identity{
-		KeyGraphID: NewDocumentID(i),
+		KeyGraphID: NewDocumentID(i.DocumentMap()),
 	}
 }
 
@@ -152,32 +152,41 @@ func (i IdentityIdentifier) String() string {
 // 	switch doc.Type {
 // 	case "core/identity.alias":
 // 		i.IdentityAlias = &IdentityAlias{}
-// 		return UnmarshalCBORBytes(doc.DocumentBytes, i.IdentityAlias)
+// 		return UnmarshalJSON(doc.DocumentBytes, i.IdentityAlias)
 // 	case "core/identity":
 // 		i.Identity = &Identity{}
-// 		return UnmarshalCBORBytes(doc.DocumentBytes, i.Identity)
+// 		return UnmarshalJSON(doc.DocumentBytes, i.Identity)
 // 	default:
 // 		return fmt.Errorf("unknown identity identifier type: %s", doc.Type)
 // 	}
 // }
 
-func (i *IdentityIdentifier) DocumentMap() DocumentMap {
+func (i *IdentityIdentifier) DocumentMap() *DocumentMap {
 	if i.IdentityAlias != nil {
 		return i.IdentityAlias.DocumentMap()
 	}
 	if i.Identity != nil {
 		return i.Identity.DocumentMap()
 	}
-	return DocumentMap{}
+	return nil
 }
 
-func (i *IdentityIdentifier) FromDocumentMap(m DocumentMap) {
-	switch m["$type"].(string) {
+func (i *IdentityIdentifier) FromDocumentMap(m *DocumentMap) error {
+	switch m.Type() {
 	case "core/identity.alias":
 		i.IdentityAlias = &IdentityAlias{}
-		i.IdentityAlias.FromDocumentMap(m)
+		err := i.IdentityAlias.FromDocumentMap(m)
+		if err != nil {
+			return fmt.Errorf("unable to unmarshal identity alias: %w", err)
+		}
+		return nil
 	case "core/identity":
 		i.Identity = &Identity{}
-		i.Identity.FromDocumentMap(m)
+		err := i.Identity.FromDocumentMap(m)
+		if err != nil {
+			return fmt.Errorf("unable to unmarshal identity: %w", err)
+		}
+		return nil
 	}
+	return fmt.Errorf("unknown identity identifier type: %s", m.Type())
 }

@@ -4,45 +4,51 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *DocumentID) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *DocumentID) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/document/id"
+		m.Set("$type", tilde.String("core/document/id"))
 	}
 
 	// # t.DocumentHash
 	//
-	// Type: nimona.DocumentHash, Kind: array
+	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.DocumentHash) {
-			m["hash"] = t.DocumentHash
+			m.Set("hash", tilde.Ref(t.DocumentHash[:]))
 		}
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *DocumentID) FromDocumentMap(m DocumentMap) {
+func (t *DocumentID) FromDocumentMap(d *DocumentMap) error {
 	*t = DocumentID{}
 
 	// # t.DocumentHash
 	//
-	// Type: nimona.DocumentHash, Kind: array
+	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["hash"].([]uint8); ok {
-			copy(t.DocumentHash[:], v)
+		if v, err := d.m.Get("hash"); err == nil {
+			if v, ok := v.(tilde.Ref); ok {
+				copy(t.DocumentHash[:], v)
+			}
 		}
 	}
 
+	return nil
 }

@@ -21,7 +21,7 @@ func NewTestIdentity(t *testing.T) *Identity {
 	t.Helper()
 
 	return &Identity{
-		KeyGraphID: NewDocumentID(NewTestKeyGraph(t)),
+		KeyGraphID: NewDocumentID(NewTestKeyGraph(t).DocumentMap()),
 	}
 }
 
@@ -53,7 +53,7 @@ func TestKeyGraph(t *testing.T) {
 	kg := NewTestKeyGraph(t)
 
 	t.Run("test hash", func(t *testing.T) {
-		h := NewDocumentHash(kg)
+		h := NewDocumentHash(kg.DocumentMap())
 		require.NotEmpty(t, h)
 	})
 

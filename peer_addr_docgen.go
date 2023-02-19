@@ -4,91 +4,101 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *PeerAddr) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *PeerAddr) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/node.address"
+		m.Set("$type", tilde.String("core/node.address"))
 	}
 
 	// # t.Address
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Address) {
-			m["address"] = t.Address
+			m.Set("address", tilde.String(t.Address))
 		}
 	}
 
 	// # t.Network
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Network) {
-			m["network"] = t.Network
+			m.Set("network", tilde.String(t.Network))
 		}
 	}
 
 	// # t.PublicKey
 	//
-	// Type: nimona.PublicKey, Kind: slice
+	// Type: nimona.PublicKey, Kind: slice, TildeKind: Bytes
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: uint8, ElemKind: uint8
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.PublicKey) {
-			m["publicKey"] = []byte(t.PublicKey)
+			m.Set("publicKey", tilde.Bytes(t.PublicKey))
 		}
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *PeerAddr) FromDocumentMap(m DocumentMap) {
+func (t *PeerAddr) FromDocumentMap(d *DocumentMap) error {
 	*t = PeerAddr{}
 
 	// # t.Address
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["address"].(string); ok {
-			t.Address = v
+		if v, err := d.m.Get("address"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Address = string(v)
+			}
 		}
 	}
 
 	// # t.Network
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, ok := m["network"].(string); ok {
-			t.Network = v
+		if v, err := d.m.Get("network"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Network = string(v)
+			}
 		}
 	}
 
 	// # t.PublicKey
 	//
-	// Type: nimona.PublicKey, Kind: slice
+	// Type: nimona.PublicKey, Kind: slice, TildeKind: Bytes
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: uint8, ElemKind: uint8
+	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["publicKey"].([]byte); ok {
-			t.PublicKey = v
+		if v, err := d.m.Get("publicKey"); err == nil {
+			if v, ok := v.(tilde.Bytes); ok {
+				t.PublicKey = PublicKey(v)
+			}
 		}
 	}
 
+	return nil
 }

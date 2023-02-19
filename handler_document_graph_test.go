@@ -28,21 +28,25 @@ func TestHandlerStream(t *testing.T) {
 	patchDocID := NewDocumentID(patchDoc)
 
 	// store documents
+	docBytes, err := rootDoc.MarshalJSON()
+	require.NoError(t, err)
 	require.NoError(t, docStore.PutDocumentEntry(
 		&DocumentEntry{
 			DocumentID:       rootDocID,
 			DocumentType:     "test/root",
 			DocumentEncoding: "cbor",
-			DocumentBytes:    MustMarshal(t, rootDoc),
+			DocumentBytes:    docBytes,
 		},
 	))
 
+	patchBytes, err := patchDoc.MarshalJSON()
+	require.NoError(t, err)
 	require.NoError(t, docStore.PutDocumentEntry(
 		&DocumentEntry{
 			DocumentID:       patchDocID,
 			DocumentType:     "test/root",
 			DocumentEncoding: "cbor",
-			DocumentBytes:    MustMarshal(t, patchDoc),
+			DocumentBytes:    patchBytes,
 			RootDocumentID:   &rootDocID,
 		},
 	))

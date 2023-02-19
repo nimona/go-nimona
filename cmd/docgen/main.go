@@ -16,7 +16,6 @@ func main() {
 	}
 
 	addMapping("document_docgen.go", nimona.DocumentID{})
-	addMapping("document_metadata_docgen.go", nimona.DocumentBase{})
 	addMapping("document_metadata_docgen.go", nimona.Metadata{})
 	addMapping("document_metadata_docgen.go", nimona.Permissions{})
 	addMapping("document_metadata_docgen.go", nimona.PermissionsAllow{})

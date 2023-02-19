@@ -89,7 +89,7 @@ func (n *NetworkInfo) String() string {
 	return n.NetworkAlias.String()
 }
 
-func (n *NetworkIdentifier) DocumentMap() DocumentMap {
+func (n *NetworkIdentifier) DocumentMap() *DocumentMap {
 	if n.NetworkAlias != nil {
 		return n.NetworkAlias.DocumentMap()
 	}
@@ -99,22 +99,36 @@ func (n *NetworkIdentifier) DocumentMap() DocumentMap {
 	if n.NetworkInfo != nil {
 		return n.NetworkInfo.DocumentMap()
 	}
-	return DocumentMap{}
+	return nil
 }
 
-func (n *NetworkIdentifier) FromDocumentMap(m DocumentMap) {
+func (n *NetworkIdentifier) FromDocumentMap(m *DocumentMap) error {
 	docType := m.Type()
 	switch docType {
 	case "core/network/alias":
 		n.NetworkAlias = &NetworkAlias{}
-		n.NetworkAlias.FromDocumentMap(m)
+		err := n.NetworkAlias.FromDocumentMap(m)
+		if err != nil {
+			return fmt.Errorf("unable to parse network alias: %w", err)
+		}
+		return nil
 	case "core/network/identity":
 		n.NetworkIdentity = &NetworkIdentity{}
-		n.NetworkIdentity.FromDocumentMap(m)
+		err := n.NetworkIdentity.FromDocumentMap(m)
+		if err != nil {
+			return fmt.Errorf("unable to parse network identity: %w", err)
+		}
+		return nil
 	case "core/network/info":
 		n.NetworkInfo = &NetworkInfo{}
-		n.NetworkInfo.FromDocumentMap(m)
+		err := n.NetworkInfo.FromDocumentMap(m)
+		if err != nil {
+			return fmt.Errorf("unable to parse network info: %w", err)
+		}
+		return nil
 	}
+
+	return fmt.Errorf("unable to parse network identifier from document map, unknown type %s", docType)
 }
 
 func (n NetworkIdentifier) Hostname() string {

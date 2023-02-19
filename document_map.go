@@ -1,74 +1,65 @@
 package nimona
 
 import (
+	"encoding/json"
 	"fmt"
-	reflect "reflect"
 
-	"github.com/fxamacker/cbor/v2"
 	"gopkg.in/yaml.v2"
+
+	"nimona.io/internal/tilde"
 )
 
-type DocumentMap map[string]interface{}
-
-func (m DocumentMap) Type() string {
-	if m == nil {
-		return ""
-	}
-	if _, ok := m["$type"]; !ok {
-		return ""
-	}
-	return m["$type"].(string)
+type DocumentMap struct {
+	m tilde.Map
 }
 
-var cborEncoder = func() cbor.EncMode {
-	encOpts := cbor.EncOptions{}
-	enc, err := encOpts.EncMode()
-	if err != nil {
-		panic(err)
+func NewDocumentMap(m tilde.Map) *DocumentMap {
+	return &DocumentMap{
+		m: m,
 	}
-	return enc
-}()
+}
 
-var cborDecoder = func() cbor.DecMode {
-	decOpts := cbor.DecOptions{
-		DefaultMapType: reflect.TypeOf(DocumentMap{}),
+type DocumentValuer interface {
+	DocumentValue(v any) any
+}
+
+func (m DocumentMap) Type() string {
+	if m.m == nil {
+		return ""
 	}
-	dec, err := decOpts.DecMode()
+	vi, err := m.m.Get("$type")
 	if err != nil {
-		panic(err)
+		return ""
 	}
-	return dec
-}()
+	v, ok := vi.(tilde.String)
+	if !ok {
+		return ""
+	}
+	return string(v)
+}
 
 func (m DocumentMap) DocumentMap() DocumentMap {
 	return m
 }
 
-// TODO(geoah): this probably needs testing and errors
-func (m DocumentMap) FromDocumentMap(dm DocumentMap) {
-	for k, v := range dm {
-		m[k] = v
-	}
-}
-
-func (m DocumentMap) MarshalCBOR() ([]byte, error) {
-	b, err := cborEncoder.Marshal(map[string]any(m))
+func (m DocumentMap) MarshalJSON() ([]byte, error) {
+	b, err := json.Marshal(m.m)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling: %w", err)
+		return nil, fmt.Errorf("error marshaling into json: %w", err)
 	}
 	return b, nil
 }
 
-func (m *DocumentMap) UnmarshalCBOR(b []byte) (err error) {
+func (m *DocumentMap) UnmarshalJSON(b []byte) error {
 	if m == nil {
-		*m = map[string]interface{}{}
+		*m = DocumentMap{}
 	}
-	mm := &map[string]any{}
-	err = cborDecoder.Unmarshal(b, mm)
+	mm := &tilde.Map{}
+	err := json.Unmarshal(b, mm)
 	if err != nil {
-		return fmt.Errorf("error unmarshaling: %w", err)
+		return fmt.Errorf("error unmarshaling from json: %w", err)
 	}
-	*m = DocumentMap(*mm)
+	m.m = *mm
 	return nil
 }
 
@@ -77,7 +68,7 @@ func DumpDocumentBytes(b []byte) {
 }
 
 func DumpDocumentMap(m DocumentMapper) {
-	yb, err := yaml.Marshal(m.DocumentMap())
+	yb, err := yaml.Marshal(m.DocumentMap().m)
 	if err != nil {
 		panic(err)
 	}

@@ -14,7 +14,7 @@ func TestDocumentSignature_SignVerify(t *testing.T) {
 		String: "foo",
 	}
 
-	hash := NewDocumentHash(doc)
+	hash := NewDocumentHash(doc.DocumentMap())
 	sig := NewDocumentSignature(sk, hash)
 	err = VerifySignature(sig, hash)
 	require.NoError(t, err)

@@ -22,11 +22,15 @@ func TestPeerKey(t *testing.T) {
 	require.Equal(t, n0, &n1)
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
-		bc, err := MarshalCBORBytes(n0)
+		bc, err := n0.DocumentMap().MarshalJSON()
+		require.NoError(t, err)
+
+		m1 := &DocumentMap{}
+		err = m1.UnmarshalJSON(bc)
 		require.NoError(t, err)
 
 		n1 := &PeerKey{}
-		err = UnmarshalCBORBytes(bc, n1)
+		err = n1.FromDocumentMap(m1)
 		require.NoError(t, err)
 		require.EqualValues(t, n0, n1)
 		require.Equal(t, s0, n1.String())

@@ -24,13 +24,15 @@ func TestNetworkAlias_MarshalUnmarshal(t *testing.T) {
 		Hostname: "testing.reamde.dev",
 	}
 
-	b, err := MarshalCBORBytes(n0)
+	b, err := n0.DocumentMap().MarshalJSON()
+	require.NoError(t, err)
+
+	m1 := &DocumentMap{}
+	err = m1.UnmarshalJSON(b)
 	require.NoError(t, err)
 
 	n1 := &NetworkAlias{}
-	err = UnmarshalCBORBytes(b, n1)
-	require.NoError(t, err)
-
+	err = n1.FromDocumentMap(m1)
 	require.Equal(t, n0, n1)
 }
 
@@ -38,12 +40,12 @@ func TestNetworkIdentifier(t *testing.T) {
 	networkInfoRootID := NewTestRandomDocumentID(t)
 	tests := []struct {
 		name    string
-		cborer  DocumentMapper
+		doc     DocumentMapper
 		want    *NetworkIdentifier
 		wantErr bool
 	}{{
 		name: "network alias",
-		cborer: &NetworkAlias{
+		doc: &NetworkAlias{
 			Hostname: "nimona.io",
 		},
 		want: &NetworkIdentifier{
@@ -53,7 +55,7 @@ func TestNetworkIdentifier(t *testing.T) {
 		},
 	}, {
 		name: "network identity",
-		cborer: &NetworkIdentity{
+		doc: &NetworkIdentity{
 			NetworkInfoRootID: networkInfoRootID,
 		},
 		want: &NetworkIdentifier{
@@ -64,13 +66,16 @@ func TestNetworkIdentifier(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cborBytes, err := MarshalCBORBytes(tt.cborer)
+			b, err := tt.doc.DocumentMap().MarshalJSON()
 			require.NoError(t, err)
 
 			id := &NetworkIdentifier{}
-			err = UnmarshalCBORBytes(cborBytes, id)
+			doc := &DocumentMap{}
+			err = doc.UnmarshalJSON(b)
+			require.NoError(t, err)
+			err = id.FromDocumentMap(doc)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("UnmarshalCBORBytes() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			require.Equal(t, tt.want, id)

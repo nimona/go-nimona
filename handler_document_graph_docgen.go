@@ -4,106 +4,115 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *DocumentGraphRequest) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *DocumentGraphRequest) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/document/graph.request"
+		m.Set("$type", tilde.String("core/document/graph.request"))
 	}
 
 	// # t.RootDocumentID
 	//
-	// Type: nimona.DocumentID, Kind: struct
+	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m["rootDocument"] = t.RootDocumentID.DocumentMap()
+		m.Set("rootDocument", t.RootDocumentID.DocumentMap().m)
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *DocumentGraphRequest) FromDocumentMap(m DocumentMap) {
+func (t *DocumentGraphRequest) FromDocumentMap(d *DocumentMap) error {
 	*t = DocumentGraphRequest{}
 
 	// # t.RootDocumentID
 	//
-	// Type: nimona.DocumentID, Kind: struct
+	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, ok := m["rootDocument"].(DocumentMap); ok {
-			e := DocumentID{}
-			e.FromDocumentMap(v)
-			t.RootDocumentID = e
+		if v, err := d.m.Get("rootDocument"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := DocumentID{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.RootDocumentID = e
+			}
 		}
 	}
 
+	return nil
 }
-func (t *DocumentGraphResponse) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *DocumentGraphResponse) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/document/graph.response"
+		m.Set("$type", tilde.String("core/document/graph.response"))
 	}
 
 	// # t.PatchDocumentIDs
 	//
-	// Type: []nimona.DocumentID, Kind: slice
+	// Type: []nimona.DocumentID, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: nimona.DocumentID, ElemKind: struct
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
-		sm := []any{}
+		sm := tilde.List{}
 		for _, v := range t.PatchDocumentIDs {
 			if !zero.IsZeroVal(t.PatchDocumentIDs) {
-				sm = append(sm, v.DocumentMap())
+				sm = append(sm, v.DocumentMap().m)
 			}
 		}
-		m["patchDocumentIDs"] = sm
+		m.Set("patchDocumentIDs", sm)
 	}
 
 	// # t.RootDocumentID
 	//
-	// Type: nimona.DocumentID, Kind: struct
+	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m["rootDocumentID"] = t.RootDocumentID.DocumentMap()
+		m.Set("rootDocumentID", t.RootDocumentID.DocumentMap().m)
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *DocumentGraphResponse) FromDocumentMap(m DocumentMap) {
+func (t *DocumentGraphResponse) FromDocumentMap(d *DocumentMap) error {
 	*t = DocumentGraphResponse{}
 
 	// # t.PatchDocumentIDs
 	//
-	// Type: []nimona.DocumentID, Kind: slice
+	// Type: []nimona.DocumentID, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: nimona.DocumentID, ElemKind: struct
+	// ElemType: nimona.DocumentID, ElemKind: struct, ElemTildeKind: Map
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []DocumentID{}
-		if vs, ok := m["patchDocumentIDs"].([]any); ok {
-			for _, vi := range vs {
-				v, ok := vi.(DocumentMap)
-				if ok {
-					e := DocumentID{}
-					e.FromDocumentMap(v)
-					sm = append(sm, e)
+		if vs, err := d.m.Get("patchDocumentIDs"); err == nil {
+			if vs, ok := vs.(tilde.List); ok {
+				for _, vi := range vs {
+					if v, ok := vi.(tilde.Map); ok {
+						e := DocumentID{}
+						d := NewDocumentMap(v)
+						e.FromDocumentMap(d)
+						sm = append(sm, e)
+					}
 				}
 			}
 		}
@@ -114,14 +123,18 @@ func (t *DocumentGraphResponse) FromDocumentMap(m DocumentMap) {
 
 	// # t.RootDocumentID
 	//
-	// Type: nimona.DocumentID, Kind: struct
+	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, ok := m["rootDocumentID"].(DocumentMap); ok {
-			e := DocumentID{}
-			e.FromDocumentMap(v)
-			t.RootDocumentID = e
+		if v, err := d.m.Get("rootDocumentID"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := DocumentID{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.RootDocumentID = e
+			}
 		}
 	}
 
+	return nil
 }

@@ -4,85 +4,90 @@ package nimona
 
 import (
 	"github.com/vikyd/zero"
+
+	"nimona.io/internal/tilde"
 )
 
 var _ = zero.IsZeroVal
+var _ = tilde.NewScanner
 
-func (t *PeerInfo) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *PeerInfo) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/peer/info"
+		m.Set("$type", tilde.String("core/peer/info"))
 	}
 
 	// # t.Addresses
 	//
-	// Type: []nimona.PeerAddr, Kind: slice
+	// Type: []nimona.PeerAddr, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: nimona.PeerAddr, ElemKind: struct
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.Addresses) {
-			sm := []any{}
+			sm := tilde.List{}
 			for _, v := range t.Addresses {
 				if !zero.IsZeroVal(t.Addresses) {
-					sm = append(sm, v.DocumentMap())
+					sm = append(sm, v.DocumentMap().m)
 				}
 			}
-			m["addresses"] = sm
+			m.Set("addresses", sm)
 		}
 	}
 
 	// # t.Metadata
 	//
-	// Type: nimona.Metadata, Kind: struct
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m["$metadata"] = t.Metadata.DocumentMap()
+			m.Set("$metadata", t.Metadata.DocumentMap().m)
 		}
 	}
 
 	// # t.PublicKey
 	//
-	// Type: nimona.PublicKey, Kind: slice
+	// Type: nimona.PublicKey, Kind: slice, TildeKind: Bytes
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: uint8, ElemKind: uint8
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.PublicKey) {
-			m["publicKey"] = []byte(t.PublicKey)
+			m.Set("publicKey", tilde.Bytes(t.PublicKey))
 		}
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *PeerInfo) FromDocumentMap(m DocumentMap) {
+func (t *PeerInfo) FromDocumentMap(d *DocumentMap) error {
 	*t = PeerInfo{}
 
 	// # t.Addresses
 	//
-	// Type: []nimona.PeerAddr, Kind: slice
+	// Type: []nimona.PeerAddr, Kind: slice, TildeKind: List
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: nimona.PeerAddr, ElemKind: struct
+	// ElemType: nimona.PeerAddr, ElemKind: struct, ElemTildeKind: Map
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []PeerAddr{}
-		if vs, ok := m["addresses"].([]any); ok {
-			for _, vi := range vs {
-				v, ok := vi.(DocumentMap)
-				if ok {
-					e := PeerAddr{}
-					e.FromDocumentMap(v)
-					sm = append(sm, e)
+		if vs, err := d.m.Get("addresses"); err == nil {
+			if vs, ok := vs.(tilde.List); ok {
+				for _, vi := range vs {
+					if v, ok := vi.(tilde.Map); ok {
+						e := PeerAddr{}
+						d := NewDocumentMap(v)
+						e.FromDocumentMap(d)
+						sm = append(sm, e)
+					}
 				}
 			}
 		}
@@ -93,71 +98,80 @@ func (t *PeerInfo) FromDocumentMap(m DocumentMap) {
 
 	// # t.Metadata
 	//
-	// Type: nimona.Metadata, Kind: struct
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, ok := m["$metadata"].(DocumentMap); ok {
-			e := Metadata{}
-			e.FromDocumentMap(v)
-			t.Metadata = e
+		if v, err := d.m.Get("$metadata"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := Metadata{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.Metadata = e
+			}
 		}
 	}
 
 	// # t.PublicKey
 	//
-	// Type: nimona.PublicKey, Kind: slice
+	// Type: nimona.PublicKey, Kind: slice, TildeKind: Bytes
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: uint8, ElemKind: uint8
+	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["publicKey"].([]byte); ok {
-			t.PublicKey = v
+		if v, err := d.m.Get("publicKey"); err == nil {
+			if v, ok := v.(tilde.Bytes); ok {
+				t.PublicKey = PublicKey(v)
+			}
 		}
 	}
 
+	return nil
 }
-func (t *PeerKey) DocumentMap() DocumentMap {
-	m := DocumentMap{}
+func (t *PeerKey) DocumentMap() *DocumentMap {
+	m := tilde.Map{}
 
 	// # t.$type
 	//
-	// Type: string, Kind: string
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m["$type"] = "core/peer/key"
+		m.Set("$type", tilde.String("core/peer/key"))
 	}
 
 	// # t.PublicKey
 	//
-	// Type: nimona.PublicKey, Kind: slice
+	// Type: nimona.PublicKey, Kind: slice, TildeKind: Bytes
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
 	// ElemType: uint8, ElemKind: uint8
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
 		if !zero.IsZeroVal(t.PublicKey) {
-			m["publicKey"] = []byte(t.PublicKey)
+			m.Set("publicKey", tilde.Bytes(t.PublicKey))
 		}
 	}
 
-	return m
+	return NewDocumentMap(m)
 }
 
-func (t *PeerKey) FromDocumentMap(m DocumentMap) {
+func (t *PeerKey) FromDocumentMap(d *DocumentMap) error {
 	*t = PeerKey{}
 
 	// # t.PublicKey
 	//
-	// Type: nimona.PublicKey, Kind: slice
+	// Type: nimona.PublicKey, Kind: slice, TildeKind: Bytes
 	// IsSlice: true, IsStruct: false, IsPointer: false
 	//
-	// ElemType: uint8, ElemKind: uint8
+	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, ok := m["publicKey"].([]byte); ok {
-			t.PublicKey = v
+		if v, err := d.m.Get("publicKey"); err == nil {
+			if v, ok := v.(tilde.Bytes); ok {
+				t.PublicKey = PublicKey(v)
+			}
 		}
 	}
 
+	return nil
 }
