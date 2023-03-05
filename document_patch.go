@@ -19,18 +19,20 @@ type (
 	}
 )
 
-func ApplyDocumentPatch(original *Document, docPatch *DocumentPatch) (*Document, error) {
+func ApplyDocumentPatch(original *Document, patches ...*DocumentPatch) (*Document, error) {
 	doc := original.Copy()
 	docMap := doc.Map()
-	for _, patch := range docPatch.Operations {
-		switch patch.Op {
-		case "replace":
-			err := docMap.Set(patch.Path, patch.Value)
-			if err != nil {
-				return nil, fmt.Errorf("error applying patch: %w", err)
+	for _, patch := range patches {
+		for _, operation := range patch.Operations {
+			switch operation.Op {
+			case "replace":
+				err := docMap.Set(operation.Path, operation.Value)
+				if err != nil {
+					return nil, fmt.Errorf("error applying patch: %w", err)
+				}
+			default:
+				return nil, fmt.Errorf("unsupported patch operation: %s", operation.Op)
 			}
-		default:
-			return nil, fmt.Errorf("unsupported patch operation: %s", patch.Op)
 		}
 	}
 	return NewDocumentMap(docMap), nil
