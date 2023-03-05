@@ -448,3 +448,16 @@ func TestJSON_Unmarshal(t *testing.T) {
 		require.EqualValues(t, testMapComplete, got)
 	})
 }
+
+func TestCopy(t *testing.T) {
+	t.Run("Copy", func(t *testing.T) {
+		got := Copy(testMapComplete).(Map)
+		require.NotSame(t, testMapComplete, got)
+		for k, v := range testMapComplete {
+			gotV, ok := got[k]
+			require.True(t, ok)
+			require.NotSame(t, v, gotV)
+		}
+		require.EqualValues(t, testMapComplete, got)
+	})
+}

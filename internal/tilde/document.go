@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mitchellh/copystructure"
 	"github.com/valyala/fastjson"
 )
 
@@ -428,4 +429,12 @@ func keyWithHint(key string, hints ...Hint) string {
 		suffix += string(hint)
 	}
 	return fmt.Sprintf("%s:%s", key, suffix)
+}
+
+func Copy(v Value) Value {
+	nv, err := copystructure.Copy(v)
+	if err != nil {
+		panic(fmt.Errorf("error copying value of type %T: %w", v, err))
+	}
+	return nv.(Value)
 }
