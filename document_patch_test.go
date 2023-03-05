@@ -27,7 +27,7 @@ func TestDocumentPatch_Apply(t *testing.T) {
 		}},
 	}
 
-	exp := NewDocumentMap(
+	exp := NewDocument(
 		tilde.Map{
 			"$type":       tilde.String("core/identity/profile"),
 			"displayName": tilde.String("bar"),

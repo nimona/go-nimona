@@ -30,7 +30,7 @@ func TestPeerKey(t *testing.T) {
 		require.NoError(t, err)
 
 		n1 := &PeerKey{}
-		err = n1.FromDocumentMap(m1)
+		err = n1.FromDocument(m1)
 		require.NoError(t, err)
 		require.EqualValues(t, n0, n1)
 		require.Equal(t, s0, n1.String())

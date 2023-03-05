@@ -35,7 +35,7 @@ type Request struct {
 	Codec       Codec
 	DocumentRaw []byte
 	Document    *Document
-	Respond     func(DocumentMapper) error
+	Respond     func(Documenter) error
 }
 
 type Response struct {
@@ -230,7 +230,7 @@ func (s *Session) write(data []byte) (int, error) {
 
 func (s *Session) Request(
 	ctx context.Context,
-	req DocumentMapper,
+	req Documenter,
 ) (*Response, error) {
 	// Check if the request is a valid document
 	reqMap := req.Document()
@@ -296,7 +296,7 @@ func (s *Session) Read() (*Request, error) {
 		Codec:       s.codec,
 		DocumentRaw: req,
 		Document:    docMap,
-		Respond: func(res DocumentMapper) error {
+		Respond: func(res Documenter) error {
 			// Encode the response
 			docMap := res.Document()
 			b, err := s.codec.Marshal(docMap)

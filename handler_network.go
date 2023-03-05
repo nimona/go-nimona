@@ -96,7 +96,7 @@ func RequestNetworkInfo(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = res.FromDocumentMap(msgRes.Document)
+	err = res.FromDocument(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -108,7 +108,7 @@ func (h *HandlerNetwork) HandleNetworkInfoRequest(
 	msg *Request,
 ) error {
 	req := NetworkInfoRequest{}
-	err := req.FromDocumentMap(msg.Document)
+	err := req.FromDocument(msg.Document)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -143,7 +143,7 @@ func RequestNetworkJoin(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = res.FromDocumentMap(msgRes.Document)
+	err = res.FromDocument(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -155,7 +155,7 @@ func (h *HandlerNetwork) HandleNetworkJoinRequest(
 	msg *Request,
 ) error {
 	req := NetworkJoinRequest{}
-	err := req.FromDocumentMap(msg.Document)
+	err := req.FromDocument(msg.Document)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -234,7 +234,7 @@ func RequestNetworkResolveHandle(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = res.FromDocumentMap(msgRes.Document)
+	err = res.FromDocument(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -246,7 +246,7 @@ func (h *HandlerNetwork) HandleNetworkResolveHandleRequest(
 	msg *Request,
 ) error {
 	req := NetworkResolveHandleRequest{}
-	err := req.FromDocumentMap(msg.Document)
+	err := req.FromDocument(msg.Document)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -305,7 +305,7 @@ func RequestNetworkAnnouncePeer(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = res.FromDocumentMap(msgRes.Document)
+	err = res.FromDocument(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -317,7 +317,7 @@ func (h *HandlerNetwork) HandleNetworkAnnouncePeerRequest(
 	msg *Request,
 ) error {
 	req := NetworkAnnouncePeerRequest{}
-	err := req.FromDocumentMap(msg.Document)
+	err := req.FromDocument(msg.Document)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -377,7 +377,7 @@ func RequestNetworkLookupPeer(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = res.FromDocumentMap(msgRes.Document)
+	err = res.FromDocument(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -389,7 +389,7 @@ func (h *HandlerNetwork) HandleNetworkLookupPeerRequest(
 	msg *Request,
 ) error {
 	req := NetworkLookupPeerRequest{}
-	err := req.FromDocumentMap(msg.Document)
+	err := req.FromDocument(msg.Document)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -431,7 +431,7 @@ func (h *HandlerNetwork) HandleNetworkLookupPeerRequest(
 	}
 
 	peerInfo := &PeerInfo{}
-	err = peerInfo.FromDocumentMap(peerInfoDoc)
+	err = peerInfo.FromDocument(peerInfoDoc)
 	if err != nil {
 		// TODO: log error
 		fmt.Println("error unmarshaling peer info:", err)

@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *DocumentRequest) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *DocumentRequest) Map() tilde.Map {
@@ -47,7 +47,7 @@ func (t *DocumentRequest) Map() tilde.Map {
 	return m
 }
 
-func (t *DocumentRequest) FromDocumentMap(d *Document) error {
+func (t *DocumentRequest) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -62,8 +62,8 @@ func (t *DocumentRequest) FromMap(d tilde.Map) error {
 		if v, err := d.Get("documentID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.DocumentID = e
 			}
 		}
@@ -77,8 +77,8 @@ func (t *DocumentRequest) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -87,7 +87,7 @@ func (t *DocumentRequest) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *DocumentResponse) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *DocumentResponse) Map() tilde.Map {
@@ -150,7 +150,7 @@ func (t *DocumentResponse) Map() tilde.Map {
 	return m
 }
 
-func (t *DocumentResponse) FromDocumentMap(d *Document) error {
+func (t *DocumentResponse) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -201,8 +201,8 @@ func (t *DocumentResponse) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -215,7 +215,7 @@ func (t *DocumentResponse) FromMap(d tilde.Map) error {
 	{
 		if v, err := d.Get("document"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
-				t.Payload = *NewDocumentMap(v)
+				t.Payload = *NewDocument(v)
 			}
 		}
 	}

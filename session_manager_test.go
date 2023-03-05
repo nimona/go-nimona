@@ -33,7 +33,7 @@ func TestSessionManager(t *testing.T) {
 	msg := &Pong{}
 	res, err := rpc.Request(context.Background(), req)
 	require.NoError(t, err)
-	err = msg.FromDocumentMap(res.Document)
+	err = msg.FromDocument(res.Document)
 	require.NoError(t, err)
 	require.Equal(t, expRes, msg)
 }

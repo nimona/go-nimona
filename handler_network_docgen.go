@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *NetworkAnnouncePeerRequest) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkAnnouncePeerRequest) Map() tilde.Map {
@@ -49,7 +49,7 @@ func (t *NetworkAnnouncePeerRequest) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkAnnouncePeerRequest) FromDocumentMap(d *Document) error {
+func (t *NetworkAnnouncePeerRequest) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -64,8 +64,8 @@ func (t *NetworkAnnouncePeerRequest) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -79,8 +79,8 @@ func (t *NetworkAnnouncePeerRequest) FromMap(d tilde.Map) error {
 		if v, err := d.Get("peerInfo"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PeerInfo{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.PeerInfo = e
 			}
 		}
@@ -89,7 +89,7 @@ func (t *NetworkAnnouncePeerRequest) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkAnnouncePeerResponse) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkAnnouncePeerResponse) Map() tilde.Map {
@@ -136,7 +136,7 @@ func (t *NetworkAnnouncePeerResponse) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkAnnouncePeerResponse) FromDocumentMap(d *Document) error {
+func (t *NetworkAnnouncePeerResponse) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -175,8 +175,8 @@ func (t *NetworkAnnouncePeerResponse) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -185,7 +185,7 @@ func (t *NetworkAnnouncePeerResponse) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkInfoRequest) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkInfoRequest) Map() tilde.Map {
@@ -202,7 +202,7 @@ func (t *NetworkInfoRequest) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkInfoRequest) FromDocumentMap(d *Document) error {
+func (t *NetworkInfoRequest) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -212,7 +212,7 @@ func (t *NetworkInfoRequest) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkJoinRequest) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkJoinRequest) Map() tilde.Map {
@@ -249,7 +249,7 @@ func (t *NetworkJoinRequest) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkJoinRequest) FromDocumentMap(d *Document) error {
+func (t *NetworkJoinRequest) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -264,8 +264,8 @@ func (t *NetworkJoinRequest) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -286,7 +286,7 @@ func (t *NetworkJoinRequest) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkJoinResponse) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkJoinResponse) Map() tilde.Map {
@@ -341,7 +341,7 @@ func (t *NetworkJoinResponse) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkJoinResponse) FromDocumentMap(d *Document) error {
+func (t *NetworkJoinResponse) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -399,7 +399,7 @@ func (t *NetworkJoinResponse) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkLookupPeerRequest) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkLookupPeerRequest) Map() tilde.Map {
@@ -436,7 +436,7 @@ func (t *NetworkLookupPeerRequest) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkLookupPeerRequest) FromDocumentMap(d *Document) error {
+func (t *NetworkLookupPeerRequest) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -451,8 +451,8 @@ func (t *NetworkLookupPeerRequest) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -466,8 +466,8 @@ func (t *NetworkLookupPeerRequest) FromMap(d tilde.Map) error {
 		if v, err := d.Get("peerKey"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PeerKey{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.PeerKey = e
 			}
 		}
@@ -476,7 +476,7 @@ func (t *NetworkLookupPeerRequest) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkLookupPeerResponse) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkLookupPeerResponse) Map() tilde.Map {
@@ -543,7 +543,7 @@ func (t *NetworkLookupPeerResponse) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkLookupPeerResponse) FromDocumentMap(d *Document) error {
+func (t *NetworkLookupPeerResponse) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -594,8 +594,8 @@ func (t *NetworkLookupPeerResponse) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -609,8 +609,8 @@ func (t *NetworkLookupPeerResponse) FromMap(d tilde.Map) error {
 		if v, err := d.Get("peerInfo"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PeerInfo{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.PeerInfo = e
 			}
 		}
@@ -619,7 +619,7 @@ func (t *NetworkLookupPeerResponse) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkResolveHandleRequest) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkResolveHandleRequest) Map() tilde.Map {
@@ -646,7 +646,7 @@ func (t *NetworkResolveHandleRequest) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkResolveHandleRequest) FromDocumentMap(d *Document) error {
+func (t *NetworkResolveHandleRequest) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -668,7 +668,7 @@ func (t *NetworkResolveHandleRequest) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkResolveHandleResponse) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkResolveHandleResponse) Map() tilde.Map {
@@ -744,7 +744,7 @@ func (t *NetworkResolveHandleResponse) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkResolveHandleResponse) FromDocumentMap(d *Document) error {
+func (t *NetworkResolveHandleResponse) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -795,8 +795,8 @@ func (t *NetworkResolveHandleResponse) FromMap(d tilde.Map) error {
 		if v, err := d.Get("identityID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Identity{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.IdentityID = e
 			}
 		}
@@ -816,8 +816,8 @@ func (t *NetworkResolveHandleResponse) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := PeerAddr{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}

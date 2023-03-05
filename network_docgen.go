@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *NetworkAlias) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkAlias) Map() tilde.Map {
@@ -37,7 +37,7 @@ func (t *NetworkAlias) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkAlias) FromDocumentMap(d *Document) error {
+func (t *NetworkAlias) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -59,7 +59,7 @@ func (t *NetworkAlias) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkIdentity) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkIdentity) Map() tilde.Map {
@@ -96,7 +96,7 @@ func (t *NetworkIdentity) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkIdentity) FromDocumentMap(d *Document) error {
+func (t *NetworkIdentity) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -111,8 +111,8 @@ func (t *NetworkIdentity) FromMap(d tilde.Map) error {
 		if v, err := d.Get("networkAlias"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := NetworkAlias{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.NetworkAlias = e
 			}
 		}
@@ -126,8 +126,8 @@ func (t *NetworkIdentity) FromMap(d tilde.Map) error {
 		if v, err := d.Get("networkInfoRootID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.NetworkInfoRootID = e
 			}
 		}
@@ -136,7 +136,7 @@ func (t *NetworkIdentity) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *NetworkInfo) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *NetworkInfo) Map() tilde.Map {
@@ -188,7 +188,7 @@ func (t *NetworkInfo) Map() tilde.Map {
 	return m
 }
 
-func (t *NetworkInfo) FromDocumentMap(d *Document) error {
+func (t *NetworkInfo) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -203,8 +203,8 @@ func (t *NetworkInfo) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -218,8 +218,8 @@ func (t *NetworkInfo) FromMap(d tilde.Map) error {
 		if v, err := d.Get("networkAlias"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := NetworkAlias{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.NetworkAlias = e
 			}
 		}
@@ -239,8 +239,8 @@ func (t *NetworkInfo) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := PeerAddr{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}

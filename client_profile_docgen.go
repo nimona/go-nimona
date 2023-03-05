@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *Profile) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *Profile) Map() tilde.Map {
@@ -88,7 +88,7 @@ func (t *Profile) Map() tilde.Map {
 	return m
 }
 
-func (t *Profile) FromDocumentMap(d *Document) error {
+func (t *Profile) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -115,8 +115,8 @@ func (t *Profile) FromMap(d tilde.Map) error {
 		if v, err := d.Get("identity"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Identity{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Identity = &e
 			}
 		}
@@ -130,8 +130,8 @@ func (t *Profile) FromMap(d tilde.Map) error {
 		if v, err := d.Get("identityAlias"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := IdentityAlias{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.IdentityAlias = &e
 			}
 		}
@@ -145,8 +145,8 @@ func (t *Profile) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -166,8 +166,8 @@ func (t *Profile) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := ProfileRepository{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}
@@ -181,7 +181,7 @@ func (t *Profile) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *ProfileRepository) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *ProfileRepository) Map() tilde.Map {
@@ -235,7 +235,7 @@ func (t *ProfileRepository) Map() tilde.Map {
 	return m
 }
 
-func (t *ProfileRepository) FromDocumentMap(d *Document) error {
+func (t *ProfileRepository) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -295,8 +295,8 @@ func (t *ProfileRepository) FromMap(d tilde.Map) error {
 		if v, err := d.Get("identity"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Identity{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Identity = &e
 			}
 		}

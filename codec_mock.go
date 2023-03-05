@@ -34,7 +34,7 @@ func (m *MockCodec) EXPECT() *MockCodecMockRecorder {
 }
 
 // Decode mocks base method.
-func (m *MockCodec) Decode(b []byte, v DocumentMapper) error {
+func (m *MockCodec) Decode(b []byte, v Documenter) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Decode", b, v)
 	ret0, _ := ret[0].(error)
@@ -48,7 +48,7 @@ func (mr *MockCodecMockRecorder) Decode(b, v interface{}) *gomock.Call {
 }
 
 // Encode mocks base method.
-func (m *MockCodec) Encode(v DocumentMapper) ([]byte, error) {
+func (m *MockCodec) Encode(v Documenter) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Encode", v)
 	ret0, _ := ret[0].([]byte)

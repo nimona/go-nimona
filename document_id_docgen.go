@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *DocumentID) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *DocumentID) Map() tilde.Map {
@@ -39,7 +39,7 @@ func (t *DocumentID) Map() tilde.Map {
 	return m
 }
 
-func (t *DocumentID) FromDocumentMap(d *Document) error {
+func (t *DocumentID) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 

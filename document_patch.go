@@ -35,5 +35,5 @@ func ApplyDocumentPatch(original *Document, patches ...*DocumentPatch) (*Documen
 			}
 		}
 	}
-	return NewDocumentMap(docMap), nil
+	return NewDocument(docMap), nil
 }

@@ -33,7 +33,7 @@ func RequestPing(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = res.FromDocumentMap(msgRes.Document)
+	err = res.FromDocument(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -45,7 +45,7 @@ func (h *HandlerPing) HandlePingRequest(
 	msg *Request,
 ) error {
 	req := Ping{}
-	err := req.FromDocumentMap(msg.Document)
+	err := req.FromDocument(msg.Document)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}

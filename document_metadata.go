@@ -10,6 +10,7 @@ type (
 		Permissions []Permissions `nimona:"permissions,omitempty"`
 		Timestamp   uint          `nimona:"timestamp,omitempty"` // TODO: use time.Time
 		Root        *DocumentID   `nimona:"root,omitempty"`
+		Sequence    uint          `nimona:"sequence,omitempty"`
 		Signature   *Signature    `nimona:"_signature,omitempty"`
 	}
 	Permissions struct {
@@ -40,7 +41,7 @@ func CheckPermissions(metadata *Metadata, patch *DocumentPatch) bool {
 		for _, operation := range patch.Operations {
 			pathMatches := false
 			for _, path := range permission.Paths {
-				g, err := glob.Compile(path)
+				g, err := glob.Compile(path, '.')
 				if err != nil {
 					return false
 				}

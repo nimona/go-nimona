@@ -11,7 +11,7 @@ import (
 
 func TestDocumentCodegen_WriteToFile(t *testing.T) {
 	t.Skip("Used to generate fixture_gen.go")
-	err := GenerateDocumentMapMethods(
+	err := GenerateDocumentMethods(
 		"document_codegen_fixture_docgen.go",
 		"nimona",
 		codegenFixture{},
@@ -51,7 +51,7 @@ func TestDocumentCodegen(t *testing.T) {
 	require.NoError(t, err)
 
 	f2 := &codegenFixture{}
-	f2.FromDocumentMap(m1)
+	f2.FromDocument(m1)
 	require.EqualValues(t, f1, *f2)
 }
 
@@ -74,6 +74,6 @@ func TestDocumentCodegen_WithType(t *testing.T) {
 	require.NoError(t, err)
 
 	f2 := &codegenFixtureWithType{}
-	f2.FromDocumentMap(m1)
+	f2.FromDocument(m1)
 	require.EqualValues(t, f1, *f2)
 }

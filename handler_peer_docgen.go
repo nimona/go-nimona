@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *PeerCapabilitiesRequest) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *PeerCapabilitiesRequest) Map() tilde.Map {
@@ -29,7 +29,7 @@ func (t *PeerCapabilitiesRequest) Map() tilde.Map {
 	return m
 }
 
-func (t *PeerCapabilitiesRequest) FromDocumentMap(d *Document) error {
+func (t *PeerCapabilitiesRequest) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -39,7 +39,7 @@ func (t *PeerCapabilitiesRequest) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *PeerCapabilitiesResponse) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *PeerCapabilitiesResponse) Map() tilde.Map {
@@ -71,7 +71,7 @@ func (t *PeerCapabilitiesResponse) Map() tilde.Map {
 	return m
 }
 
-func (t *PeerCapabilitiesResponse) FromDocumentMap(d *Document) error {
+func (t *PeerCapabilitiesResponse) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 

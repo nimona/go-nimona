@@ -34,7 +34,7 @@ func RequestDocumentGraph(
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
-	err = res.FromDocumentMap(msgRes.Document)
+	err = res.FromDocument(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -46,7 +46,7 @@ func (h *HandlerDocumentGraph) HandleDocumentGraphRequest(
 	msg *Request,
 ) error {
 	req := DocumentGraphRequest{}
-	req.FromDocumentMap(msg.Document)
+	req.FromDocument(msg.Document)
 	if msg.Type != "core/document/graph.request" {
 		return fmt.Errorf("invalid request type: %s", msg.Type)
 	}

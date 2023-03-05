@@ -102,26 +102,26 @@ func (n *NetworkIdentifier) Document() *Document {
 	return nil
 }
 
-func (n *NetworkIdentifier) FromDocumentMap(m *Document) error {
+func (n *NetworkIdentifier) FromDocument(m *Document) error {
 	docType := m.Type()
 	switch docType {
 	case "core/network/alias":
 		n.NetworkAlias = &NetworkAlias{}
-		err := n.NetworkAlias.FromDocumentMap(m)
+		err := n.NetworkAlias.FromDocument(m)
 		if err != nil {
 			return fmt.Errorf("unable to parse network alias: %w", err)
 		}
 		return nil
 	case "core/network/identity":
 		n.NetworkIdentity = &NetworkIdentity{}
-		err := n.NetworkIdentity.FromDocumentMap(m)
+		err := n.NetworkIdentity.FromDocument(m)
 		if err != nil {
 			return fmt.Errorf("unable to parse network identity: %w", err)
 		}
 		return nil
 	case "core/network/info":
 		n.NetworkInfo = &NetworkInfo{}
-		err := n.NetworkInfo.FromDocumentMap(m)
+		err := n.NetworkInfo.FromDocument(m)
 		if err != nil {
 			return fmt.Errorf("unable to parse network info: %w", err)
 		}

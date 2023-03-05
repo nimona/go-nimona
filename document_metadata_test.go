@@ -16,7 +16,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		name: "read permission granted",
 		metadata: Metadata{
 			Permissions: []Permissions{{
-				Paths: []string{"/path/*"},
+				Paths: []string{"path.*"},
 				Operations: PermissionsAllow{
 					Read: true,
 				},
@@ -25,7 +25,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		patch: DocumentPatch{
 			Operations: []DocumentPatchOperation{{
 				Op:   "read",
-				Path: "/path/test",
+				Path: "path.test",
 			}},
 		},
 		want: true,
@@ -33,12 +33,12 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		name: "read permission not granted",
 		metadata: Metadata{
 			Permissions: []Permissions{{
-				Paths: []string{"/path/*"},
+				Paths: []string{"path.*"},
 				Operations: PermissionsAllow{
 					Read: true,
 				},
 			}, {
-				Paths: []string{"/path/*"},
+				Paths: []string{"path.*"},
 				Operations: PermissionsAllow{
 					Read: false,
 				},
@@ -47,7 +47,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		patch: DocumentPatch{
 			Operations: []DocumentPatchOperation{{
 				Op:   "read",
-				Path: "/path/test",
+				Path: "path.test",
 			}},
 		},
 		want: false,
@@ -55,7 +55,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		name: "add permission granted",
 		metadata: Metadata{
 			Permissions: []Permissions{{
-				Paths: []string{"/path/*"},
+				Paths: []string{"path.*"},
 				Operations: PermissionsAllow{
 					Add: true,
 				},
@@ -64,7 +64,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		patch: DocumentPatch{
 			Operations: []DocumentPatchOperation{{
 				Op:   "add",
-				Path: "/path/test",
+				Path: "path.test",
 			}},
 		},
 		want: true,
@@ -72,7 +72,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		name: "add permission not granted",
 		metadata: Metadata{
 			Permissions: []Permissions{{
-				Paths: []string{"/path/*"},
+				Paths: []string{"path.*"},
 				Operations: PermissionsAllow{
 					Add: false,
 				},
@@ -81,7 +81,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		patch: DocumentPatch{
 			Operations: []DocumentPatchOperation{{
 				Op:   "add",
-				Path: "/path/test",
+				Path: "path.test",
 			}},
 		},
 		want: false,
@@ -89,7 +89,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		name: "remove permission granted",
 		metadata: Metadata{
 			Permissions: []Permissions{{
-				Paths: []string{"/path/*"},
+				Paths: []string{"path.*"},
 				Operations: PermissionsAllow{
 					Remove: true,
 				},
@@ -98,7 +98,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		patch: DocumentPatch{
 			Operations: []DocumentPatchOperation{{
 				Op:   "remove",
-				Path: "/path/test",
+				Path: "path.test",
 			}},
 		},
 		want: true,
@@ -106,7 +106,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		name: "remove permission not granted",
 		metadata: Metadata{
 			Permissions: []Permissions{{
-				Paths: []string{"/path/*"},
+				Paths: []string{"path.*"},
 				Operations: PermissionsAllow{
 					Remove: false,
 				},
@@ -115,7 +115,7 @@ func TestMetadata_CheckPermissions(t *testing.T) {
 		patch: DocumentPatch{
 			Operations: []DocumentPatchOperation{{
 				Op:   "remove",
-				Path: "/path/test",
+				Path: "path.test",
 			}},
 		},
 		want: false,

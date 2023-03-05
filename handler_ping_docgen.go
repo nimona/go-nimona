@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *Ping) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *Ping) Map() tilde.Map {
@@ -37,7 +37,7 @@ func (t *Ping) Map() tilde.Map {
 	return m
 }
 
-func (t *Ping) FromDocumentMap(d *Document) error {
+func (t *Ping) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -59,7 +59,7 @@ func (t *Ping) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *Pong) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *Pong) Map() tilde.Map {
@@ -84,7 +84,7 @@ func (t *Pong) Map() tilde.Map {
 	return m
 }
 
-func (t *Pong) FromDocumentMap(d *Document) error {
+func (t *Pong) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 

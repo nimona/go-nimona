@@ -1,8 +1,8 @@
 package nimona
 
-type DocumentMapper interface {
+type Documenter interface {
 	Document() *Document
-	FromDocumentMap(*Document) error
+	FromDocument(*Document) error
 }
 
 type MessageWrapper struct {

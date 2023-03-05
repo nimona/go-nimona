@@ -42,7 +42,7 @@ func TestIdentityAlias(t *testing.T) {
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
 		n1 := &IdentityAlias{}
-		n1.FromDocumentMap(n0.Document())
+		n1.FromDocument(n0.Document())
 		require.NoError(t, err)
 		require.EqualValues(t, n0, n1)
 		require.Equal(t, s0, n1.String())
@@ -59,7 +59,7 @@ func TestKeyGraph(t *testing.T) {
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
 		kg1 := &KeyGraph{}
-		kg1.FromDocumentMap(kg.Document())
+		kg1.FromDocument(kg.Document())
 		require.EqualValues(t, kg, kg1)
 	})
 }

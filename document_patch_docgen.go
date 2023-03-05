@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *DocumentPatch) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *DocumentPatch) Map() tilde.Map {
@@ -58,7 +58,7 @@ func (t *DocumentPatch) Map() tilde.Map {
 	return m
 }
 
-func (t *DocumentPatch) FromDocumentMap(d *Document) error {
+func (t *DocumentPatch) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -73,8 +73,8 @@ func (t *DocumentPatch) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -94,8 +94,8 @@ func (t *DocumentPatch) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := DocumentPatchOperation{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}
@@ -109,7 +109,7 @@ func (t *DocumentPatch) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *DocumentPatchOperation) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *DocumentPatchOperation) Map() tilde.Map {
@@ -144,7 +144,7 @@ func (t *DocumentPatchOperation) Map() tilde.Map {
 	return m
 }
 
-func (t *DocumentPatchOperation) FromDocumentMap(d *Document) error {
+func (t *DocumentPatchOperation) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 

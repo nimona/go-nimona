@@ -48,7 +48,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 		require.NoError(t, err)
 
 		g := &CborFixture{}
-		err = g.FromDocumentMap(gm)
+		err = g.FromDocument(gm)
 
 		require.NoError(t, err)
 		require.Equal(t, m, g)

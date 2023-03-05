@@ -3,7 +3,7 @@ package nimona
 // func TestGetShorthand(t *testing.T) {
 // 	tests := []struct {
 // 		name    string
-// 		cborer  DocumentMapper
+// 		cborer  Documenter
 // 		want    string
 // 		wantErr bool
 // 	}{{

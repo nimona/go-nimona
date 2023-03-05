@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *codegenFixture) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *codegenFixture) Map() tilde.Map {
@@ -233,7 +233,7 @@ func (t *codegenFixture) Map() tilde.Map {
 	return m
 }
 
-func (t *codegenFixture) FromDocumentMap(d *Document) error {
+func (t *codegenFixture) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -287,8 +287,8 @@ func (t *codegenFixture) FromMap(d tilde.Map) error {
 		if v, err := d.Get("mapPtr"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := codegenFixture{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.MapPtr = &e
 			}
 		}
@@ -302,8 +302,8 @@ func (t *codegenFixture) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -386,8 +386,8 @@ func (t *codegenFixture) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := codegenFixture{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}
@@ -412,8 +412,8 @@ func (t *codegenFixture) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := &codegenFixture{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}
@@ -493,7 +493,7 @@ func (t *codegenFixture) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *codegenFixtureWithType) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *codegenFixtureWithType) Map() tilde.Map {
@@ -520,7 +520,7 @@ func (t *codegenFixtureWithType) Map() tilde.Map {
 	return m
 }
 
-func (t *codegenFixtureWithType) FromDocumentMap(d *Document) error {
+func (t *codegenFixtureWithType) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 

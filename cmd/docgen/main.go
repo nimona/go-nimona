@@ -55,7 +55,7 @@ func main() {
 	addMapping("peer_docgen.go", nimona.PeerKey{})
 
 	for filename, types := range mappings {
-		err := nimona.GenerateDocumentMapMethods(
+		err := nimona.GenerateDocumentMethods(
 			filename,
 			"nimona",
 			types...,

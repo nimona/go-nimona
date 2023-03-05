@@ -171,18 +171,18 @@ func (i *IdentityIdentifier) Document() *Document {
 	return nil
 }
 
-func (i *IdentityIdentifier) FromDocumentMap(m *Document) error {
+func (i *IdentityIdentifier) FromDocument(m *Document) error {
 	switch m.Type() {
 	case "core/identity.alias":
 		i.IdentityAlias = &IdentityAlias{}
-		err := i.IdentityAlias.FromDocumentMap(m)
+		err := i.IdentityAlias.FromDocument(m)
 		if err != nil {
 			return fmt.Errorf("unable to unmarshal identity alias: %w", err)
 		}
 		return nil
 	case "core/identity":
 		i.Identity = &Identity{}
-		err := i.Identity.FromDocumentMap(m)
+		err := i.Identity.FromDocument(m)
 		if err != nil {
 			return fmt.Errorf("unable to unmarshal identity: %w", err)
 		}

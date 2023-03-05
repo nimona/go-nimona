@@ -87,7 +87,7 @@ func TestDocumentMap(t *testing.T) {
 
 	t.Run("test converting from map", func(t *testing.T) {
 		g := &CborFixture{}
-		g.FromDocumentMap(fixMap)
+		g.FromDocument(fixMap)
 		require.Equal(t, fix, g)
 	})
 }

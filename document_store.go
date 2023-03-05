@@ -27,13 +27,13 @@ type (
 	}
 )
 
-func (doc *DocumentEntry) UnmarshalInto(v DocumentMapper) error {
+func (doc *DocumentEntry) UnmarshalInto(v Documenter) error {
 	m := &Document{}
 	err := json.Unmarshal(doc.DocumentBytes, m)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling document: %w", err)
 	}
-	v.FromDocumentMap(m)
+	v.FromDocument(m)
 	return nil
 }
 

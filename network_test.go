@@ -32,7 +32,7 @@ func TestNetworkAlias_MarshalUnmarshal(t *testing.T) {
 	require.NoError(t, err)
 
 	n1 := &NetworkAlias{}
-	err = n1.FromDocumentMap(m1)
+	err = n1.FromDocument(m1)
 	require.NoError(t, err)
 	require.Equal(t, n0, n1)
 }
@@ -41,7 +41,7 @@ func TestNetworkIdentifier(t *testing.T) {
 	networkInfoRootID := NewTestRandomDocumentID(t)
 	tests := []struct {
 		name    string
-		doc     DocumentMapper
+		doc     Documenter
 		want    *NetworkIdentifier
 		wantErr bool
 	}{{
@@ -74,7 +74,7 @@ func TestNetworkIdentifier(t *testing.T) {
 			doc := &Document{}
 			err = doc.UnmarshalJSON(b)
 			require.NoError(t, err)
-			err = id.FromDocumentMap(doc)
+			err = id.FromDocument(doc)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -55,7 +55,7 @@ func RequestDocument(
 	}
 
 	res := &DocumentResponse{}
-	err = res.FromDocumentMap(msgRes.Document)
+	err = res.FromDocument(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -76,7 +76,7 @@ func (h *HandlerDocument) HandleDocumentRequest(
 	msg *Request,
 ) error {
 	req := &DocumentRequest{}
-	err := req.FromDocumentMap(msg.Document)
+	err := req.FromDocument(msg.Document)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}

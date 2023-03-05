@@ -14,7 +14,7 @@ type Document struct {
 	Schema   *tilde.Schema
 }
 
-func NewDocumentMap(m tilde.Map) *Document {
+func NewDocument(m tilde.Map) *Document {
 	doc := &Document{
 		Metadata: Metadata{},
 		data:     m,
@@ -110,7 +110,7 @@ func DumpDocumentBytes(b []byte) {
 	fmt.Printf("%x\n", b)
 }
 
-func DumpDocumentMap(doc DocumentMapper) {
+func DumpDocument(doc Documenter) {
 	yb, err := json.MarshalIndent(doc.Document().Map(), "", "  ")
 	if err != nil {
 		panic(err)

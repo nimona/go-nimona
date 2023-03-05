@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *PeerInfo) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *PeerInfo) Map() tilde.Map {
@@ -71,7 +71,7 @@ func (t *PeerInfo) Map() tilde.Map {
 	return m
 }
 
-func (t *PeerInfo) FromDocumentMap(d *Document) error {
+func (t *PeerInfo) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -92,8 +92,8 @@ func (t *PeerInfo) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := PeerAddr{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}
@@ -112,8 +112,8 @@ func (t *PeerInfo) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -137,7 +137,7 @@ func (t *PeerInfo) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *PeerKey) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *PeerKey) Map() tilde.Map {
@@ -167,7 +167,7 @@ func (t *PeerKey) Map() tilde.Map {
 	return m
 }
 
-func (t *PeerKey) FromDocumentMap(d *Document) error {
+func (t *PeerKey) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 

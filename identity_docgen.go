@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *Identity) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *Identity) Map() tilde.Map {
@@ -47,7 +47,7 @@ func (t *Identity) Map() tilde.Map {
 	return m
 }
 
-func (t *Identity) FromDocumentMap(d *Document) error {
+func (t *Identity) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -62,8 +62,8 @@ func (t *Identity) FromMap(d tilde.Map) error {
 		if v, err := d.Get("keyGraphID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.KeyGraphID = e
 			}
 		}
@@ -77,8 +77,8 @@ func (t *Identity) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -87,7 +87,7 @@ func (t *Identity) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *IdentityAlias) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *IdentityAlias) Map() tilde.Map {
@@ -134,7 +134,7 @@ func (t *IdentityAlias) Map() tilde.Map {
 	return m
 }
 
-func (t *IdentityAlias) FromDocumentMap(d *Document) error {
+func (t *IdentityAlias) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -161,8 +161,8 @@ func (t *IdentityAlias) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -176,8 +176,8 @@ func (t *IdentityAlias) FromMap(d tilde.Map) error {
 		if v, err := d.Get("network"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := NetworkAlias{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Network = e
 			}
 		}
@@ -186,7 +186,7 @@ func (t *IdentityAlias) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *KeyGraph) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *KeyGraph) Map() tilde.Map {
@@ -235,7 +235,7 @@ func (t *KeyGraph) Map() tilde.Map {
 	return m
 }
 
-func (t *KeyGraph) FromDocumentMap(d *Document) error {
+func (t *KeyGraph) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -265,8 +265,8 @@ func (t *KeyGraph) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}

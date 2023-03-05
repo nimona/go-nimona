@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *DocumentGraphRequest) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *DocumentGraphRequest) Map() tilde.Map {
@@ -37,7 +37,7 @@ func (t *DocumentGraphRequest) Map() tilde.Map {
 	return m
 }
 
-func (t *DocumentGraphRequest) FromDocumentMap(d *Document) error {
+func (t *DocumentGraphRequest) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -52,8 +52,8 @@ func (t *DocumentGraphRequest) FromMap(d tilde.Map) error {
 		if v, err := d.Get("rootDocument"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.RootDocumentID = e
 			}
 		}
@@ -62,7 +62,7 @@ func (t *DocumentGraphRequest) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *DocumentGraphResponse) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *DocumentGraphResponse) Map() tilde.Map {
@@ -104,7 +104,7 @@ func (t *DocumentGraphResponse) Map() tilde.Map {
 	return m
 }
 
-func (t *DocumentGraphResponse) FromDocumentMap(d *Document) error {
+func (t *DocumentGraphResponse) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -125,8 +125,8 @@ func (t *DocumentGraphResponse) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := DocumentID{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}
@@ -145,8 +145,8 @@ func (t *DocumentGraphResponse) FromMap(d tilde.Map) error {
 		if v, err := d.Get("rootDocumentID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.RootDocumentID = e
 			}
 		}

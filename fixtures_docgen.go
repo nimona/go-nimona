@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *CborFixture) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *CborFixture) Map() tilde.Map {
@@ -209,7 +209,7 @@ func (t *CborFixture) Map() tilde.Map {
 	return m
 }
 
-func (t *CborFixture) FromDocumentMap(d *Document) error {
+func (t *CborFixture) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -251,8 +251,8 @@ func (t *CborFixture) FromMap(d tilde.Map) error {
 		if v, err := d.Get("documentID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.DocumentID = e
 			}
 		}
@@ -290,8 +290,8 @@ func (t *CborFixture) FromMap(d tilde.Map) error {
 		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Metadata = e
 			}
 		}
@@ -305,8 +305,8 @@ func (t *CborFixture) FromMap(d tilde.Map) error {
 		if v, err := d.Get("map"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := CborFixture{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.NestedMap = &e
 			}
 		}
@@ -368,8 +368,8 @@ func (t *CborFixture) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := &CborFixture{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}

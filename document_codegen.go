@@ -53,7 +53,7 @@ type (
 	}
 )
 
-func GenerateDocumentMapMethods(fname, pkg string, types ...interface{}) error {
+func GenerateDocumentMethods(fname, pkg string, types ...interface{}) error {
 	buf := new(bytes.Buffer)
 
 	// Gather document info
@@ -343,7 +343,7 @@ var _ = tilde.NewScanner
 
 {{- range .Types }}
 func (t *{{ .Name }}) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *{{ .Name }}) Map() tilde.Map {
@@ -399,7 +399,7 @@ func (t *{{ .Name }}) Map() tilde.Map {
 	return m
 }
 
-func (t *{{ .Name }}) FromDocumentMap(d *Document) error {
+func (t *{{ .Name }}) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -437,8 +437,8 @@ func (t *{{ .Name }}) FromMap(d tilde.Map) error {
 							{{- else }}
 								e := {{ typeName .ElemType }}{}
 							{{- end }}
-							d := NewDocumentMap(v)
-							e.FromDocumentMap(d)
+							d := NewDocument(v)
+							e.FromDocument(d)
 							sm = append(sm, e)
 						}
 					}
@@ -450,15 +450,15 @@ func (t *{{ .Name }}) FromMap(d tilde.Map) error {
 		{{- else if eq .Type.String "nimona.Document" }}
 			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Map); ok {
-					t.{{ .Name }} = *NewDocumentMap(v)
+					t.{{ .Name }} = *NewDocument(v)
 				}
 			}
 		{{- else if .IsStruct }}
 			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Map); ok {
 					e := {{ typeName .Type }}{}
-					d := NewDocumentMap(v)
-					e.FromDocumentMap(d)
+					d := NewDocument(v)
+					e.FromDocument(d)
 					{{- if .IsPointer }}
 						t.{{ .Name }} = &e
 					{{- else }}

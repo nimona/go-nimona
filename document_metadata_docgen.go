@@ -12,7 +12,7 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 func (t *Metadata) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *Metadata) Map() tilde.Map {
@@ -80,7 +80,7 @@ func (t *Metadata) Map() tilde.Map {
 	return m
 }
 
-func (t *Metadata) FromDocumentMap(d *Document) error {
+func (t *Metadata) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -95,8 +95,8 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 		if v, err := d.Get("owner"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Identity{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Owner = &e
 			}
 		}
@@ -116,8 +116,8 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
 						e := Permissions{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
+						d := NewDocument(v)
+						e.FromDocument(d)
 						sm = append(sm, e)
 					}
 				}
@@ -136,8 +136,8 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 		if v, err := d.Get("root"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Root = &e
 			}
 		}
@@ -151,8 +151,8 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 		if v, err := d.Get("_signature"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Signature{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Signature = &e
 			}
 		}
@@ -173,7 +173,7 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *Permissions) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *Permissions) Map() tilde.Map {
@@ -213,7 +213,7 @@ func (t *Permissions) Map() tilde.Map {
 	return m
 }
 
-func (t *Permissions) FromDocumentMap(d *Document) error {
+func (t *Permissions) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -228,8 +228,8 @@ func (t *Permissions) FromMap(d tilde.Map) error {
 		if v, err := d.Get("conditions"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PermissionsCondition{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Conditions = e
 			}
 		}
@@ -243,8 +243,8 @@ func (t *Permissions) FromMap(d tilde.Map) error {
 		if v, err := d.Get("operations"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PermissionsAllow{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Operations = e
 			}
 		}
@@ -274,7 +274,7 @@ func (t *Permissions) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *PermissionsAllow) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *PermissionsAllow) Map() tilde.Map {
@@ -353,7 +353,7 @@ func (t *PermissionsAllow) Map() tilde.Map {
 	return m
 }
 
-func (t *PermissionsAllow) FromDocumentMap(d *Document) error {
+func (t *PermissionsAllow) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -447,7 +447,7 @@ func (t *PermissionsAllow) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *PermissionsCondition) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *PermissionsCondition) Map() tilde.Map {
@@ -466,7 +466,7 @@ func (t *PermissionsCondition) Map() tilde.Map {
 	return m
 }
 
-func (t *PermissionsCondition) FromDocumentMap(d *Document) error {
+func (t *PermissionsCondition) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -488,7 +488,7 @@ func (t *PermissionsCondition) FromMap(d tilde.Map) error {
 	return nil
 }
 func (t *Signature) Document() *Document {
-	return NewDocumentMap(t.Map())
+	return NewDocument(t.Map())
 }
 
 func (t *Signature) Map() tilde.Map {
@@ -516,7 +516,7 @@ func (t *Signature) Map() tilde.Map {
 	return m
 }
 
-func (t *Signature) FromDocumentMap(d *Document) error {
+func (t *Signature) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -531,8 +531,8 @@ func (t *Signature) FromMap(d tilde.Map) error {
 		if v, err := d.Get("signer"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PeerKey{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
+				d := NewDocument(v)
+				e.FromDocument(d)
 				t.Signer = e
 			}
 		}
