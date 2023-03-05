@@ -47,6 +47,16 @@ func (t *Metadata) Map() tilde.Map {
 		}
 	}
 
+	// # t.Root
+	//
+	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: true
+	{
+		if !zero.IsZeroVal(t.Root) {
+			m.Set("root", t.Root.Map())
+		}
+	}
+
 	// # t.Signature
 	//
 	// Type: nimona.Signature, Kind: struct, TildeKind: Map
@@ -115,6 +125,21 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 		}
 		if len(sm) > 0 {
 			t.Permissions = sm
+		}
+	}
+
+	// # t.Root
+	//
+	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: true
+	{
+		if v, err := d.Get("root"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := DocumentID{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.Root = &e
+			}
 		}
 	}
 

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"nimona.io/internal/tilde"
 )
 
@@ -113,7 +111,7 @@ func DumpDocumentBytes(b []byte) {
 }
 
 func DumpDocumentMap(doc DocumentMapper) {
-	yb, err := yaml.Marshal(doc.Document().data)
+	yb, err := json.MarshalIndent(doc.Document().Map(), "", "  ")
 	if err != nil {
 		panic(err)
 	}

@@ -53,6 +53,7 @@ const (
 	HintBool    Hint = 'b'
 	HintList    Hint = 'a'
 	HintMap     Hint = 'm'
+	HintAny     Hint = '*'
 )
 
 const (
@@ -65,6 +66,7 @@ const (
 	KindBool    ValueKind = iota
 	KindList    ValueKind = iota
 	KindMap     ValueKind = iota
+	KindAny     ValueKind = iota
 )
 
 type (
@@ -108,6 +110,8 @@ func (k ValueKind) String() string {
 		return "list"
 	case KindMap:
 		return "map"
+	case KindAny:
+		return "Value"
 	}
 	return "invalid"
 }
@@ -128,6 +132,8 @@ func (k ValueKind) Name() string {
 		return "List"
 	case KindMap:
 		return "Map"
+	case KindAny:
+		return "Value"
 	}
 	return "InvalidValueKind" + strconv.Itoa(int(k))
 }
@@ -148,6 +154,8 @@ func (k ValueKind) Hint() Hint {
 		return HintList
 	case KindMap:
 		return HintMap
+	case KindAny:
+		return HintAny
 	}
 	return HintInvalid
 }

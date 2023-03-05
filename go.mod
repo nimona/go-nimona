@@ -24,7 +24,6 @@ require (
 	github.com/whyrusleeping/cbor-gen v0.0.0-20221220214510-0333c149dec0
 	golang.org/x/crypto v0.4.0
 	gopkg.in/evanphx/json-patch.v5 v5.6.0
-	gopkg.in/yaml.v2 v2.2.5
 	gorm.io/driver/sqlite v1.4.4
 	gorm.io/gorm v1.24.3
 	modernc.org/sqlite v1.20.2

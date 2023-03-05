@@ -1,25 +1,47 @@
 package nimona
 
-// func TestDocumentPatch_CreateAndApply(t *testing.T) {
-// 	original := &CborFixture{
-// 		String: "foo",
-// 	}
+import (
+	"testing"
 
-// 	target := &CborFixture{
-// 		String: "bar",
-// 		Int64:  42,
-// 	}
+	"github.com/stretchr/testify/require"
 
-// 	patch, err := CreateDocumentPatch(
-// 		original.Document(),
-// 		target.Document(),
-// 	)
-// 	require.NoError(t, err)
+	"nimona.io/internal/tilde"
+)
 
-// 	applied, err := ApplyDocumentPatch(
-// 		original.Document(),
-// 		patch,
-// 	)
-// 	require.NoError(t, err)
-// 	require.Equal(t, target, applied)
-// }
+func TestDocumentPatch_Apply(t *testing.T) {
+	root := &Profile{
+		DisplayName: "foo",
+	}
+
+	rootDoc := root.Document()
+	rootDocID := NewDocumentID(rootDoc)
+
+	patch := &DocumentPatch{
+		Metadata: Metadata{
+			Root: &rootDocID,
+		},
+		Operations: []DocumentPatchOperation{{
+			Op:    "replace",
+			Path:  "displayName",
+			Value: tilde.String("bar"),
+		}},
+	}
+
+	exp := NewDocumentMap(
+		tilde.Map{
+			"$type":        tilde.String("core/identity/profile"),
+			"$metadata":    tilde.Map{},
+			"displayName":  tilde.String("bar"),
+			"repositories": tilde.List{},
+		},
+	)
+
+	DumpDocumentMap(patch)
+
+	applied, err := ApplyDocumentPatch(
+		rootDoc,
+		patch,
+	)
+	require.NoError(t, err)
+	require.Equal(t, exp.Map(), applied.Map())
+}

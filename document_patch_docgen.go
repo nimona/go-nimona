@@ -26,25 +26,6 @@ func (t *DocumentPatch) Map() tilde.Map {
 		m.Set("$type", tilde.String("core/stream/patch"))
 	}
 
-	// # t.Dependencies
-	//
-	// Type: []nimona.DocumentID, Kind: slice, TildeKind: List
-	// IsSlice: true, IsStruct: false, IsPointer: false
-	//
-	// ElemType: nimona.DocumentID, ElemKind: struct
-	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
-	{
-		if !zero.IsZeroVal(t.Dependencies) {
-			sm := tilde.List{}
-			for _, v := range t.Dependencies {
-				if !zero.IsZeroVal(t.Dependencies) {
-					sm = append(sm, v.Map())
-				}
-			}
-			m.Set("dependencies", sm)
-		}
-	}
-
 	// # t.Metadata
 	//
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
@@ -83,32 +64,6 @@ func (t *DocumentPatch) FromDocumentMap(d *Document) error {
 
 func (t *DocumentPatch) FromMap(d tilde.Map) error {
 	*t = DocumentPatch{}
-
-	// # t.Dependencies
-	//
-	// Type: []nimona.DocumentID, Kind: slice, TildeKind: List
-	// IsSlice: true, IsStruct: false, IsPointer: false
-	//
-	// ElemType: nimona.DocumentID, ElemKind: struct, ElemTildeKind: Map
-	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
-	{
-		sm := []DocumentID{}
-		if vs, err := d.Get("dependencies"); err == nil {
-			if vs, ok := vs.(tilde.List); ok {
-				for _, vi := range vs {
-					if v, ok := vi.(tilde.Map); ok {
-						e := DocumentID{}
-						d := NewDocumentMap(v)
-						e.FromDocumentMap(d)
-						sm = append(sm, e)
-					}
-				}
-			}
-		}
-		if len(sm) > 0 {
-			t.Dependencies = sm
-		}
-	}
 
 	// # t.Metadata
 	//
@@ -160,16 +115,6 @@ func (t *DocumentPatchOperation) Document() *Document {
 func (t *DocumentPatchOperation) Map() tilde.Map {
 	m := tilde.Map{}
 
-	// # t.From
-	//
-	// Type: string, Kind: string, TildeKind: String
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		if !zero.IsZeroVal(t.From) {
-			m.Set("from", tilde.String(t.From))
-		}
-	}
-
 	// # t.Op
 	//
 	// Type: string, Kind: string, TildeKind: String
@@ -188,11 +133,11 @@ func (t *DocumentPatchOperation) Map() tilde.Map {
 
 	// # t.Value
 	//
-	// Type: nimona.Document, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: tilde.Value, Kind: interface, TildeKind: Value
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Value) {
-			m.Set("value", t.Value.Map())
+			m.Set("value", tilde.Value(t.Value))
 		}
 	}
 
@@ -205,18 +150,6 @@ func (t *DocumentPatchOperation) FromDocumentMap(d *Document) error {
 
 func (t *DocumentPatchOperation) FromMap(d tilde.Map) error {
 	*t = DocumentPatchOperation{}
-
-	// # t.From
-	//
-	// Type: string, Kind: string, TildeKind: String
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		if v, err := d.Get("from"); err == nil {
-			if v, ok := v.(tilde.String); ok {
-				t.From = string(v)
-			}
-		}
-	}
 
 	// # t.Op
 	//
@@ -244,12 +177,12 @@ func (t *DocumentPatchOperation) FromMap(d tilde.Map) error {
 
 	// # t.Value
 	//
-	// Type: nimona.Document, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: tilde.Value, Kind: interface, TildeKind: Value
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if v, err := d.Get("value"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				t.Value = *NewDocumentMap(v)
+			if v, ok := v.(tilde.Value); ok {
+				t.Value = tilde.Value(v)
 			}
 		}
 	}

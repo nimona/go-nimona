@@ -60,10 +60,10 @@ func GenerateDocumentMapMethods(fname, pkg string, types ...interface{}) error {
 	docs := []*DocumentInfo{}
 	for _, t := range types {
 		gti, err := documentType(t)
-		docType := ""
 		if err != nil {
-			return fmt.Errorf("failed to document type: %w", err)
+			return fmt.Errorf("failed to get document type: %w", err)
 		}
+		docType := ""
 		for _, tf := range gti.Fields {
 			if tf.Tag.Name == "$metadata" && tf.Tag.DocumentType != "" {
 				docType = tf.Tag.DocumentType
@@ -107,10 +107,7 @@ func GenerateDocumentMapMethods(fname, pkg string, types ...interface{}) error {
 		Must(template.New("map").
 			Funcs(template.FuncMap{
 				"typeName": func(t reflect.Type) string {
-					if t.PkgPath() == pkg {
-						return strings.TrimPrefix(t.String(), pkg+".")
-					}
-					return t.Name()
+					return strings.TrimPrefix(t.String(), pkg+".")
 				},
 			}).
 			Parse(tpl))
@@ -158,6 +155,7 @@ func documentType(i interface{}) (*DocumentInfo, error) {
 	}
 
 	typeDocumentValuer := reflect.TypeOf((*DocumentValuer)(nil)).Elem()
+	typeTildeValue := reflect.TypeOf((*tilde.Value)(nil)).Elem()
 
 	typeToTildeKind := func(t reflect.Type) (tilde.ValueKind, error) {
 		switch t.Kind() {
@@ -178,6 +176,10 @@ func documentType(i interface{}) (*DocumentInfo, error) {
 				return tilde.KindBytes, nil
 			}
 			return tilde.KindList, nil
+		}
+
+		if t.Implements(typeTildeValue) {
+			return tilde.KindAny, nil
 		}
 
 		if t.Name() == "DocumentHash" {
