@@ -29,14 +29,10 @@ func TestDocumentPatch_Apply(t *testing.T) {
 
 	exp := NewDocumentMap(
 		tilde.Map{
-			"$type":        tilde.String("core/identity/profile"),
-			"$metadata":    tilde.Map{},
-			"displayName":  tilde.String("bar"),
-			"repositories": tilde.List{},
+			"$type":       tilde.String("core/identity/profile"),
+			"displayName": tilde.String("bar"),
 		},
 	)
-
-	DumpDocumentMap(patch)
 
 	applied, err := ApplyDocumentPatch(
 		rootDoc,
