@@ -15,6 +15,8 @@ func main() {
 		mappings[f] = append(mappings[f], t)
 	}
 
+	addMapping("client_profile_docgen.go", nimona.Profile{})
+	addMapping("client_profile_docgen.go", nimona.ProfileRepository{})
 	addMapping("document_id_docgen.go", nimona.DocumentID{})
 	addMapping("document_metadata_docgen.go", nimona.Metadata{})
 	addMapping("document_metadata_docgen.go", nimona.Permissions{})
