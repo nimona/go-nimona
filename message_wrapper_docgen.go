@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *MessageWrapper) DocumentMap() *DocumentMap {
+func (t *MessageWrapper) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *MessageWrapper) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.Type
@@ -22,10 +26,14 @@ func (t *MessageWrapper) DocumentMap() *DocumentMap {
 		m.Set("$type", tilde.String(t.Type))
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *MessageWrapper) FromDocumentMap(d *DocumentMap) error {
+func (t *MessageWrapper) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *MessageWrapper) FromMap(d tilde.Map) error {
 	*t = MessageWrapper{}
 
 	// # t.Type
@@ -33,7 +41,7 @@ func (t *MessageWrapper) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("$type"); err == nil {
+		if v, err := d.Get("$type"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Type = string(v)
 			}

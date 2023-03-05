@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *PeerAddr) DocumentMap() *DocumentMap {
+func (t *PeerAddr) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *PeerAddr) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -55,10 +59,14 @@ func (t *PeerAddr) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *PeerAddr) FromDocumentMap(d *DocumentMap) error {
+func (t *PeerAddr) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *PeerAddr) FromMap(d tilde.Map) error {
 	*t = PeerAddr{}
 
 	// # t.Address
@@ -66,7 +74,7 @@ func (t *PeerAddr) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("address"); err == nil {
+		if v, err := d.Get("address"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Address = string(v)
 			}
@@ -78,7 +86,7 @@ func (t *PeerAddr) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("network"); err == nil {
+		if v, err := d.Get("network"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Network = string(v)
 			}
@@ -93,7 +101,7 @@ func (t *PeerAddr) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("publicKey"); err == nil {
+		if v, err := d.Get("publicKey"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.PublicKey = PublicKey(v)
 			}

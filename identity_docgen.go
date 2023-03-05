@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *Identity) DocumentMap() *DocumentMap {
+func (t *Identity) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *Identity) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -27,7 +31,7 @@ func (t *Identity) DocumentMap() *DocumentMap {
 	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m.Set("keyGraphID", t.KeyGraphID.DocumentMap().m)
+		m.Set("keyGraphID", t.KeyGraphID.Map())
 	}
 
 	// # t.Metadata
@@ -36,14 +40,18 @@ func (t *Identity) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *Identity) FromDocumentMap(d *DocumentMap) error {
+func (t *Identity) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *Identity) FromMap(d tilde.Map) error {
 	*t = Identity{}
 
 	// # t.KeyGraphID
@@ -51,7 +59,7 @@ func (t *Identity) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("keyGraphID"); err == nil {
+		if v, err := d.Get("keyGraphID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
 				d := NewDocumentMap(v)
@@ -66,7 +74,7 @@ func (t *Identity) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -78,7 +86,11 @@ func (t *Identity) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *IdentityAlias) DocumentMap() *DocumentMap {
+func (t *IdentityAlias) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *IdentityAlias) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -105,7 +117,7 @@ func (t *IdentityAlias) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -115,14 +127,18 @@ func (t *IdentityAlias) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Network) {
-			m.Set("network", t.Network.DocumentMap().m)
+			m.Set("network", t.Network.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *IdentityAlias) FromDocumentMap(d *DocumentMap) error {
+func (t *IdentityAlias) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *IdentityAlias) FromMap(d tilde.Map) error {
 	*t = IdentityAlias{}
 
 	// # t.Handle
@@ -130,7 +146,7 @@ func (t *IdentityAlias) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("handle"); err == nil {
+		if v, err := d.Get("handle"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Handle = string(v)
 			}
@@ -142,7 +158,7 @@ func (t *IdentityAlias) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -157,7 +173,7 @@ func (t *IdentityAlias) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("network"); err == nil {
+		if v, err := d.Get("network"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := NetworkAlias{}
 				d := NewDocumentMap(v)
@@ -169,7 +185,11 @@ func (t *IdentityAlias) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *KeyGraph) DocumentMap() *DocumentMap {
+func (t *KeyGraph) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *KeyGraph) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -197,7 +217,7 @@ func (t *KeyGraph) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -212,10 +232,14 @@ func (t *KeyGraph) DocumentMap() *DocumentMap {
 		m.Set("next", tilde.Bytes(t.Next))
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *KeyGraph) FromDocumentMap(d *DocumentMap) error {
+func (t *KeyGraph) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *KeyGraph) FromMap(d tilde.Map) error {
 	*t = KeyGraph{}
 
 	// # t.Keys
@@ -226,7 +250,7 @@ func (t *KeyGraph) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("keys"); err == nil {
+		if v, err := d.Get("keys"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.Keys = PublicKey(v)
 			}
@@ -238,7 +262,7 @@ func (t *KeyGraph) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -256,7 +280,7 @@ func (t *KeyGraph) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("next"); err == nil {
+		if v, err := d.Get("next"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.Next = PublicKey(v)
 			}

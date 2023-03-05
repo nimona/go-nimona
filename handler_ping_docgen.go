@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *Ping) DocumentMap() *DocumentMap {
+func (t *Ping) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *Ping) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -30,10 +34,14 @@ func (t *Ping) DocumentMap() *DocumentMap {
 		m.Set("nonce", tilde.String(t.Nonce))
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *Ping) FromDocumentMap(d *DocumentMap) error {
+func (t *Ping) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *Ping) FromMap(d tilde.Map) error {
 	*t = Ping{}
 
 	// # t.Nonce
@@ -41,7 +49,7 @@ func (t *Ping) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("nonce"); err == nil {
+		if v, err := d.Get("nonce"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Nonce = string(v)
 			}
@@ -50,7 +58,11 @@ func (t *Ping) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *Pong) DocumentMap() *DocumentMap {
+func (t *Pong) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *Pong) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -69,10 +81,14 @@ func (t *Pong) DocumentMap() *DocumentMap {
 		m.Set("nonce", tilde.String(t.Nonce))
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *Pong) FromDocumentMap(d *DocumentMap) error {
+func (t *Pong) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *Pong) FromMap(d tilde.Map) error {
 	*t = Pong{}
 
 	// # t.Nonce
@@ -80,7 +96,7 @@ func (t *Pong) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("nonce"); err == nil {
+		if v, err := d.Get("nonce"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Nonce = string(v)
 			}

@@ -9,6 +9,7 @@ type (
 		Owner       *Identity     `nimona:"owner,omitempty"`
 		Permissions []Permissions `nimona:"permissions,omitempty"`
 		Timestamp   uint          `nimona:"timestamp,omitempty"` // TODO: use time.Time
+		Root        *DocumentID   `nimona:"root,omitempty"`
 		Signature   *Signature    `nimona:"_signature,omitempty"`
 	}
 	Permissions struct {

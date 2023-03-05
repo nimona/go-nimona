@@ -48,8 +48,8 @@ func documentHashRaw(h tilde.Hint, b []byte) []byte {
 	return d.Sum(nil)
 }
 
-func NewDocumentHash(dm *DocumentMap) (h DocumentHash) {
-	x, err := documentHashMap(dm.m)
+func NewDocumentHash(dm *Document) (h DocumentHash) {
+	x, err := documentHashMap(dm.Map())
 	if err != nil {
 		panic(fmt.Errorf("error hashing map: %w", err))
 	}
@@ -125,7 +125,7 @@ func documentHashMap(m tilde.Map) (h []byte, err error) {
 			continue
 		}
 		// skip zero values
-		// TODO(geoah): for all types?
+		// TODO Reconsider if we should be skipping all zero values
 		if zero.IsZeroVal(value) {
 			continue
 		}

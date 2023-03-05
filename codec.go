@@ -5,17 +5,17 @@ package nimona
 type (
 	// CodecType string
 	Codec interface {
-		Marshal(v *DocumentMap) ([]byte, error)
-		Unmarshal(b []byte, v *DocumentMap) error
+		Marshal(v *Document) ([]byte, error)
+		Unmarshal(b []byte, v *Document) error
 	}
 )
 
 type CodecJSON struct{}
 
-func (c *CodecJSON) Marshal(v *DocumentMap) ([]byte, error) {
+func (c *CodecJSON) Marshal(v *Document) ([]byte, error) {
 	return v.MarshalJSON()
 }
 
-func (c *CodecJSON) Unmarshal(b []byte, v *DocumentMap) error {
+func (c *CodecJSON) Unmarshal(b []byte, v *Document) error {
 	return v.UnmarshalJSON(b)
 }

@@ -91,7 +91,7 @@ func TestSession_E2E_RPC(t *testing.T) {
 		require.NoError(t, err)
 
 		msg := Ping{}
-		err = msg.FromDocumentMap(req.DocumentMap)
+		err = msg.FromDocumentMap(req.Document)
 		require.NoError(t, err)
 		require.EqualValues(t, *messagePing, msg)
 
@@ -104,7 +104,7 @@ func TestSession_E2E_RPC(t *testing.T) {
 	res, err := cln.Request(ctx, messagePing)
 	require.NoError(t, err)
 
-	err = msg.FromDocumentMap(res.DocumentMap)
+	err = msg.FromDocumentMap(res.Document)
 	require.NoError(t, err)
 	require.EqualValues(t, messagePong, msg)
 

@@ -11,6 +11,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/jimeh/undent v1.1.1
 	github.com/kelseyhightower/envconfig v1.4.0
+	github.com/mitchellh/copystructure v1.2.0
 	github.com/mitchellh/go-linereader v0.0.0-20190213213312-1b945b3263eb
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mr-tron/base58 v1.2.0
@@ -36,7 +37,7 @@ require (
 	github.com/anacrolix/missinggo/v2 v2.5.1 // indirect
 	github.com/anacrolix/sync v0.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.1 // indirect
 	github.com/ipfs/go-cid v0.3.2 // indirect
@@ -44,9 +45,11 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.2 // indirect
+	github.com/kr/pretty v0.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-sqlite3 v1.14.15 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
 	github.com/multiformats/go-base36 v0.2.0 // indirect
 	github.com/multiformats/go-multibase v0.1.1 // indirect
@@ -61,7 +64,8 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/mod v0.6.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/tools v0.2.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

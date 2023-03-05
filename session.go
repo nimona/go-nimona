@@ -34,15 +34,15 @@ type Request struct {
 	Type        string
 	Codec       Codec
 	DocumentRaw []byte
-	DocumentMap *DocumentMap
+	Document    *Document
 	Respond     func(DocumentMapper) error
 }
 
 type Response struct {
-	Type        string
-	Body        []byte
-	Codec       Codec
-	DocumentMap *DocumentMap
+	Type     string
+	Body     []byte
+	Codec    Codec
+	Document *Document
 }
 
 // NewSession returns a new Session that wraps the given net.Conn.
@@ -233,7 +233,7 @@ func (s *Session) Request(
 	req DocumentMapper,
 ) (*Response, error) {
 	// Check if the request is a valid document
-	reqMap := req.DocumentMap()
+	reqMap := req.Document()
 	if reqMap.Type() == "" {
 		return nil, fmt.Errorf("request document is missing a $type field")
 	}
@@ -251,7 +251,7 @@ func (s *Session) Request(
 	}
 
 	// Decode the response
-	resMap := &DocumentMap{}
+	resMap := &Document{}
 	codec := s.codec
 	err = codec.Unmarshal(resBytes, resMap)
 	if err != nil {
@@ -264,10 +264,10 @@ func (s *Session) Request(
 	}
 
 	res := &Response{
-		DocumentMap: resMap,
-		Type:        docType,
-		Body:        resBytes,
-		Codec:       s.codec,
+		Document: resMap,
+		Type:     docType,
+		Body:     resBytes,
+		Codec:    s.codec,
 	}
 
 	return res, nil
@@ -280,7 +280,7 @@ func (s *Session) Read() (*Request, error) {
 		return nil, fmt.Errorf("unable to read message: %w", err)
 	}
 
-	docMap := &DocumentMap{}
+	docMap := &Document{}
 	err = s.codec.Unmarshal(req, docMap)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode message: %w", err)
@@ -295,10 +295,10 @@ func (s *Session) Read() (*Request, error) {
 		Type:        docType,
 		Codec:       s.codec,
 		DocumentRaw: req,
-		DocumentMap: docMap,
+		Document:    docMap,
 		Respond: func(res DocumentMapper) error {
 			// Encode the response
-			docMap := res.DocumentMap()
+			docMap := res.Document()
 			b, err := s.codec.Marshal(docMap)
 			if err != nil {
 				return fmt.Errorf("unable to encode response: %w", err)

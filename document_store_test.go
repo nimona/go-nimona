@@ -41,7 +41,7 @@ func TestDocumentStore(t *testing.T) {
 		String: "test",
 		Uint64: 42,
 	}
-	doc := val.DocumentMap()
+	doc := val.Document()
 
 	docBytes, err := doc.MarshalJSON()
 	require.NoError(t, err)
@@ -86,10 +86,10 @@ func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
 		Sequence:         1,
 	}
 
-	err := store.PutDocumentEntry(rootEntry)
+	err := store.putDocumentEntry(rootEntry)
 	require.NoError(t, err)
 
-	err = store.PutDocumentEntry(childEntry)
+	err = store.putDocumentEntry(childEntry)
 	require.NoError(t, err)
 
 	// Test getting the stream

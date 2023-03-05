@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *NetworkAnnouncePeerRequest) DocumentMap() *DocumentMap {
+func (t *NetworkAnnouncePeerRequest) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkAnnouncePeerRequest) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -28,7 +32,7 @@ func (t *NetworkAnnouncePeerRequest) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -38,14 +42,18 @@ func (t *NetworkAnnouncePeerRequest) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.PeerInfo) {
-			m.Set("peerInfo", t.PeerInfo.DocumentMap().m)
+			m.Set("peerInfo", t.PeerInfo.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkAnnouncePeerRequest) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkAnnouncePeerRequest) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkAnnouncePeerRequest) FromMap(d tilde.Map) error {
 	*t = NetworkAnnouncePeerRequest{}
 
 	// # t.Metadata
@@ -53,7 +61,7 @@ func (t *NetworkAnnouncePeerRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -68,7 +76,7 @@ func (t *NetworkAnnouncePeerRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.PeerInfo, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("peerInfo"); err == nil {
+		if v, err := d.Get("peerInfo"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PeerInfo{}
 				d := NewDocumentMap(v)
@@ -80,7 +88,11 @@ func (t *NetworkAnnouncePeerRequest) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkAnnouncePeerResponse) DocumentMap() *DocumentMap {
+func (t *NetworkAnnouncePeerResponse) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkAnnouncePeerResponse) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -117,14 +129,18 @@ func (t *NetworkAnnouncePeerResponse) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkAnnouncePeerResponse) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkAnnouncePeerResponse) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkAnnouncePeerResponse) FromMap(d tilde.Map) error {
 	*t = NetworkAnnouncePeerResponse{}
 
 	// # t.Error
@@ -132,7 +148,7 @@ func (t *NetworkAnnouncePeerResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("error"); err == nil {
+		if v, err := d.Get("error"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Error = bool(v)
 			}
@@ -144,7 +160,7 @@ func (t *NetworkAnnouncePeerResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("errorDescription"); err == nil {
+		if v, err := d.Get("errorDescription"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.ErrorDescription = string(v)
 			}
@@ -156,7 +172,7 @@ func (t *NetworkAnnouncePeerResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -168,7 +184,11 @@ func (t *NetworkAnnouncePeerResponse) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkInfoRequest) DocumentMap() *DocumentMap {
+func (t *NetworkInfoRequest) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkInfoRequest) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -179,15 +199,23 @@ func (t *NetworkInfoRequest) DocumentMap() *DocumentMap {
 		m.Set("$type", tilde.String("core/network/info.request"))
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkInfoRequest) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkInfoRequest) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkInfoRequest) FromMap(d tilde.Map) error {
 	*t = NetworkInfoRequest{}
 
 	return nil
 }
-func (t *NetworkJoinRequest) DocumentMap() *DocumentMap {
+func (t *NetworkJoinRequest) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkJoinRequest) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -204,7 +232,7 @@ func (t *NetworkJoinRequest) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -218,10 +246,14 @@ func (t *NetworkJoinRequest) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkJoinRequest) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkJoinRequest) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkJoinRequest) FromMap(d tilde.Map) error {
 	*t = NetworkJoinRequest{}
 
 	// # t.Metadata
@@ -229,7 +261,7 @@ func (t *NetworkJoinRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -244,7 +276,7 @@ func (t *NetworkJoinRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("requestedHandle"); err == nil {
+		if v, err := d.Get("requestedHandle"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.RequestedHandle = string(v)
 			}
@@ -253,7 +285,11 @@ func (t *NetworkJoinRequest) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkJoinResponse) DocumentMap() *DocumentMap {
+func (t *NetworkJoinResponse) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkJoinResponse) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -302,10 +338,14 @@ func (t *NetworkJoinResponse) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkJoinResponse) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkJoinResponse) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkJoinResponse) FromMap(d tilde.Map) error {
 	*t = NetworkJoinResponse{}
 
 	// # t.Accepted
@@ -313,7 +353,7 @@ func (t *NetworkJoinResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("accepted"); err == nil {
+		if v, err := d.Get("accepted"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Accepted = bool(v)
 			}
@@ -325,7 +365,7 @@ func (t *NetworkJoinResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("error"); err == nil {
+		if v, err := d.Get("error"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Error = bool(v)
 			}
@@ -337,7 +377,7 @@ func (t *NetworkJoinResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("errorDescription"); err == nil {
+		if v, err := d.Get("errorDescription"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.ErrorDescription = string(v)
 			}
@@ -349,7 +389,7 @@ func (t *NetworkJoinResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("handle"); err == nil {
+		if v, err := d.Get("handle"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Handle = string(v)
 			}
@@ -358,7 +398,11 @@ func (t *NetworkJoinResponse) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkLookupPeerRequest) DocumentMap() *DocumentMap {
+func (t *NetworkLookupPeerRequest) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkLookupPeerRequest) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -375,7 +419,7 @@ func (t *NetworkLookupPeerRequest) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -385,14 +429,18 @@ func (t *NetworkLookupPeerRequest) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.PeerKey) {
-			m.Set("peerKey", t.PeerKey.DocumentMap().m)
+			m.Set("peerKey", t.PeerKey.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkLookupPeerRequest) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkLookupPeerRequest) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkLookupPeerRequest) FromMap(d tilde.Map) error {
 	*t = NetworkLookupPeerRequest{}
 
 	// # t.Metadata
@@ -400,7 +448,7 @@ func (t *NetworkLookupPeerRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -415,7 +463,7 @@ func (t *NetworkLookupPeerRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.PeerKey, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("peerKey"); err == nil {
+		if v, err := d.Get("peerKey"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PeerKey{}
 				d := NewDocumentMap(v)
@@ -427,7 +475,11 @@ func (t *NetworkLookupPeerRequest) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkLookupPeerResponse) DocumentMap() *DocumentMap {
+func (t *NetworkLookupPeerResponse) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkLookupPeerResponse) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -474,7 +526,7 @@ func (t *NetworkLookupPeerResponse) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -484,14 +536,18 @@ func (t *NetworkLookupPeerResponse) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.PeerInfo) {
-			m.Set("peerInfo", t.PeerInfo.DocumentMap().m)
+			m.Set("peerInfo", t.PeerInfo.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkLookupPeerResponse) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkLookupPeerResponse) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkLookupPeerResponse) FromMap(d tilde.Map) error {
 	*t = NetworkLookupPeerResponse{}
 
 	// # t.Error
@@ -499,7 +555,7 @@ func (t *NetworkLookupPeerResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("error"); err == nil {
+		if v, err := d.Get("error"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Error = bool(v)
 			}
@@ -511,7 +567,7 @@ func (t *NetworkLookupPeerResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("errorDescription"); err == nil {
+		if v, err := d.Get("errorDescription"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.ErrorDescription = string(v)
 			}
@@ -523,7 +579,7 @@ func (t *NetworkLookupPeerResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("found"); err == nil {
+		if v, err := d.Get("found"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Found = bool(v)
 			}
@@ -535,7 +591,7 @@ func (t *NetworkLookupPeerResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -550,7 +606,7 @@ func (t *NetworkLookupPeerResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.PeerInfo, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("peerInfo"); err == nil {
+		if v, err := d.Get("peerInfo"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PeerInfo{}
 				d := NewDocumentMap(v)
@@ -562,7 +618,11 @@ func (t *NetworkLookupPeerResponse) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkResolveHandleRequest) DocumentMap() *DocumentMap {
+func (t *NetworkResolveHandleRequest) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkResolveHandleRequest) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -583,10 +643,14 @@ func (t *NetworkResolveHandleRequest) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkResolveHandleRequest) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkResolveHandleRequest) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkResolveHandleRequest) FromMap(d tilde.Map) error {
 	*t = NetworkResolveHandleRequest{}
 
 	// # t.Handle
@@ -594,7 +658,7 @@ func (t *NetworkResolveHandleRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("handle"); err == nil {
+		if v, err := d.Get("handle"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Handle = string(v)
 			}
@@ -603,7 +667,11 @@ func (t *NetworkResolveHandleRequest) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkResolveHandleResponse) DocumentMap() *DocumentMap {
+func (t *NetworkResolveHandleResponse) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkResolveHandleResponse) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -650,7 +718,7 @@ func (t *NetworkResolveHandleResponse) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.IdentityID) {
-			m.Set("identityID", t.IdentityID.DocumentMap().m)
+			m.Set("identityID", t.IdentityID.Map())
 		}
 	}
 
@@ -666,17 +734,21 @@ func (t *NetworkResolveHandleResponse) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.PeerAddresses {
 				if !zero.IsZeroVal(t.PeerAddresses) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("peerAddresses", sm)
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkResolveHandleResponse) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkResolveHandleResponse) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkResolveHandleResponse) FromMap(d tilde.Map) error {
 	*t = NetworkResolveHandleResponse{}
 
 	// # t.Error
@@ -684,7 +756,7 @@ func (t *NetworkResolveHandleResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("error"); err == nil {
+		if v, err := d.Get("error"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Error = bool(v)
 			}
@@ -696,7 +768,7 @@ func (t *NetworkResolveHandleResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("errorDescription"); err == nil {
+		if v, err := d.Get("errorDescription"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.ErrorDescription = string(v)
 			}
@@ -708,7 +780,7 @@ func (t *NetworkResolveHandleResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("found"); err == nil {
+		if v, err := d.Get("found"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Found = bool(v)
 			}
@@ -720,7 +792,7 @@ func (t *NetworkResolveHandleResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Identity, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("identityID"); err == nil {
+		if v, err := d.Get("identityID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Identity{}
 				d := NewDocumentMap(v)
@@ -739,7 +811,7 @@ func (t *NetworkResolveHandleResponse) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []PeerAddr{}
-		if vs, err := d.m.Get("peerAddresses"); err == nil {
+		if vs, err := d.Get("peerAddresses"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {

@@ -14,12 +14,12 @@ type (
 		DocumentID DocumentID `nimona:"documentID"`
 	}
 	DocumentResponse struct {
-		_                string      `nimona:"$type,type=core/document.response"`
-		Metadata         Metadata    `nimona:"$metadata,omitempty"`
-		Document         DocumentMap `nimona:"document"`
-		Found            bool        `nimona:"found"`
-		Error            bool        `nimona:"error,omitempty"`
-		ErrorDescription string      `nimona:"errorDescription,omitempty"`
+		_                string   `nimona:"$type,type=core/document.response"`
+		Metadata         Metadata `nimona:"$metadata,omitempty"`
+		Payload          Document `nimona:"document"`
+		Found            bool     `nimona:"found"`
+		Error            bool     `nimona:"error,omitempty"`
+		ErrorDescription string   `nimona:"errorDescription,omitempty"`
 	}
 )
 
@@ -36,7 +36,7 @@ func RequestDocument(
 	ses *Session,
 	peerConfig *PeerConfig,
 	docID DocumentID,
-) (*DocumentMap, error) {
+) (*Document, error) {
 	req := &DocumentRequest{
 		Metadata: Metadata{
 			Owner: peerConfig.GetIdentity(),
@@ -46,7 +46,7 @@ func RequestDocument(
 
 	req.Metadata.Signature = NewDocumentSignature(
 		peerConfig.GetPrivateKey(),
-		NewDocumentHash(req.DocumentMap()),
+		NewDocumentHash(req.Document()),
 	)
 
 	msgRes, err := ses.Request(ctx, req)
@@ -55,7 +55,7 @@ func RequestDocument(
 	}
 
 	res := &DocumentResponse{}
-	err = res.FromDocumentMap(msgRes.DocumentMap)
+	err = res.FromDocumentMap(msgRes.Document)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding message: %w", err)
 	}
@@ -68,7 +68,7 @@ func RequestDocument(
 		return nil, fmt.Errorf("got error: %s", res.ErrorDescription)
 	}
 
-	return &res.Document, nil
+	return &res.Payload, nil
 }
 
 func (h *HandlerDocument) HandleDocumentRequest(
@@ -76,7 +76,7 @@ func (h *HandlerDocument) HandleDocumentRequest(
 	msg *Request,
 ) error {
 	req := &DocumentRequest{}
-	err := req.FromDocumentMap(msg.DocumentMap)
+	err := req.FromDocumentMap(msg.Document)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling request: %w", err)
 	}
@@ -103,8 +103,8 @@ func (h *HandlerDocument) HandleDocumentRequest(
 	}
 
 	res := &DocumentResponse{
-		Found:    true,
-		Document: doc.DocumentMap(),
+		Found:   true,
+		Payload: doc.Document(),
 	}
 	err = msg.Respond(res)
 	if err != nil {

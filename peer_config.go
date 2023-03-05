@@ -22,7 +22,7 @@ func NewPeerConfig(
 	if peerInfo != nil && peerInfo.Metadata.Signature == nil {
 		peerInfo.Metadata.Signature = NewDocumentSignature(
 			privateKey,
-			NewDocumentHash(peerInfo.DocumentMap()),
+			NewDocumentHash(peerInfo.Document()),
 		)
 	}
 	return &PeerConfig{

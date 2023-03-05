@@ -24,15 +24,16 @@ func TestNetworkAlias_MarshalUnmarshal(t *testing.T) {
 		Hostname: "testing.reamde.dev",
 	}
 
-	b, err := n0.DocumentMap().MarshalJSON()
+	b, err := n0.Document().MarshalJSON()
 	require.NoError(t, err)
 
-	m1 := &DocumentMap{}
+	m1 := &Document{}
 	err = m1.UnmarshalJSON(b)
 	require.NoError(t, err)
 
 	n1 := &NetworkAlias{}
 	err = n1.FromDocumentMap(m1)
+	require.NoError(t, err)
 	require.Equal(t, n0, n1)
 }
 
@@ -66,11 +67,11 @@ func TestNetworkIdentifier(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b, err := tt.doc.DocumentMap().MarshalJSON()
+			b, err := tt.doc.Document().MarshalJSON()
 			require.NoError(t, err)
 
 			id := &NetworkIdentifier{}
-			doc := &DocumentMap{}
+			doc := &Document{}
 			err = doc.UnmarshalJSON(b)
 			require.NoError(t, err)
 			err = id.FromDocumentMap(doc)

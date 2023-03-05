@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *PeerCapabilitiesRequest) DocumentMap() *DocumentMap {
+func (t *PeerCapabilitiesRequest) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *PeerCapabilitiesRequest) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -22,15 +26,23 @@ func (t *PeerCapabilitiesRequest) DocumentMap() *DocumentMap {
 		m.Set("$type", tilde.String("core/peer/capabilities.request"))
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *PeerCapabilitiesRequest) FromDocumentMap(d *DocumentMap) error {
+func (t *PeerCapabilitiesRequest) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *PeerCapabilitiesRequest) FromMap(d tilde.Map) error {
 	*t = PeerCapabilitiesRequest{}
 
 	return nil
 }
-func (t *PeerCapabilitiesResponse) DocumentMap() *DocumentMap {
+func (t *PeerCapabilitiesResponse) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *PeerCapabilitiesResponse) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -56,10 +68,14 @@ func (t *PeerCapabilitiesResponse) DocumentMap() *DocumentMap {
 		m.Set("", s)
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *PeerCapabilitiesResponse) FromDocumentMap(d *DocumentMap) error {
+func (t *PeerCapabilitiesResponse) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *PeerCapabilitiesResponse) FromMap(d tilde.Map) error {
 	*t = PeerCapabilitiesResponse{}
 
 	// # t.Capabilities
@@ -70,7 +86,7 @@ func (t *PeerCapabilitiesResponse) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: string, ElemKind: string, ElemTildeKind: String
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get(""); err == nil {
+		if v, err := d.Get(""); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]string, len(v))
 				for i, vi := range v {

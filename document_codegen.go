@@ -340,7 +340,11 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 {{- range .Types }}
-func (t *{{ .Name }}) DocumentMap() *DocumentMap {
+func (t *{{ .Name }}) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *{{ .Name }}) Map() tilde.Map {
 	m := tilde.Map{}
 	{{ range .Fields }}
 		// # t.{{ .Name }}
@@ -368,12 +372,12 @@ func (t *{{ .Name }}) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.{{ .Name }} {
 				if !zero.IsZeroVal(t.{{ .Name }}) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("{{ .Tag.Name }}", sm)
 		{{- else if .IsStruct }}
-			m.Set("{{ .Tag.Name }}", t.{{ .Name }}.DocumentMap().m)
+			m.Set("{{ .Tag.Name }}", t.{{ .Name }}.Map())
 		{{- else if and (.IsSlice) (eq .ElemType.String "uint8") }}
 			m.Set("{{ .Tag.Name }}", tilde.{{ .TildeKind.Name }}(t.{{ .Name }}))
 		{{- else if .IsSlice }}
@@ -390,10 +394,14 @@ func (t *{{ .Name }}) DocumentMap() *DocumentMap {
 		{{- end }}
 		}
 	{{ end }}
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *{{ .Name }}) FromDocumentMap(d *DocumentMap) error {
+func (t *{{ .Name }}) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *{{ .Name }}) FromMap(d tilde.Map) error {
 	*t = {{ .Name }}{}
 	{{ range .Fields }}
 		{{- if .Tag.Const }}
@@ -418,7 +426,7 @@ func (t *{{ .Name }}) FromDocumentMap(d *DocumentMap) error {
 			{{- else }}
 			sm := []{{ typeName .ElemType }}{}
 			{{- end }}
-			if vs, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+			if vs, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if vs, ok := vs.(tilde.List); ok {
 					for _, vi := range vs {
 						if v, ok := vi.(tilde.Map); ok {
@@ -437,14 +445,14 @@ func (t *{{ .Name }}) FromDocumentMap(d *DocumentMap) error {
 			if len(sm) > 0 {
 				t.{{ .Name }} = sm
 			}
-		{{- else if eq .Type.String "nimona.DocumentMap" }}
-			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+		{{- else if eq .Type.String "nimona.Document" }}
+			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Map); ok {
 					t.{{ .Name }} = *NewDocumentMap(v)
 				}
 			}
 		{{- else if .IsStruct }}
-			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Map); ok {
 					e := {{ typeName .Type }}{}
 					d := NewDocumentMap(v)
@@ -457,19 +465,19 @@ func (t *{{ .Name }}) FromDocumentMap(d *DocumentMap) error {
 				}
 			}
 		{{- else if eq .Type.String "nimona.DocumentHash" }}
-			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Ref); ok {
 					copy(t.{{ .Name }}[:], v)
 				}
 			}
 		{{- else if eq .Type.String "[]uint8" }}
-			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Bytes); ok {
 					t.{{ .Name }} = []byte(v)
 				}
 			}
 		{{- else if eq .TildeKind.Name "List" }}
-			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.{{ .TildeKind.Name }}); ok {
 					s := make({{ .Type }}, len(v))
 					for i, vi := range v {
@@ -481,7 +489,7 @@ func (t *{{ .Name }}) FromDocumentMap(d *DocumentMap) error {
 				}
 			}
 		{{- else }}
-			if v, err := d.m.Get("{{ .Tag.Name }}"); err == nil {
+			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.{{ .TildeKind.Name }}); ok {
 					t.{{ .Name }} = {{ typeName .Type }}(v)
 				}

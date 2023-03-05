@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *PeerInfo) DocumentMap() *DocumentMap {
+func (t *PeerInfo) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *PeerInfo) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -34,7 +38,7 @@ func (t *PeerInfo) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.Addresses {
 				if !zero.IsZeroVal(t.Addresses) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("addresses", sm)
@@ -47,7 +51,7 @@ func (t *PeerInfo) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -64,10 +68,14 @@ func (t *PeerInfo) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *PeerInfo) FromDocumentMap(d *DocumentMap) error {
+func (t *PeerInfo) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *PeerInfo) FromMap(d tilde.Map) error {
 	*t = PeerInfo{}
 
 	// # t.Addresses
@@ -79,7 +87,7 @@ func (t *PeerInfo) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []PeerAddr{}
-		if vs, err := d.m.Get("addresses"); err == nil {
+		if vs, err := d.Get("addresses"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
@@ -101,7 +109,7 @@ func (t *PeerInfo) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -119,7 +127,7 @@ func (t *PeerInfo) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("publicKey"); err == nil {
+		if v, err := d.Get("publicKey"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.PublicKey = PublicKey(v)
 			}
@@ -128,7 +136,11 @@ func (t *PeerInfo) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *PeerKey) DocumentMap() *DocumentMap {
+func (t *PeerKey) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *PeerKey) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -152,10 +164,14 @@ func (t *PeerKey) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *PeerKey) FromDocumentMap(d *DocumentMap) error {
+func (t *PeerKey) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *PeerKey) FromMap(d tilde.Map) error {
 	*t = PeerKey{}
 
 	// # t.PublicKey
@@ -166,7 +182,7 @@ func (t *PeerKey) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("publicKey"); err == nil {
+		if v, err := d.Get("publicKey"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.PublicKey = PublicKey(v)
 			}

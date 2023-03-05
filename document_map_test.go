@@ -15,7 +15,7 @@ func TestDocumentMap(t *testing.T) {
 		Int64:  -42,
 		Bytes:  []byte("bar"),
 		Bool:   true,
-		Map: &CborFixture{
+		NestedMap: &CborFixture{
 			String: "foo",
 		},
 		RepeatedString: []string{"foo", "bar"},
@@ -77,7 +77,7 @@ func TestDocumentMap(t *testing.T) {
 	  "uint64:u": 42
 	}`
 
-	fixMap := fix.DocumentMap()
+	fixMap := fix.Document()
 
 	t.Run("test converting to map", func(t *testing.T) {
 		b, err := json.MarshalIndent(fixMap, "", "  ")

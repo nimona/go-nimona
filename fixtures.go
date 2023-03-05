@@ -7,7 +7,7 @@ type CborFixture struct {
 	Int64          int64        `nimona:"int64,omitempty"`
 	Bytes          []byte       `nimona:"bytes,omitempty"`
 	Bool           bool         `nimona:"bool,omitempty"`
-	Map            *CborFixture `nimona:"map,omitempty"`
+	NestedMap      *CborFixture `nimona:"map,omitempty"`
 	RepeatedString []string     `nimona:"repeatedstring,omitempty"`
 	RepeatedUint64 []uint64     `nimona:"repeateduint64,omitempty"`
 	RepeatedInt64  []int64      `nimona:"repeatedint64,omitempty"`

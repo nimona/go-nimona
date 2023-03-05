@@ -15,7 +15,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 		Int64:  -42,
 		Bytes:  []byte("bar"),
 		Bool:   true,
-		Map: &CborFixture{
+		NestedMap: &CborFixture{
 			String: "foo",
 		},
 		RepeatedString: []string{"foo", "bar"},
@@ -33,17 +33,17 @@ func TestDocumentHash_Ping(t *testing.T) {
 	exp := "82pCJU9HhpjB1XgndtpSzby9UT13dCmdbBVFnDyWysGq"
 
 	t.Run("hash", func(t *testing.T) {
-		h := NewDocumentHash(m.DocumentMap())
+		h := NewDocumentHash(m.Document())
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("unmarshal and hash", func(t *testing.T) {
-		b, err := m.DocumentMap().MarshalJSON()
+		b, err := m.Document().MarshalJSON()
 		require.NoError(t, err)
 
 		fmt.Println(string(b))
 
-		gm := &DocumentMap{}
+		gm := &Document{}
 		err = gm.UnmarshalJSON(b)
 		require.NoError(t, err)
 
@@ -53,22 +53,22 @@ func TestDocumentHash_Ping(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, m, g)
 
-		h := NewDocumentHash(g.DocumentMap())
+		h := NewDocumentHash(g.Document())
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("ephemeral fields should not affect hash", func(t *testing.T) {
 		m.EphemeralString = "foo"
-		h := NewDocumentHash(m.DocumentMap())
+		h := NewDocumentHash(m.Document())
 		require.Equal(t, exp, h.String())
 	})
 
 	t.Run("add document id", func(t *testing.T) {
-		m.DocumentID = NewDocumentID(m.DocumentMap())
+		m.DocumentID = NewDocumentID(m.Document())
 		exp := "2VMpDXUXnj4cX4UYpQK441x2UKCGn5cCswkxmYWvtyGr"
 
 		t.Run("test hashing", func(t *testing.T) {
-			h := NewDocumentHash(m.DocumentMap())
+			h := NewDocumentHash(m.Document())
 			require.Equal(t, exp, h.String())
 		})
 	})
@@ -82,6 +82,23 @@ func TestDocumentHash_NewRandomHash(t *testing.T) {
 	})
 }
 
+func TestDocumentHash(t *testing.T) {
+	doc := &CborFixture{
+		String: "foo",
+	}
+
+	hash := NewDocumentHash(doc.Document())
+	require.Equal(t, "4QBmwF9dpvChi39wVAiCWi8cAKEiRpT3hRD4TNopirdT", hash.String())
+}
+
+func TestDocumentHash_NewTestRandomDocumentID(t *testing.T) {
+	t.Run("test random document id", func(t *testing.T) {
+		h1 := NewTestRandomDocumentID(t)
+		h2 := NewTestRandomDocumentID(t)
+		require.NotEqual(t, h1, h2)
+	})
+}
+
 // NewRandomHash returns a random hash for testing purposes.
 func NewRandomHash(t *testing.T) DocumentHash {
 	t.Helper()
@@ -90,5 +107,5 @@ func NewRandomHash(t *testing.T) DocumentHash {
 		String: uuid.New().String(),
 	}
 
-	return NewDocumentHash(doc.DocumentMap())
+	return NewDocumentHash(doc.Document())
 }

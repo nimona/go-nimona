@@ -77,7 +77,7 @@ func (i *KeyGraph) Identity() *Identity {
 		return nil
 	}
 	return &Identity{
-		KeyGraphID: NewDocumentID(i.DocumentMap()),
+		KeyGraphID: NewDocumentID(i.Document()),
 	}
 }
 
@@ -161,17 +161,17 @@ func (i IdentityIdentifier) String() string {
 // 	}
 // }
 
-func (i *IdentityIdentifier) DocumentMap() *DocumentMap {
+func (i *IdentityIdentifier) Document() *Document {
 	if i.IdentityAlias != nil {
-		return i.IdentityAlias.DocumentMap()
+		return i.IdentityAlias.Document()
 	}
 	if i.Identity != nil {
-		return i.Identity.DocumentMap()
+		return i.Identity.Document()
 	}
 	return nil
 }
 
-func (i *IdentityIdentifier) FromDocumentMap(m *DocumentMap) error {
+func (i *IdentityIdentifier) FromDocumentMap(m *Document) error {
 	switch m.Type() {
 	case "core/identity.alias":
 		i.IdentityAlias = &IdentityAlias{}

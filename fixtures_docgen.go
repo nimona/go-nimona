@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *CborFixture) DocumentMap() *DocumentMap {
+func (t *CborFixture) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *CborFixture) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -51,7 +55,7 @@ func (t *CborFixture) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.DocumentID) {
-			m.Set("documentID", t.DocumentID.DocumentMap().m)
+			m.Set("documentID", t.DocumentID.Map())
 		}
 	}
 
@@ -75,23 +79,23 @@ func (t *CborFixture) DocumentMap() *DocumentMap {
 		}
 	}
 
-	// # t.Map
-	//
-	// Type: nimona.CborFixture, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: true
-	{
-		if !zero.IsZeroVal(t.Map) {
-			m.Set("map", t.Map.DocumentMap().m)
-		}
-	}
-
 	// # t.Metadata
 	//
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
+		}
+	}
+
+	// # t.NestedMap
+	//
+	// Type: nimona.CborFixture, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: true
+	{
+		if !zero.IsZeroVal(t.NestedMap) {
+			m.Set("map", t.NestedMap.Map())
 		}
 	}
 
@@ -141,7 +145,7 @@ func (t *CborFixture) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.RepeatedMap {
 				if !zero.IsZeroVal(t.RepeatedMap) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("repeatedmap", sm)
@@ -202,10 +206,14 @@ func (t *CborFixture) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
+func (t *CborFixture) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *CborFixture) FromMap(d tilde.Map) error {
 	*t = CborFixture{}
 
 	// # t.Bool
@@ -213,7 +221,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("bool"); err == nil {
+		if v, err := d.Get("bool"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Bool = bool(v)
 			}
@@ -228,7 +236,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("bytes"); err == nil {
+		if v, err := d.Get("bytes"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.Bytes = []byte(v)
 			}
@@ -240,7 +248,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("documentID"); err == nil {
+		if v, err := d.Get("documentID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
 				d := NewDocumentMap(v)
@@ -255,7 +263,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("_ephemeralString"); err == nil {
+		if v, err := d.Get("_ephemeralString"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.EphemeralString = string(v)
 			}
@@ -267,24 +275,9 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: int64, Kind: int64, TildeKind: Int64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("int64"); err == nil {
+		if v, err := d.Get("int64"); err == nil {
 			if v, ok := v.(tilde.Int64); ok {
 				t.Int64 = int64(v)
-			}
-		}
-	}
-
-	// # t.Map
-	//
-	// Type: nimona.CborFixture, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: true
-	{
-		if v, err := d.m.Get("map"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				e := CborFixture{}
-				d := NewDocumentMap(v)
-				e.FromDocumentMap(d)
-				t.Map = &e
 			}
 		}
 	}
@@ -294,12 +287,27 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
 				e.FromDocumentMap(d)
 				t.Metadata = e
+			}
+		}
+	}
+
+	// # t.NestedMap
+	//
+	// Type: nimona.CborFixture, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: true
+	{
+		if v, err := d.Get("map"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := CborFixture{}
+				d := NewDocumentMap(v)
+				e.FromDocumentMap(d)
+				t.NestedMap = &e
 			}
 		}
 	}
@@ -312,7 +320,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: []uint8, ElemKind: slice, ElemTildeKind: Bytes
 	// IsElemSlice: true, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeatedbytes"); err == nil {
+		if v, err := d.Get("repeatedbytes"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([][]uint8, len(v))
 				for i, vi := range v {
@@ -333,7 +341,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: int64, ElemKind: int64, ElemTildeKind: Int64
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeatedint64"); err == nil {
+		if v, err := d.Get("repeatedint64"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]int64, len(v))
 				for i, vi := range v {
@@ -355,7 +363,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: true
 	{
 		sm := []*CborFixture{} // CborFixture
-		if vs, err := d.m.Get("repeatedmap"); err == nil {
+		if vs, err := d.Get("repeatedmap"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
@@ -380,7 +388,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: string, ElemKind: string, ElemTildeKind: String
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeatedstring"); err == nil {
+		if v, err := d.Get("repeatedstring"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]string, len(v))
 				for i, vi := range v {
@@ -401,7 +409,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint64, ElemKind: uint64, ElemTildeKind: Uint64
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeateduint64"); err == nil {
+		if v, err := d.Get("repeateduint64"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]uint64, len(v))
 				for i, vi := range v {
@@ -419,7 +427,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("string"); err == nil {
+		if v, err := d.Get("string"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.String = string(v)
 			}
@@ -431,7 +439,7 @@ func (t *CborFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: uint64, Kind: uint64, TildeKind: Uint64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("uint64"); err == nil {
+		if v, err := d.Get("uint64"); err == nil {
 			if v, ok := v.(tilde.Uint64); ok {
 				t.Uint64 = uint64(v)
 			}

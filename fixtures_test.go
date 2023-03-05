@@ -6,10 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewTestDocument(t *testing.T) *DocumentMap {
+func NewTestDocument(t *testing.T) *Document {
 	t.Helper()
 	doc := &CborFixture{
 		String: uuid.New().String(),
 	}
-	return doc.DocumentMap()
+	return doc.Document()
 }

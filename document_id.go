@@ -13,7 +13,7 @@ type (
 	}
 )
 
-func NewDocumentID(m *DocumentMap) DocumentID {
+func NewDocumentID(m *Document) DocumentID {
 	return DocumentID{
 		DocumentHash: NewDocumentHash(m),
 	}

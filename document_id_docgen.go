@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *DocumentID) DocumentMap() *DocumentMap {
+func (t *DocumentID) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *DocumentID) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -32,10 +36,14 @@ func (t *DocumentID) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *DocumentID) FromDocumentMap(d *DocumentMap) error {
+func (t *DocumentID) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *DocumentID) FromMap(d tilde.Map) error {
 	*t = DocumentID{}
 
 	// # t.DocumentHash
@@ -43,7 +51,7 @@ func (t *DocumentID) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("hash"); err == nil {
+		if v, err := d.Get("hash"); err == nil {
 			if v, ok := v.(tilde.Ref); ok {
 				copy(t.DocumentHash[:], v)
 			}

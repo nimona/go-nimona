@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *Metadata) DocumentMap() *DocumentMap {
+func (t *Metadata) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *Metadata) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.Owner
@@ -20,7 +24,7 @@ func (t *Metadata) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
 		if !zero.IsZeroVal(t.Owner) {
-			m.Set("owner", t.Owner.DocumentMap().m)
+			m.Set("owner", t.Owner.Map())
 		}
 	}
 
@@ -36,7 +40,7 @@ func (t *Metadata) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.Permissions {
 				if !zero.IsZeroVal(t.Permissions) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("permissions", sm)
@@ -49,7 +53,7 @@ func (t *Metadata) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
 		if !zero.IsZeroVal(t.Signature) {
-			m.Set("_signature", t.Signature.DocumentMap().m)
+			m.Set("_signature", t.Signature.Map())
 		}
 	}
 
@@ -63,10 +67,14 @@ func (t *Metadata) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *Metadata) FromDocumentMap(d *DocumentMap) error {
+func (t *Metadata) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *Metadata) FromMap(d tilde.Map) error {
 	*t = Metadata{}
 
 	// # t.Owner
@@ -74,7 +82,7 @@ func (t *Metadata) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Identity, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
-		if v, err := d.m.Get("owner"); err == nil {
+		if v, err := d.Get("owner"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Identity{}
 				d := NewDocumentMap(v)
@@ -93,7 +101,7 @@ func (t *Metadata) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []Permissions{}
-		if vs, err := d.m.Get("permissions"); err == nil {
+		if vs, err := d.Get("permissions"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
@@ -115,7 +123,7 @@ func (t *Metadata) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Signature, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
-		if v, err := d.m.Get("_signature"); err == nil {
+		if v, err := d.Get("_signature"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Signature{}
 				d := NewDocumentMap(v)
@@ -130,7 +138,7 @@ func (t *Metadata) FromDocumentMap(d *DocumentMap) error {
 	// Type: uint, Kind: uint, TildeKind: Uint64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("timestamp"); err == nil {
+		if v, err := d.Get("timestamp"); err == nil {
 			if v, ok := v.(tilde.Uint64); ok {
 				t.Timestamp = uint(v)
 			}
@@ -139,7 +147,11 @@ func (t *Metadata) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *Permissions) DocumentMap() *DocumentMap {
+func (t *Permissions) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *Permissions) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.Conditions
@@ -147,7 +159,7 @@ func (t *Permissions) DocumentMap() *DocumentMap {
 	// Type: nimona.PermissionsCondition, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m.Set("conditions", t.Conditions.DocumentMap().m)
+		m.Set("conditions", t.Conditions.Map())
 	}
 
 	// # t.Operations
@@ -155,7 +167,7 @@ func (t *Permissions) DocumentMap() *DocumentMap {
 	// Type: nimona.PermissionsAllow, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m.Set("operations", t.Operations.DocumentMap().m)
+		m.Set("operations", t.Operations.Map())
 	}
 
 	// # t.Paths
@@ -173,10 +185,14 @@ func (t *Permissions) DocumentMap() *DocumentMap {
 		m.Set("paths", s)
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *Permissions) FromDocumentMap(d *DocumentMap) error {
+func (t *Permissions) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *Permissions) FromMap(d tilde.Map) error {
 	*t = Permissions{}
 
 	// # t.Conditions
@@ -184,7 +200,7 @@ func (t *Permissions) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.PermissionsCondition, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("conditions"); err == nil {
+		if v, err := d.Get("conditions"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PermissionsCondition{}
 				d := NewDocumentMap(v)
@@ -199,7 +215,7 @@ func (t *Permissions) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.PermissionsAllow, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("operations"); err == nil {
+		if v, err := d.Get("operations"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PermissionsAllow{}
 				d := NewDocumentMap(v)
@@ -217,7 +233,7 @@ func (t *Permissions) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: string, ElemKind: string, ElemTildeKind: String
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("paths"); err == nil {
+		if v, err := d.Get("paths"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]string, len(v))
 				for i, vi := range v {
@@ -232,7 +248,11 @@ func (t *Permissions) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *PermissionsAllow) DocumentMap() *DocumentMap {
+func (t *PermissionsAllow) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *PermissionsAllow) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.Add
@@ -305,10 +325,14 @@ func (t *PermissionsAllow) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
+func (t *PermissionsAllow) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *PermissionsAllow) FromMap(d tilde.Map) error {
 	*t = PermissionsAllow{}
 
 	// # t.Add
@@ -316,7 +340,7 @@ func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("add"); err == nil {
+		if v, err := d.Get("add"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Add = bool(v)
 			}
@@ -328,7 +352,7 @@ func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("copy"); err == nil {
+		if v, err := d.Get("copy"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Copy = bool(v)
 			}
@@ -340,7 +364,7 @@ func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("move"); err == nil {
+		if v, err := d.Get("move"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Move = bool(v)
 			}
@@ -352,7 +376,7 @@ func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("read"); err == nil {
+		if v, err := d.Get("read"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Read = bool(v)
 			}
@@ -364,7 +388,7 @@ func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("remove"); err == nil {
+		if v, err := d.Get("remove"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Remove = bool(v)
 			}
@@ -376,7 +400,7 @@ func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("replace"); err == nil {
+		if v, err := d.Get("replace"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Replace = bool(v)
 			}
@@ -388,7 +412,7 @@ func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("test"); err == nil {
+		if v, err := d.Get("test"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Test = bool(v)
 			}
@@ -397,7 +421,11 @@ func (t *PermissionsAllow) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *PermissionsCondition) DocumentMap() *DocumentMap {
+func (t *PermissionsCondition) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *PermissionsCondition) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.IsOwner
@@ -410,10 +438,14 @@ func (t *PermissionsCondition) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *PermissionsCondition) FromDocumentMap(d *DocumentMap) error {
+func (t *PermissionsCondition) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *PermissionsCondition) FromMap(d tilde.Map) error {
 	*t = PermissionsCondition{}
 
 	// # t.IsOwner
@@ -421,7 +453,7 @@ func (t *PermissionsCondition) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("isOwner"); err == nil {
+		if v, err := d.Get("isOwner"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.IsOwner = bool(v)
 			}
@@ -430,7 +462,11 @@ func (t *PermissionsCondition) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *Signature) DocumentMap() *DocumentMap {
+func (t *Signature) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *Signature) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.Signer
@@ -438,7 +474,7 @@ func (t *Signature) DocumentMap() *DocumentMap {
 	// Type: nimona.PeerKey, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m.Set("signer", t.Signer.DocumentMap().m)
+		m.Set("signer", t.Signer.Map())
 	}
 
 	// # t.X
@@ -452,10 +488,14 @@ func (t *Signature) DocumentMap() *DocumentMap {
 		m.Set("x", tilde.Bytes(t.X))
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *Signature) FromDocumentMap(d *DocumentMap) error {
+func (t *Signature) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *Signature) FromMap(d tilde.Map) error {
 	*t = Signature{}
 
 	// # t.Signer
@@ -463,7 +503,7 @@ func (t *Signature) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.PeerKey, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("signer"); err == nil {
+		if v, err := d.Get("signer"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := PeerKey{}
 				d := NewDocumentMap(v)
@@ -481,7 +521,7 @@ func (t *Signature) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("x"); err == nil {
+		if v, err := d.Get("x"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.X = []byte(v)
 			}

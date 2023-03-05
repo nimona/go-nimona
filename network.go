@@ -81,7 +81,7 @@ func (n *NetworkInfo) NetworkIdentifier() NetworkIdentifier {
 
 func (n *NetworkInfo) NetworkIdentity() NetworkIdentity {
 	return NetworkIdentity{
-		NetworkInfoRootID: NewDocumentID(n.DocumentMap()),
+		NetworkInfoRootID: NewDocumentID(n.Document()),
 	}
 }
 
@@ -89,20 +89,20 @@ func (n *NetworkInfo) String() string {
 	return n.NetworkAlias.String()
 }
 
-func (n *NetworkIdentifier) DocumentMap() *DocumentMap {
+func (n *NetworkIdentifier) Document() *Document {
 	if n.NetworkAlias != nil {
-		return n.NetworkAlias.DocumentMap()
+		return n.NetworkAlias.Document()
 	}
 	if n.NetworkIdentity != nil {
-		return n.NetworkIdentity.DocumentMap()
+		return n.NetworkIdentity.Document()
 	}
 	if n.NetworkInfo != nil {
-		return n.NetworkInfo.DocumentMap()
+		return n.NetworkInfo.Document()
 	}
 	return nil
 }
 
-func (n *NetworkIdentifier) FromDocumentMap(m *DocumentMap) error {
+func (n *NetworkIdentifier) FromDocumentMap(m *Document) error {
 	docType := m.Type()
 	switch docType {
 	case "core/network/alias":

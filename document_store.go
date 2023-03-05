@@ -28,7 +28,7 @@ type (
 )
 
 func (doc *DocumentEntry) UnmarshalInto(v DocumentMapper) error {
-	m := &DocumentMap{}
+	m := &Document{}
 	err := json.Unmarshal(doc.DocumentBytes, m)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling document: %w", err)
@@ -52,28 +52,29 @@ func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 	return s, nil
 }
 
-func (s *DocumentStore) PutDocument(docMap *DocumentMap) error {
-	docBytes, err := docMap.MarshalJSON()
+func (s *DocumentStore) PutDocument(doc *Document) error {
+	docBytes, err := doc.MarshalJSON()
 	if err != nil {
 		return fmt.Errorf("error marshaling document: %w", err)
 	}
 
-	docID := NewDocumentID(docMap)
+	docID := NewDocumentID(doc)
+	rootID := doc.Metadata.Root
 
 	entry := &DocumentEntry{
 		DocumentID:       docID,
-		DocumentType:     docMap.Type(),
+		DocumentType:     doc.Type(),
 		DocumentEncoding: "cbor",
 		DocumentBytes:    docBytes,
-		// RootDocumentID:   doc.Metadata.Parent,
+		RootDocumentID:   rootID,
 		// Sequence:         doc.Metadata.Sequence,
 	}
-	return s.PutDocumentEntry(entry)
+	return s.putDocumentEntry(entry)
 }
 
-// PutDocumentEntry puts a document entry in the database, if it already exists,
+// putDocumentEntry puts a document entry in the database, if it already exists,
 // returns a ErrDocumentAlreadyExists error.
-func (s *DocumentStore) PutDocumentEntry(entry *DocumentEntry) error {
+func (s *DocumentStore) putDocumentEntry(entry *DocumentEntry) error {
 	if entry.DocumentID.IsEmpty() {
 		return fmt.Errorf("document id is empty")
 	}
@@ -100,7 +101,7 @@ func (s *DocumentStore) PutDocumentEntry(entry *DocumentEntry) error {
 	return nil
 }
 
-func (s *DocumentStore) GetDocument(id DocumentID) (*DocumentMap, error) {
+func (s *DocumentStore) GetDocument(id DocumentID) (*Document, error) {
 	doc := &DocumentEntry{}
 	err := s.db.
 		Where("document_id = ?", id).
@@ -110,7 +111,7 @@ func (s *DocumentStore) GetDocument(id DocumentID) (*DocumentMap, error) {
 		return nil, fmt.Errorf("error getting document: %w", err)
 	}
 
-	m := &DocumentMap{}
+	m := &Document{}
 	err = m.UnmarshalJSON(doc.DocumentBytes)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling document: %w", err)

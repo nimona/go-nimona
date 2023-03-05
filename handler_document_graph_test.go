@@ -25,31 +25,13 @@ func TestHandlerStream(t *testing.T) {
 	patchDoc := NewTestDocument(t)
 
 	rootDocID := NewDocumentID(rootDoc)
+	patchDoc.Metadata.Root = &rootDocID
+
 	patchDocID := NewDocumentID(patchDoc)
 
 	// store documents
-	docBytes, err := rootDoc.MarshalJSON()
-	require.NoError(t, err)
-	require.NoError(t, docStore.PutDocumentEntry(
-		&DocumentEntry{
-			DocumentID:       rootDocID,
-			DocumentType:     "test/root",
-			DocumentEncoding: "cbor",
-			DocumentBytes:    docBytes,
-		},
-	))
-
-	patchBytes, err := patchDoc.MarshalJSON()
-	require.NoError(t, err)
-	require.NoError(t, docStore.PutDocumentEntry(
-		&DocumentEntry{
-			DocumentID:       patchDocID,
-			DocumentType:     "test/root",
-			DocumentEncoding: "cbor",
-			DocumentBytes:    patchBytes,
-			RootDocumentID:   &rootDocID,
-		},
-	))
+	require.NoError(t, docStore.PutDocument(rootDoc))
+	require.NoError(t, docStore.PutDocument(patchDoc))
 
 	// dial the server
 	ses, err := clt.Dial(context.Background(), srv.PeerAddr())

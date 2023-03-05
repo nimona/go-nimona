@@ -37,9 +37,9 @@ func TestDocumentCodegen(t *testing.T) {
 		RepeatedMapPtr: []*codegenFixture{{String: "repeated", Uint64: 64}},
 	}
 
-	m1 := f1.DocumentMap()
+	m1 := f1.Document()
 
-	gotConst, err := m1.m.Get("stringConst")
+	gotConst, err := m1.Map().Get("stringConst")
 	require.NoError(t, err)
 	require.Equal(t, tilde.String("foo"), gotConst)
 
@@ -60,9 +60,9 @@ func TestDocumentCodegen_WithType(t *testing.T) {
 		String: "string",
 	}
 
-	m1 := f1.DocumentMap()
+	m1 := f1.Document()
 
-	gotType, err := m1.m.Get("$type")
+	gotType, err := m1.Map().Get("$type")
 	require.NoError(t, err)
 	require.Equal(t, tilde.String("foobar"), gotType)
 

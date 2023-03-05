@@ -21,7 +21,7 @@ func NewTestIdentity(t *testing.T) *Identity {
 	t.Helper()
 
 	return &Identity{
-		KeyGraphID: NewDocumentID(NewTestKeyGraph(t).DocumentMap()),
+		KeyGraphID: NewDocumentID(NewTestKeyGraph(t).Document()),
 	}
 }
 
@@ -42,7 +42,7 @@ func TestIdentityAlias(t *testing.T) {
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
 		n1 := &IdentityAlias{}
-		n1.FromDocumentMap(n0.DocumentMap())
+		n1.FromDocumentMap(n0.Document())
 		require.NoError(t, err)
 		require.EqualValues(t, n0, n1)
 		require.Equal(t, s0, n1.String())
@@ -53,13 +53,13 @@ func TestKeyGraph(t *testing.T) {
 	kg := NewTestKeyGraph(t)
 
 	t.Run("test hash", func(t *testing.T) {
-		h := NewDocumentHash(kg.DocumentMap())
+		h := NewDocumentHash(kg.Document())
 		require.NotEmpty(t, h)
 	})
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
 		kg1 := &KeyGraph{}
-		kg1.FromDocumentMap(kg.DocumentMap())
+		kg1.FromDocumentMap(kg.Document())
 		require.EqualValues(t, kg, kg1)
 	})
 }

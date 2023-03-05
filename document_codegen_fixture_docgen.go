@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *codegenFixture) DocumentMap() *DocumentMap {
+func (t *codegenFixture) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *codegenFixture) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -61,7 +65,7 @@ func (t *codegenFixture) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
 		if !zero.IsZeroVal(t.MapPtr) {
-			m.Set("mapPtr", t.MapPtr.DocumentMap().m)
+			m.Set("mapPtr", t.MapPtr.Map())
 		}
 	}
 
@@ -71,7 +75,7 @@ func (t *codegenFixture) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -138,7 +142,7 @@ func (t *codegenFixture) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.RepeatedMap {
 				if !zero.IsZeroVal(t.RepeatedMap) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("repeatedmap", sm)
@@ -157,7 +161,7 @@ func (t *codegenFixture) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.RepeatedMapPtr {
 				if !zero.IsZeroVal(t.RepeatedMapPtr) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("repeatedmapPtr", sm)
@@ -226,10 +230,14 @@ func (t *codegenFixture) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
+func (t *codegenFixture) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *codegenFixture) FromMap(d tilde.Map) error {
 	*t = codegenFixture{}
 
 	// # t.Bool
@@ -237,7 +245,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("bool"); err == nil {
+		if v, err := d.Get("bool"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Bool = bool(v)
 			}
@@ -252,7 +260,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint8, ElemKind: uint8, ElemTildeKind: InvalidValueKind0
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("bytes"); err == nil {
+		if v, err := d.Get("bytes"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.Bytes = []byte(v)
 			}
@@ -264,7 +272,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: int64, Kind: int64, TildeKind: Int64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("int64"); err == nil {
+		if v, err := d.Get("int64"); err == nil {
 			if v, ok := v.(tilde.Int64); ok {
 				t.Int64 = int64(v)
 			}
@@ -276,7 +284,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.codegenFixture, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
-		if v, err := d.m.Get("mapPtr"); err == nil {
+		if v, err := d.Get("mapPtr"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := codegenFixture{}
 				d := NewDocumentMap(v)
@@ -291,7 +299,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -309,7 +317,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: bool, ElemKind: bool, ElemTildeKind: Bool
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeatedbool"); err == nil {
+		if v, err := d.Get("repeatedbool"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]bool, len(v))
 				for i, vi := range v {
@@ -330,7 +338,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: []uint8, ElemKind: slice, ElemTildeKind: Bytes
 	// IsElemSlice: true, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeatedbytes"); err == nil {
+		if v, err := d.Get("repeatedbytes"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([][]uint8, len(v))
 				for i, vi := range v {
@@ -351,7 +359,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: int64, ElemKind: int64, ElemTildeKind: Int64
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeatedint64"); err == nil {
+		if v, err := d.Get("repeatedint64"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]int64, len(v))
 				for i, vi := range v {
@@ -373,7 +381,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []codegenFixture{}
-		if vs, err := d.m.Get("repeatedmap"); err == nil {
+		if vs, err := d.Get("repeatedmap"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
@@ -399,7 +407,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: true
 	{
 		sm := []*codegenFixture{} // codegenFixture
-		if vs, err := d.m.Get("repeatedmapPtr"); err == nil {
+		if vs, err := d.Get("repeatedmapPtr"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
@@ -424,7 +432,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: string, ElemKind: string, ElemTildeKind: String
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeatedstring"); err == nil {
+		if v, err := d.Get("repeatedstring"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]string, len(v))
 				for i, vi := range v {
@@ -445,7 +453,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// ElemType: uint64, ElemKind: uint64, ElemTildeKind: Uint64
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		if v, err := d.m.Get("repeateduint64"); err == nil {
+		if v, err := d.Get("repeateduint64"); err == nil {
 			if v, ok := v.(tilde.List); ok {
 				s := make([]uint64, len(v))
 				for i, vi := range v {
@@ -463,7 +471,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("string"); err == nil {
+		if v, err := d.Get("string"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.String = string(v)
 			}
@@ -475,7 +483,7 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 	// Type: uint64, Kind: uint64, TildeKind: Uint64
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("uint64"); err == nil {
+		if v, err := d.Get("uint64"); err == nil {
 			if v, ok := v.(tilde.Uint64); ok {
 				t.Uint64 = uint64(v)
 			}
@@ -484,7 +492,11 @@ func (t *codegenFixture) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *codegenFixtureWithType) DocumentMap() *DocumentMap {
+func (t *codegenFixtureWithType) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *codegenFixtureWithType) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -505,10 +517,14 @@ func (t *codegenFixtureWithType) DocumentMap() *DocumentMap {
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *codegenFixtureWithType) FromDocumentMap(d *DocumentMap) error {
+func (t *codegenFixtureWithType) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *codegenFixtureWithType) FromMap(d tilde.Map) error {
 	*t = codegenFixtureWithType{}
 
 	// # t.String
@@ -516,7 +532,7 @@ func (t *codegenFixtureWithType) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("string"); err == nil {
+		if v, err := d.Get("string"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.String = string(v)
 			}

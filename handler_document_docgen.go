@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *DocumentRequest) DocumentMap() *DocumentMap {
+func (t *DocumentRequest) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *DocumentRequest) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -27,7 +31,7 @@ func (t *DocumentRequest) DocumentMap() *DocumentMap {
 	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m.Set("documentID", t.DocumentID.DocumentMap().m)
+		m.Set("documentID", t.DocumentID.Map())
 	}
 
 	// # t.Metadata
@@ -36,14 +40,18 @@ func (t *DocumentRequest) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *DocumentRequest) FromDocumentMap(d *DocumentMap) error {
+func (t *DocumentRequest) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *DocumentRequest) FromMap(d tilde.Map) error {
 	*t = DocumentRequest{}
 
 	// # t.DocumentID
@@ -51,7 +59,7 @@ func (t *DocumentRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("documentID"); err == nil {
+		if v, err := d.Get("documentID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
 				d := NewDocumentMap(v)
@@ -66,7 +74,7 @@ func (t *DocumentRequest) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -78,7 +86,11 @@ func (t *DocumentRequest) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *DocumentResponse) DocumentMap() *DocumentMap {
+func (t *DocumentResponse) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *DocumentResponse) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -87,14 +99,6 @@ func (t *DocumentResponse) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		m.Set("$type", tilde.String("core/document.response"))
-	}
-
-	// # t.Document
-	//
-	// Type: nimona.DocumentMap, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
-	{
-		m.Set("document", t.Document.DocumentMap().m)
 	}
 
 	// # t.Error
@@ -131,34 +135,34 @@ func (t *DocumentResponse) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
-}
-
-func (t *DocumentResponse) FromDocumentMap(d *DocumentMap) error {
-	*t = DocumentResponse{}
-
-	// # t.Document
+	// # t.Payload
 	//
-	// Type: nimona.DocumentMap, Kind: struct, TildeKind: Map
+	// Type: nimona.Document, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("document"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				t.Document = *NewDocumentMap(v)
-			}
-		}
+		m.Set("document", t.Payload.Map())
 	}
+
+	return m
+}
+
+func (t *DocumentResponse) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *DocumentResponse) FromMap(d tilde.Map) error {
+	*t = DocumentResponse{}
 
 	// # t.Error
 	//
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("error"); err == nil {
+		if v, err := d.Get("error"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Error = bool(v)
 			}
@@ -170,7 +174,7 @@ func (t *DocumentResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("errorDescription"); err == nil {
+		if v, err := d.Get("errorDescription"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.ErrorDescription = string(v)
 			}
@@ -182,7 +186,7 @@ func (t *DocumentResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: bool, Kind: bool, TildeKind: Bool
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("found"); err == nil {
+		if v, err := d.Get("found"); err == nil {
 			if v, ok := v.(tilde.Bool); ok {
 				t.Found = bool(v)
 			}
@@ -194,12 +198,24 @@ func (t *DocumentResponse) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
 				e.FromDocumentMap(d)
 				t.Metadata = e
+			}
+		}
+	}
+
+	// # t.Payload
+	//
+	// Type: nimona.Document, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if v, err := d.Get("document"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				t.Payload = *NewDocumentMap(v)
 			}
 		}
 	}

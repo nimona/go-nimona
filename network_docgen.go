@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *NetworkAlias) DocumentMap() *DocumentMap {
+func (t *NetworkAlias) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkAlias) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -30,10 +34,14 @@ func (t *NetworkAlias) DocumentMap() *DocumentMap {
 		m.Set("hostname", tilde.String(t.Hostname))
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkAlias) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkAlias) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkAlias) FromMap(d tilde.Map) error {
 	*t = NetworkAlias{}
 
 	// # t.Hostname
@@ -41,7 +49,7 @@ func (t *NetworkAlias) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("hostname"); err == nil {
+		if v, err := d.Get("hostname"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Hostname = string(v)
 			}
@@ -50,7 +58,11 @@ func (t *NetworkAlias) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkIdentity) DocumentMap() *DocumentMap {
+func (t *NetworkIdentity) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkIdentity) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -67,7 +79,7 @@ func (t *NetworkIdentity) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.NetworkAlias) {
-			m.Set("networkAlias", t.NetworkAlias.DocumentMap().m)
+			m.Set("networkAlias", t.NetworkAlias.Map())
 		}
 	}
 
@@ -77,14 +89,18 @@ func (t *NetworkIdentity) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.NetworkInfoRootID) {
-			m.Set("networkInfoRootID", t.NetworkInfoRootID.DocumentMap().m)
+			m.Set("networkInfoRootID", t.NetworkInfoRootID.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkIdentity) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkIdentity) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkIdentity) FromMap(d tilde.Map) error {
 	*t = NetworkIdentity{}
 
 	// # t.NetworkAlias
@@ -92,7 +108,7 @@ func (t *NetworkIdentity) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("networkAlias"); err == nil {
+		if v, err := d.Get("networkAlias"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := NetworkAlias{}
 				d := NewDocumentMap(v)
@@ -107,7 +123,7 @@ func (t *NetworkIdentity) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("networkInfoRootID"); err == nil {
+		if v, err := d.Get("networkInfoRootID"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := DocumentID{}
 				d := NewDocumentMap(v)
@@ -119,7 +135,11 @@ func (t *NetworkIdentity) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *NetworkInfo) DocumentMap() *DocumentMap {
+func (t *NetworkInfo) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *NetworkInfo) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -136,7 +156,7 @@ func (t *NetworkInfo) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -145,7 +165,7 @@ func (t *NetworkInfo) DocumentMap() *DocumentMap {
 	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		m.Set("networkAlias", t.NetworkAlias.DocumentMap().m)
+		m.Set("networkAlias", t.NetworkAlias.Map())
 	}
 
 	// # t.PeerAddresses
@@ -159,16 +179,20 @@ func (t *NetworkInfo) DocumentMap() *DocumentMap {
 		sm := tilde.List{}
 		for _, v := range t.PeerAddresses {
 			if !zero.IsZeroVal(t.PeerAddresses) {
-				sm = append(sm, v.DocumentMap().m)
+				sm = append(sm, v.Map())
 			}
 		}
 		m.Set("peerAddresses", sm)
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *NetworkInfo) FromDocumentMap(d *DocumentMap) error {
+func (t *NetworkInfo) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *NetworkInfo) FromMap(d tilde.Map) error {
 	*t = NetworkInfo{}
 
 	// # t.Metadata
@@ -176,7 +200,7 @@ func (t *NetworkInfo) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -191,7 +215,7 @@ func (t *NetworkInfo) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("networkAlias"); err == nil {
+		if v, err := d.Get("networkAlias"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := NetworkAlias{}
 				d := NewDocumentMap(v)
@@ -210,7 +234,7 @@ func (t *NetworkInfo) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []PeerAddr{}
-		if vs, err := d.m.Get("peerAddresses"); err == nil {
+		if vs, err := d.Get("peerAddresses"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {

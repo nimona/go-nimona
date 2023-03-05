@@ -11,7 +11,11 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
-func (t *DocumentPatch) DocumentMap() *DocumentMap {
+func (t *DocumentPatch) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *DocumentPatch) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -34,7 +38,7 @@ func (t *DocumentPatch) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.Dependencies {
 				if !zero.IsZeroVal(t.Dependencies) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("dependencies", sm)
@@ -47,7 +51,7 @@ func (t *DocumentPatch) DocumentMap() *DocumentMap {
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.DocumentMap().m)
+			m.Set("$metadata", t.Metadata.Map())
 		}
 	}
 
@@ -63,17 +67,21 @@ func (t *DocumentPatch) DocumentMap() *DocumentMap {
 			sm := tilde.List{}
 			for _, v := range t.Operations {
 				if !zero.IsZeroVal(t.Operations) {
-					sm = append(sm, v.DocumentMap().m)
+					sm = append(sm, v.Map())
 				}
 			}
 			m.Set("operations", sm)
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *DocumentPatch) FromDocumentMap(d *DocumentMap) error {
+func (t *DocumentPatch) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *DocumentPatch) FromMap(d tilde.Map) error {
 	*t = DocumentPatch{}
 
 	// # t.Dependencies
@@ -85,7 +93,7 @@ func (t *DocumentPatch) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []DocumentID{}
-		if vs, err := d.m.Get("dependencies"); err == nil {
+		if vs, err := d.Get("dependencies"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
@@ -107,7 +115,7 @@ func (t *DocumentPatch) FromDocumentMap(d *DocumentMap) error {
 	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("$metadata"); err == nil {
+		if v, err := d.Get("$metadata"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Metadata{}
 				d := NewDocumentMap(v)
@@ -126,7 +134,7 @@ func (t *DocumentPatch) FromDocumentMap(d *DocumentMap) error {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := []DocumentPatchOperation{}
-		if vs, err := d.m.Get("operations"); err == nil {
+		if vs, err := d.Get("operations"); err == nil {
 			if vs, ok := vs.(tilde.List); ok {
 				for _, vi := range vs {
 					if v, ok := vi.(tilde.Map); ok {
@@ -145,7 +153,11 @@ func (t *DocumentPatch) FromDocumentMap(d *DocumentMap) error {
 
 	return nil
 }
-func (t *DocumentPatchOperation) DocumentMap() *DocumentMap {
+func (t *DocumentPatchOperation) Document() *Document {
+	return NewDocumentMap(t.Map())
+}
+
+func (t *DocumentPatchOperation) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.From
@@ -176,18 +188,22 @@ func (t *DocumentPatchOperation) DocumentMap() *DocumentMap {
 
 	// # t.Value
 	//
-	// Type: nimona.DocumentMap, Kind: struct, TildeKind: Map
+	// Type: nimona.Document, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Value) {
-			m.Set("value", t.Value.DocumentMap().m)
+			m.Set("value", t.Value.Map())
 		}
 	}
 
-	return NewDocumentMap(m)
+	return m
 }
 
-func (t *DocumentPatchOperation) FromDocumentMap(d *DocumentMap) error {
+func (t *DocumentPatchOperation) FromDocumentMap(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *DocumentPatchOperation) FromMap(d tilde.Map) error {
 	*t = DocumentPatchOperation{}
 
 	// # t.From
@@ -195,7 +211,7 @@ func (t *DocumentPatchOperation) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("from"); err == nil {
+		if v, err := d.Get("from"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.From = string(v)
 			}
@@ -207,7 +223,7 @@ func (t *DocumentPatchOperation) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("op"); err == nil {
+		if v, err := d.Get("op"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Op = string(v)
 			}
@@ -219,7 +235,7 @@ func (t *DocumentPatchOperation) FromDocumentMap(d *DocumentMap) error {
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.m.Get("path"); err == nil {
+		if v, err := d.Get("path"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Path = string(v)
 			}
@@ -228,10 +244,10 @@ func (t *DocumentPatchOperation) FromDocumentMap(d *DocumentMap) error {
 
 	// # t.Value
 	//
-	// Type: nimona.DocumentMap, Kind: struct, TildeKind: Map
+	// Type: nimona.Document, Kind: struct, TildeKind: Map
 	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
-		if v, err := d.m.Get("value"); err == nil {
+		if v, err := d.Get("value"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				t.Value = *NewDocumentMap(v)
 			}

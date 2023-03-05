@@ -22,10 +22,10 @@ func TestPeerKey(t *testing.T) {
 	require.Equal(t, n0, &n1)
 
 	t.Run("marshal unmarshal", func(t *testing.T) {
-		bc, err := n0.DocumentMap().MarshalJSON()
+		bc, err := n0.Document().MarshalJSON()
 		require.NoError(t, err)
 
-		m1 := &DocumentMap{}
+		m1 := &Document{}
 		err = m1.UnmarshalJSON(bc)
 		require.NoError(t, err)
 
