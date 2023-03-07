@@ -4,6 +4,12 @@ import (
 	"sync"
 )
 
+type RequestContext struct {
+	Identity   *Identity
+	PublicKey  PublicKey
+	PrivateKey PrivateKey
+}
+
 type PeerConfig struct {
 	mutex      sync.RWMutex
 	privateKey PrivateKey

@@ -43,3 +43,15 @@ func NewTestPeerConfig(t *testing.T) *PeerConfig {
 
 	return pc
 }
+
+func NewTestRequestContext(t *testing.T) RequestContext {
+	t.Helper()
+
+	pk, sk, err := GenerateKey()
+	require.NoError(t, err)
+
+	return RequestContext{
+		PrivateKey: sk,
+		PublicKey:  pk,
+	}
+}
