@@ -6,6 +6,8 @@ import (
 
 	"github.com/jimeh/undent"
 	"github.com/stretchr/testify/require"
+
+	"nimona.io/internal/tilde"
 )
 
 func TestDocumentMap(t *testing.T) {
@@ -90,4 +92,32 @@ func TestDocumentMap(t *testing.T) {
 		g.FromDocument(fixMap)
 		require.Equal(t, fix, g)
 	})
+}
+
+func removeUnderscoreKeys(m tilde.Map) {
+	for k := range m {
+		if k[0] == '_' {
+			delete(m, k)
+			continue
+		}
+		if v, ok := m[k].(tilde.Map); ok {
+			removeUnderscoreKeys(v)
+		}
+	}
+}
+
+func EqualDocument(
+	t require.TestingT,
+	expected *Document,
+	actual *Document,
+	msgAndArgs ...interface{},
+) {
+	expectedMap := tilde.Copy(expected.Map())
+	actualMap := tilde.Copy(actual.Map())
+
+	// remove all underscore prefixed keys
+	removeUnderscoreKeys(expectedMap)
+	removeUnderscoreKeys(actualMap)
+
+	require.EqualValues(t, expectedMap, actualMap, msgAndArgs...)
 }
