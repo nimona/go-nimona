@@ -17,14 +17,10 @@ type (
 	}
 )
 
-type HandlerDocumentGraph struct {
-	DocumentStore *DocumentStore
-}
-
 func RequestDocumentGraph(
 	ctx context.Context,
-	ses *Session,
 	rootID DocumentID,
+	ses *Session,
 ) (*DocumentGraphResponse, error) {
 	req := &DocumentGraphRequest{
 		RootDocumentID: rootID,
@@ -41,33 +37,40 @@ func RequestDocumentGraph(
 	return &res, nil
 }
 
-func (h *HandlerDocumentGraph) HandleDocumentGraphRequest(
-	ctx context.Context,
-	msg *Request,
-) error {
-	req := DocumentGraphRequest{}
-	req.FromDocument(msg.Document)
-	if msg.Type != "core/document/graph.request" {
-		return fmt.Errorf("invalid request type: %s", msg.Type)
-	}
+func HandleDocumentGraphRequest(
+	sesManager *SessionManager,
+	docStore *DocumentStore,
+) {
+	handler := func(ctx context.Context, msg *Request) error {
+		if msg.Type != "core/document/graph.request" {
+			return fmt.Errorf("invalid request type: %s", msg.Type)
+		}
 
-	docs, err := h.DocumentStore.GetDocumentsByRootID(req.RootDocumentID)
-	if err != nil {
-		return fmt.Errorf("error getting documents: %w", err)
-	}
+		req := DocumentGraphRequest{}
+		err := req.FromDocument(msg.Document)
+		if err != nil {
+			return fmt.Errorf("error decoding message: %w", err)
+		}
 
-	var patchIDs []DocumentID
-	for _, doc := range docs {
-		patchIDs = append(patchIDs, doc.DocumentID)
-	}
+		docs, err := docStore.GetDocumentsByRootID(req.RootDocumentID)
+		if err != nil {
+			return fmt.Errorf("error getting documents: %w", err)
+		}
 
-	res := &DocumentGraphResponse{
-		RootDocumentID:   req.RootDocumentID,
-		PatchDocumentIDs: patchIDs,
+		var patchIDs []DocumentID
+		for _, doc := range docs {
+			patchIDs = append(patchIDs, doc.DocumentID)
+		}
+
+		res := &DocumentGraphResponse{
+			RootDocumentID:   req.RootDocumentID,
+			PatchDocumentIDs: patchIDs,
+		}
+		err = msg.Respond(res)
+		if err != nil {
+			return fmt.Errorf("error replying: %w", err)
+		}
+		return nil
 	}
-	err = msg.Respond(res)
-	if err != nil {
-		return fmt.Errorf("error replying: %w", err)
-	}
-	return nil
+	sesManager.RegisterHandler("core/document/graph.request", handler)
 }

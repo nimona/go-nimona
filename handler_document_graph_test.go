@@ -8,17 +8,12 @@ import (
 )
 
 func TestHandlerStream(t *testing.T) {
+	// construct server and client
 	srv, clt := newTestSessionManager(t)
+	srvDocStore := NewTestDocumentStore(t)
 
-	docStore := NewTestDocumentStore(t)
-
-	hnd := &HandlerDocumentGraph{
-		DocumentStore: docStore,
-	}
-	srv.RegisterHandler(
-		"core/document/graph.request",
-		hnd.HandleDocumentGraphRequest,
-	)
+	// handle requests
+	HandleDocumentGraphRequest(srv, srvDocStore)
 
 	// create documents
 	rootDoc := NewTestDocument(t)
@@ -30,8 +25,8 @@ func TestHandlerStream(t *testing.T) {
 	patchDocID := NewDocumentID(patchDoc)
 
 	// store documents
-	require.NoError(t, docStore.PutDocument(rootDoc))
-	require.NoError(t, docStore.PutDocument(patchDoc))
+	require.NoError(t, srvDocStore.PutDocument(rootDoc))
+	require.NoError(t, srvDocStore.PutDocument(patchDoc))
 
 	// dial the server
 	ses, err := clt.Dial(context.Background(), srv.PeerAddr())
@@ -39,7 +34,7 @@ func TestHandlerStream(t *testing.T) {
 
 	// ask for stream
 	ctx := context.Background()
-	res, err := RequestDocumentGraph(ctx, ses, rootDocID)
+	res, err := RequestDocumentGraph(ctx, rootDocID, ses)
 	require.NoError(t, err)
 	require.Len(t, res.PatchDocumentIDs, 1)
 	require.Equal(t, rootDocID, res.RootDocumentID)
