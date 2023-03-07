@@ -451,7 +451,7 @@ func TestJSON_Unmarshal(t *testing.T) {
 
 func TestCopy(t *testing.T) {
 	t.Run("Copy", func(t *testing.T) {
-		got := Copy(testMapComplete).(Map)
+		got := Copy(testMapComplete)
 		require.NotSame(t, testMapComplete, got)
 		for k, v := range testMapComplete {
 			gotV, ok := got[k]

@@ -439,10 +439,10 @@ func keyWithHint(key string, hints ...Hint) string {
 	return fmt.Sprintf("%s:%s", key, suffix)
 }
 
-func Copy(v Value) Value {
+func Copy[T Value](v T) T {
 	nv, err := copystructure.Copy(v)
 	if err != nil {
 		panic(fmt.Errorf("error copying value of type %T: %w", v, err))
 	}
-	return nv.(Value)
+	return nv.(T)
 }
