@@ -51,7 +51,7 @@ func (doc *Document) Get(path string) (tilde.Value, error) {
 	return doc.data.Get(path)
 }
 
-func (doc Document) Map() tilde.Map {
+func (doc *Document) Map() tilde.Map {
 	docMap := tilde.Copy(doc.data)
 	metaMap := doc.Metadata.Map()
 	if len(metaMap) > 0 {
@@ -60,7 +60,7 @@ func (doc Document) Map() tilde.Map {
 	return docMap
 }
 
-func (doc Document) Type() string {
+func (doc *Document) Type() string {
 	if doc.data == nil {
 		return ""
 	}
@@ -81,11 +81,11 @@ func (doc *Document) Copy() *Document {
 	}
 }
 
-func (doc Document) Document() Document {
+func (doc *Document) Document() *Document {
 	return doc
 }
 
-func (doc Document) MarshalJSON() ([]byte, error) {
+func (doc *Document) MarshalJSON() ([]byte, error) {
 	b, err := json.Marshal(doc.Map())
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling into json: %w", err)

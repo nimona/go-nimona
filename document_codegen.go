@@ -450,7 +450,7 @@ func (t *{{ .Name }}) FromMap(d tilde.Map) error {
 		{{- else if eq .Type.String "nimona.Document" }}
 			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Map); ok {
-					t.{{ .Name }} = *NewDocument(v)
+					t.{{ .Name }} = NewDocument(v)
 				}
 			}
 		{{- else if .IsStruct }}

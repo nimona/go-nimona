@@ -14,20 +14,12 @@ type (
 		DocumentID DocumentID `nimona:"documentID"`
 	}
 	DocumentResponse struct {
-		_                string   `nimona:"$type,type=core/document.response"`
-		Metadata         Metadata `nimona:"$metadata,omitempty"`
-		Payload          Document `nimona:"document"`
-		Found            bool     `nimona:"found"`
-		Error            bool     `nimona:"error,omitempty"`
-		ErrorDescription string   `nimona:"errorDescription,omitempty"`
-	}
-)
-
-type (
-	HandlerDocument struct {
-		Hostname      string
-		PeerConfig    *PeerConfig
-		DocumentStore *DocumentStore
+		_                string    `nimona:"$type,type=core/document.response"`
+		Metadata         Metadata  `nimona:"$metadata,omitempty"`
+		Payload          *Document `nimona:"document"`
+		Found            bool      `nimona:"found"`
+		Error            bool      `nimona:"error,omitempty"`
+		ErrorDescription string    `nimona:"errorDescription,omitempty"`
 	}
 )
 
@@ -68,7 +60,7 @@ func RequestDocument(
 		return nil, fmt.Errorf("got error: %s", res.ErrorDescription)
 	}
 
-	return &res.Payload, nil
+	return res.Payload, nil
 }
 
 func HandleDocumentRequest(
