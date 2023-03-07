@@ -33,19 +33,19 @@ type (
 
 func RequestDocument(
 	ctx context.Context,
-	ses *Session,
-	peerConfig *PeerConfig,
+	rctx RequestContext,
 	docID DocumentID,
+	ses *Session,
 ) (*Document, error) {
 	req := &DocumentRequest{
 		Metadata: Metadata{
-			Owner: peerConfig.GetIdentity(),
+			Owner: rctx.Identity,
 		},
 		DocumentID: docID,
 	}
 
 	req.Metadata.Signature = NewDocumentSignature(
-		peerConfig.GetPrivateKey(),
+		rctx.PrivateKey,
 		NewDocumentHash(req.Document()),
 	)
 
@@ -71,20 +71,44 @@ func RequestDocument(
 	return &res.Payload, nil
 }
 
-func (h *HandlerDocument) HandleDocumentRequest(
-	ctx context.Context,
-	msg *Request,
-) error {
-	req := &DocumentRequest{}
-	err := req.FromDocument(msg.Document)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling request: %w", err)
-	}
+func HandleDocumentRequest(
+	sesManager *SessionManager,
+	docStore *DocumentStore,
+) {
+	handler := func(
+		ctx context.Context,
+		msg *Request,
+	) error {
+		req := &DocumentRequest{}
+		err := req.FromDocument(msg.Document)
+		if err != nil {
+			return fmt.Errorf("error unmarshaling request: %w", err)
+		}
 
-	respondWithError := func(desc string) error {
+		respondWithError := func(desc string) error {
+			res := &DocumentResponse{
+				Error:            true,
+				ErrorDescription: desc,
+			}
+			err = msg.Respond(res)
+			if err != nil {
+				return fmt.Errorf("error replying: %w", err)
+			}
+			return nil
+		}
+
+		doc, err := docStore.GetDocument(req.DocumentID)
+		if err != nil {
+			return fmt.Errorf("error getting document: %w", err)
+		}
+
+		if doc == nil {
+			return respondWithError("document not found")
+		}
+
 		res := &DocumentResponse{
-			Error:            true,
-			ErrorDescription: desc,
+			Found:   true,
+			Payload: doc.Document().Copy(),
 		}
 		err = msg.Respond(res)
 		if err != nil {
@@ -92,23 +116,5 @@ func (h *HandlerDocument) HandleDocumentRequest(
 		}
 		return nil
 	}
-
-	doc, err := h.DocumentStore.GetDocument(req.DocumentID)
-	if err != nil {
-		return fmt.Errorf("error getting document: %w", err)
-	}
-
-	if doc == nil {
-		return respondWithError("document not found")
-	}
-
-	res := &DocumentResponse{
-		Found:   true,
-		Payload: doc.Document(),
-	}
-	err = msg.Respond(res)
-	if err != nil {
-		return fmt.Errorf("error replying: %w", err)
-	}
-	return nil
+	sesManager.RegisterHandler("core/document.request", handler)
 }

@@ -10,10 +10,6 @@ import (
 func TestHandlerDocument(t *testing.T) {
 	ctx := context.Background()
 
-	// Create new peer configs
-	srvPeerConfig := NewTestPeerConfig(t)
-	clnPeerConfig := NewTestPeerConfig(t)
-
 	// Create new session manager
 	srv, clt := newTestSessionManager(t)
 
@@ -29,22 +25,17 @@ func TestHandlerDocument(t *testing.T) {
 	require.NoError(t, err)
 
 	// Construct a new HandlerDocument
-	hnd := &HandlerDocument{
-		Hostname:      "testing.nimona.io",
-		PeerConfig:    srvPeerConfig,
-		DocumentStore: store,
-	}
-	srv.RegisterHandler(
-		"core/document.request",
-		hnd.HandleDocumentRequest,
-	)
+	HandleDocumentRequest(srv, store)
 
 	// Dial the server
 	ses, err := clt.Dial(context.Background(), srv.PeerAddr())
 	require.NoError(t, err)
 
+	// construct new request context
+	rctx := NewTestRequestContext(t)
+
 	// Request document
-	gotDoc, err := RequestDocument(ctx, ses, clnPeerConfig, docID)
+	gotDoc, err := RequestDocument(ctx, rctx, docID, ses)
 	require.NoError(t, err)
 	require.Equal(t, doc, gotDoc)
 }

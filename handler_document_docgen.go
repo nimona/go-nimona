@@ -142,7 +142,7 @@ func (t *DocumentResponse) Map() tilde.Map {
 	// # t.Payload
 	//
 	// Type: nimona.Document, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
 		m.Set("document", t.Payload.Map())
 	}
@@ -211,11 +211,11 @@ func (t *DocumentResponse) FromMap(d tilde.Map) error {
 	// # t.Payload
 	//
 	// Type: nimona.Document, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// IsSlice: false, IsStruct: true, IsPointer: true
 	{
 		if v, err := d.Get("document"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
-				t.Payload = *NewDocument(v)
+				t.Payload = NewDocument(v)
 			}
 		}
 	}
