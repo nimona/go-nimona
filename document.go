@@ -110,8 +110,8 @@ func DumpDocumentBytes(b []byte) {
 	fmt.Printf("%x\n", b)
 }
 
-func DumpDocument(doc Documenter) {
-	yb, err := json.MarshalIndent(doc.Document().Map(), "", "  ")
+func DumpDocument(doc *Document) {
+	yb, err := json.MarshalIndent(doc.Map(), "", "  ")
 	if err != nil {
 		panic(err)
 	}
