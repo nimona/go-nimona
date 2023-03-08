@@ -16,7 +16,7 @@ func (n *Node) ListNetworks() ([]NetworkInfo, error) {
 	var networks []NetworkInfo
 	for _, doc := range docs {
 		netInfo := &NetworkInfo{}
-		err := doc.UnmarshalInto(netInfo)
+		err := netInfo.FromDocument(doc)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling document: %w", err)
 		}

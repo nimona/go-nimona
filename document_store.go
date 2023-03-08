@@ -1,7 +1,6 @@
 package nimona
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -26,16 +25,6 @@ type (
 		CreatedAt        time.Time `gorm:"autoCreateTime"`
 	}
 )
-
-func (doc *DocumentEntry) UnmarshalInto(v Documenter) error {
-	m := &Document{}
-	err := json.Unmarshal(doc.DocumentBytes, m)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling document: %w", err)
-	}
-	v.FromDocument(m)
-	return nil
-}
 
 func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 	s := &DocumentStore{
@@ -120,7 +109,7 @@ func (s *DocumentStore) GetDocument(id DocumentID) (*Document, error) {
 	return m, nil
 }
 
-func (s *DocumentStore) GetDocumentsByType(docType string) ([]*DocumentEntry, error) {
+func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) {
 	var docs []*DocumentEntry
 	err := s.db.
 		Where("document_type = ?", docType).
@@ -130,7 +119,17 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*DocumentEntry, er
 		return nil, fmt.Errorf("error getting documents: %w", err)
 	}
 
-	return docs, nil
+	var ret []*Document
+	for _, doc := range docs {
+		m := &Document{}
+		err = m.UnmarshalJSON(doc.DocumentBytes)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling document: %w", err)
+		}
+		ret = append(ret, m)
+	}
+
+	return ret, nil
 }
 
 // GetDocumentsByRootID returns all documents with the given root id, not including
