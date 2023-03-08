@@ -33,31 +33,31 @@ func (m *MockCodec) EXPECT() *MockCodecMockRecorder {
 	return m.recorder
 }
 
-// Decode mocks base method.
-func (m *MockCodec) Decode(b []byte, v Documenter) error {
+// Marshal mocks base method.
+func (m *MockCodec) Marshal(v *Document) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Decode", b, v)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Decode indicates an expected call of Decode.
-func (mr *MockCodecMockRecorder) Decode(b, v interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Decode", reflect.TypeOf((*MockCodec)(nil).Decode), b, v)
-}
-
-// Encode mocks base method.
-func (m *MockCodec) Encode(v Documenter) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Encode", v)
+	ret := m.ctrl.Call(m, "Marshal", v)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Encode indicates an expected call of Encode.
-func (mr *MockCodecMockRecorder) Encode(v interface{}) *gomock.Call {
+// Marshal indicates an expected call of Marshal.
+func (mr *MockCodecMockRecorder) Marshal(v interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Encode", reflect.TypeOf((*MockCodec)(nil).Encode), v)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Marshal", reflect.TypeOf((*MockCodec)(nil).Marshal), v)
+}
+
+// Unmarshal mocks base method.
+func (m *MockCodec) Unmarshal(b []byte, v *Document) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Unmarshal", b, v)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Unmarshal indicates an expected call of Unmarshal.
+func (mr *MockCodecMockRecorder) Unmarshal(b, v interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unmarshal", reflect.TypeOf((*MockCodec)(nil).Unmarshal), b, v)
 }
