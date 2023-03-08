@@ -25,7 +25,7 @@ func RequestPeerCapabilities(
 ) (*PeerCapabilitiesResponse, error) {
 	req := &PeerCapabilitiesRequest{}
 	res := &PeerCapabilitiesResponse{}
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -51,7 +51,7 @@ func (h *HandlerPeerCapabilities) HandlePeerCapabilitiesRequest(
 	res := &PeerCapabilitiesResponse{
 		Capabilities: h.Capabilities,
 	}
-	err = msg.Respond(res)
+	err = msg.Respond(res.Document())
 	if err != nil {
 		return fmt.Errorf("error replying: %w", err)
 	}

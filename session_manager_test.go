@@ -15,7 +15,7 @@ func TestSessionManager(t *testing.T) {
 		Nonce: "bar",
 	}
 	handler := func(ctx context.Context, msg *Request) error {
-		err := msg.Respond(expRes)
+		err := msg.Respond(expRes.Document())
 		require.NoError(t, err)
 		return nil
 	}
@@ -31,7 +31,7 @@ func TestSessionManager(t *testing.T) {
 
 	// send a message
 	msg := &Pong{}
-	res, err := rpc.Request(context.Background(), req)
+	res, err := rpc.Request(context.Background(), req.Document())
 	require.NoError(t, err)
 	err = msg.FromDocument(res.Document)
 	require.NoError(t, err)

@@ -41,7 +41,7 @@ func RequestDocument(
 		NewDocumentHash(req.Document()),
 	)
 
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -82,7 +82,7 @@ func HandleDocumentRequest(
 				Error:            true,
 				ErrorDescription: desc,
 			}
-			err = msg.Respond(res)
+			err = msg.Respond(res.Document())
 			if err != nil {
 				return fmt.Errorf("error replying: %w", err)
 			}
@@ -102,7 +102,7 @@ func HandleDocumentRequest(
 			Found:   true,
 			Payload: doc.Document().Copy(),
 		}
-		err = msg.Respond(res)
+		err = msg.Respond(res.Document())
 		if err != nil {
 			return fmt.Errorf("error replying: %w", err)
 		}

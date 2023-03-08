@@ -26,7 +26,7 @@ func RequestDocumentGraph(
 		RootDocumentID: rootID,
 	}
 	res := DocumentGraphResponse{}
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -66,7 +66,7 @@ func HandleDocumentGraphRequest(
 			RootDocumentID:   req.RootDocumentID,
 			PatchDocumentIDs: patchIDs,
 		}
-		err = msg.Respond(res)
+		err = msg.Respond(res.Document())
 		if err != nil {
 			return fmt.Errorf("error replying: %w", err)
 		}

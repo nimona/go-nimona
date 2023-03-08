@@ -29,7 +29,7 @@ func RequestPing(
 ) (*Pong, error) {
 	req := &Ping{}
 	res := &Pong{}
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -52,7 +52,7 @@ func (h *HandlerPing) HandlePingRequest(
 	res := &Pong{
 		Nonce: time.Now().Format(time.RFC3339Nano),
 	}
-	err = msg.Respond(res)
+	err = msg.Respond(res.Document())
 	if err != nil {
 		return fmt.Errorf("error replying: %w", err)
 	}

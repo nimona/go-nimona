@@ -106,7 +106,7 @@ func (cm *SessionManager) connCacheKey(k PublicKey) connCacheKey {
 func (cm *SessionManager) Request(
 	ctx context.Context,
 	addr PeerAddr,
-	req Documenter,
+	req *Document,
 ) (*Response, error) {
 	ses, err := cm.Dial(ctx, addr)
 	if err != nil {

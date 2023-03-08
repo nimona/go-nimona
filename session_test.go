@@ -95,13 +95,13 @@ func TestSession_E2E_RPC(t *testing.T) {
 		require.NoError(t, err)
 		require.EqualValues(t, *messagePing, msg)
 
-		err = req.Respond(messagePong)
+		err = req.Respond(messagePong.Document())
 		require.NoError(t, err)
 	}()
 
 	// client writes to server
 	msg := &Pong{}
-	res, err := cln.Request(ctx, messagePing)
+	res, err := cln.Request(ctx, messagePing.Document())
 	require.NoError(t, err)
 
 	err = msg.FromDocument(res.Document)

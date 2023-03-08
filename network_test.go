@@ -39,16 +39,24 @@ func TestNetworkAlias_MarshalUnmarshal(t *testing.T) {
 
 func TestNetworkIdentifier(t *testing.T) {
 	networkInfoRootID := NewTestRandomDocumentID(t)
+	alias := &NetworkAlias{
+		Hostname: "nimona.io",
+	}
+	aliasDoc := alias.Document()
+
+	identity := &NetworkIdentity{
+		NetworkInfoRootID: networkInfoRootID,
+	}
+	identityDoc := identity.Document()
+
 	tests := []struct {
 		name    string
-		doc     Documenter
+		doc     *Document
 		want    *NetworkIdentifier
 		wantErr bool
 	}{{
 		name: "network alias",
-		doc: &NetworkAlias{
-			Hostname: "nimona.io",
-		},
+		doc:  aliasDoc,
 		want: &NetworkIdentifier{
 			NetworkAlias: &NetworkAlias{
 				Hostname: "nimona.io",
@@ -56,9 +64,7 @@ func TestNetworkIdentifier(t *testing.T) {
 		},
 	}, {
 		name: "network identity",
-		doc: &NetworkIdentity{
-			NetworkInfoRootID: networkInfoRootID,
-		},
+		doc:  identityDoc,
 		want: &NetworkIdentifier{
 			NetworkIdentity: &NetworkIdentity{
 				NetworkInfoRootID: networkInfoRootID,

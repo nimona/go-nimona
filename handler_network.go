@@ -92,7 +92,7 @@ func RequestNetworkInfo(
 	req := &NetworkInfoRequest{}
 	// TODO Res should be a NetworkInfoResponse that contains NetworkInfo or error
 	res := &NetworkInfo{}
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -118,7 +118,7 @@ func (h *HandlerNetwork) HandleNetworkInfoRequest(
 		},
 		PeerAddresses: h.PeerAddresses,
 	}
-	err = msg.Respond(res)
+	err = msg.Respond(res.Document())
 	if err != nil {
 		return fmt.Errorf("error replying: %w", err)
 	}
@@ -139,7 +139,7 @@ func RequestNetworkJoin(
 		return nil, fmt.Errorf("cannot join a network without an identity")
 	}
 	res := &NetworkJoinResponse{}
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -165,7 +165,7 @@ func (h *HandlerNetwork) HandleNetworkJoinRequest(
 			Error:            true,
 			ErrorDescription: desc,
 		}
-		err = msg.Respond(res)
+		err = msg.Respond(res.Document())
 		if err != nil {
 			return fmt.Errorf("error replying: %w", err)
 		}
@@ -211,7 +211,7 @@ func (h *HandlerNetwork) HandleNetworkJoinRequest(
 		Accepted: true,
 		Handle:   req.RequestedHandle,
 	}
-	err = msg.Respond(res)
+	err = msg.Respond(res.Document())
 	if err != nil {
 		return fmt.Errorf("error replying: %w", err)
 	}
@@ -230,7 +230,7 @@ func RequestNetworkResolveHandle(
 		Handle: handle,
 	}
 	res := &NetworkResolveHandleResponse{}
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -256,7 +256,7 @@ func (h *HandlerNetwork) HandleNetworkResolveHandleRequest(
 			Error:            true,
 			ErrorDescription: desc,
 		}
-		err = msg.Respond(res)
+		err = msg.Respond(res.Document())
 		if err != nil {
 			return fmt.Errorf("error replying: %w", err)
 		}
@@ -281,7 +281,7 @@ func (h *HandlerNetwork) HandleNetworkResolveHandleRequest(
 		Found:      true,
 		IdentityID: *acc.IdentityID,
 	}
-	err = msg.Respond(res)
+	err = msg.Respond(res.Document())
 	if err != nil {
 		return fmt.Errorf("error replying: %w", err)
 	}
@@ -301,7 +301,7 @@ func RequestNetworkAnnouncePeer(
 		return nil, fmt.Errorf("cannot announce a peer without an identity")
 	}
 	res := &NetworkAnnouncePeerResponse{}
-	msgRes, err := ses.Request(ctx, req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -327,7 +327,7 @@ func (h *HandlerNetwork) HandleNetworkAnnouncePeerRequest(
 			Error:            true,
 			ErrorDescription: desc,
 		}
-		err = msg.Respond(res)
+		err = msg.Respond(res.Document())
 		if err != nil {
 			return fmt.Errorf("error replying: %w", err)
 		}
@@ -357,7 +357,7 @@ func (h *HandlerNetwork) HandleNetworkAnnouncePeerRequest(
 	}
 
 	res := &NetworkAnnouncePeerResponse{}
-	err = msg.Respond(res)
+	err = msg.Respond(res.Document())
 	if err != nil {
 		return fmt.Errorf("error replying: %w", err)
 	}
@@ -373,7 +373,7 @@ func RequestNetworkLookupPeer(
 		PeerKey: peerKey,
 	}
 	res := &NetworkLookupPeerResponse{}
-	msgRes, err := ses.Request(ctx, &req)
+	msgRes, err := ses.Request(ctx, req.Document())
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -399,7 +399,7 @@ func (h *HandlerNetwork) HandleNetworkLookupPeerRequest(
 			Error:            true,
 			ErrorDescription: desc,
 		}
-		err = msg.Respond(res)
+		err = msg.Respond(res.Document())
 		if err != nil {
 			return fmt.Errorf("error replying: %w", err)
 		}
@@ -442,7 +442,7 @@ func (h *HandlerNetwork) HandleNetworkLookupPeerRequest(
 		Found:    true,
 		PeerInfo: *peerInfo,
 	}
-	err = msg.Respond(res)
+	err = msg.Respond(res.Document())
 	if err != nil {
 		return fmt.Errorf("error replying: %w", err)
 	}
