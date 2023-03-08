@@ -15,8 +15,6 @@ func main() {
 		mappings[f] = append(mappings[f], t)
 	}
 
-	addMapping("client_profile_docgen.go", nimona.Profile{})
-	addMapping("client_profile_docgen.go", nimona.ProfileRepository{})
 	addMapping("document_id_docgen.go", nimona.DocumentID{})
 	addMapping("document_metadata_docgen.go", nimona.Metadata{})
 	addMapping("document_metadata_docgen.go", nimona.Permissions{})
@@ -47,6 +45,8 @@ func main() {
 	addMapping("identity_docgen.go", nimona.IdentityAlias{})
 	addMapping("identity_docgen.go", nimona.KeyGraph{})
 	addMapping("message_wrapper_docgen.go", nimona.MessageWrapper{})
+	addMapping("model_profile_docgen.go", nimona.Profile{})
+	addMapping("model_profile_docgen.go", nimona.ProfileRepository{})
 	addMapping("network_docgen.go", nimona.NetworkAlias{})
 	addMapping("network_docgen.go", nimona.NetworkIdentity{})
 	addMapping("network_docgen.go", nimona.NetworkInfo{})

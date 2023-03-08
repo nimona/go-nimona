@@ -39,7 +39,7 @@ func (t *Profile) Map() tilde.Map {
 	// # t.Identity
 	//
 	// Type: nimona.Identity, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: true
+	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Identity) {
 			m.Set("identity", t.Identity.Map())
@@ -110,14 +110,14 @@ func (t *Profile) FromMap(d tilde.Map) error {
 	// # t.Identity
 	//
 	// Type: nimona.Identity, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: true
+	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if v, err := d.Get("identity"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Identity{}
 				d := NewDocument(v)
 				e.FromDocument(d)
-				t.Identity = &e
+				t.Identity = e
 			}
 		}
 	}
@@ -225,7 +225,7 @@ func (t *ProfileRepository) Map() tilde.Map {
 	// # t.Identity
 	//
 	// Type: nimona.Identity, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: true
+	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Identity) {
 			m.Set("identity", t.Identity.Map())
@@ -290,14 +290,14 @@ func (t *ProfileRepository) FromMap(d tilde.Map) error {
 	// # t.Identity
 	//
 	// Type: nimona.Identity, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: true
+	// IsSlice: false, IsStruct: true, IsPointer: false
 	{
 		if v, err := d.Get("identity"); err == nil {
 			if v, ok := v.(tilde.Map); ok {
 				e := Identity{}
 				d := NewDocument(v)
 				e.FromDocument(d)
-				t.Identity = &e
+				t.Identity = e
 			}
 		}
 	}
