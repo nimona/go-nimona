@@ -44,7 +44,6 @@ func main() {
 	addMapping("identity_docgen.go", nimona.Identity{})
 	addMapping("identity_docgen.go", nimona.IdentityAlias{})
 	addMapping("identity_docgen.go", nimona.KeyGraph{})
-	addMapping("message_wrapper_docgen.go", nimona.MessageWrapper{})
 	addMapping("model_profile_docgen.go", nimona.Profile{})
 	addMapping("model_profile_docgen.go", nimona.ProfileRepository{})
 	addMapping("network_docgen.go", nimona.NetworkAlias{})
