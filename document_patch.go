@@ -19,7 +19,10 @@ type (
 	}
 )
 
-func ApplyDocumentPatch(original *Document, patches ...*DocumentPatch) (*Document, error) {
+func ApplyDocumentPatch(
+	original *Document,
+	patches ...*DocumentPatch,
+) (*Document, error) {
 	doc := original.Copy()
 	docMap := doc.Map()
 	for _, patch := range patches {
@@ -31,7 +34,7 @@ func ApplyDocumentPatch(original *Document, patches ...*DocumentPatch) (*Documen
 					return nil, fmt.Errorf("error applying patch: %w", err)
 				}
 			default:
-				return nil, fmt.Errorf("unsupported patch operation: %s", operation.Op)
+				return nil, fmt.Errorf("unsupported operation: %s", operation.Op)
 			}
 		}
 	}
