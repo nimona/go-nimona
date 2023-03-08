@@ -5,16 +5,32 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"nimona.io/internal/tilde"
 )
 
 func TestExample_Graph(t *testing.T) {
 	var srvAddr string
 
 	// create test documents
-	origRootDoc := NewTestDocument(t)
+	origProfile := Profile{DisplayName: "John"}
+	origRootDoc := origProfile.Document()
 	origRootDocID := NewDocumentID(origRootDoc)
-	origPatchDoc := NewTestDocument(t)
-	origPatchDoc.Metadata.Root = &origRootDocID
+
+	origProfilePatch := DocumentPatch{
+		Metadata: Metadata{
+			Root: &origRootDocID,
+		},
+		Operations: []DocumentPatchOperation{{
+			Op:    "replace",
+			Path:  "displayName",
+			Value: tilde.String("John Doe"),
+		}},
+	}
+	origPatchDoc := origProfilePatch.Document()
+
+	DumpDocument(origRootDoc)
+	DumpDocument(origPatchDoc)
 
 	t.Run("setup server", func(t *testing.T) {
 		srvCtx := context.Background()
@@ -78,12 +94,25 @@ func TestExample_Graph(t *testing.T) {
 	require.Equal(t, origRootDocID, NewDocumentID(gotRootDoc))
 
 	// get patch documents
-	gotPatches := []*Document{}
+	gotPatches := []*DocumentPatch{}
+	gotPatchDocs := []*Document{}
 	for _, gotPatchDocID := range res.PatchDocumentIDs {
 		gotPatchDoc, err := RequestDocument(ctx, rctx, gotPatchDocID, ses)
 		require.NoError(t, err)
-		gotPatches = append(gotPatches, gotPatchDoc)
+		gotPatch := &DocumentPatch{}
+		gotPatch.FromDocument(gotPatchDoc)
+		gotPatches = append(gotPatches, gotPatch)
+		gotPatchDocs = append(gotPatchDocs, gotPatchDoc)
 	}
 	require.Len(t, gotPatches, 1)
-	EqualDocument(t, origPatchDoc, gotPatches[0])
+	require.Len(t, gotPatchDocs, 1)
+	EqualDocument(t, origPatchDoc, gotPatchDocs[0])
+
+	// create aggregate document
+	gotAggregateDoc, err := ApplyDocumentPatch(gotRootDoc, gotPatches...)
+	require.NoError(t, err)
+	require.Equal(t, NewDocument(tilde.Map{
+		"$type":       tilde.String("core/identity/profile"),
+		"displayName": tilde.String("John Doe"),
+	}), gotAggregateDoc)
 }
