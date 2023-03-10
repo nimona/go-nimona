@@ -9,13 +9,13 @@ import (
 )
 
 func TestDocumentHash_Ping(t *testing.T) {
-	m := &CborFixture{
+	m := &documentFixture{
 		String: "foo",
 		Uint64: 42,
 		Int64:  -42,
 		Bytes:  []byte("bar"),
 		Bool:   true,
-		NestedMap: &CborFixture{
+		MapPtr: &documentFixture{
 			String: "foo",
 		},
 		RepeatedString: []string{"foo", "bar"},
@@ -23,14 +23,14 @@ func TestDocumentHash_Ping(t *testing.T) {
 		RepeatedInt64:  []int64{-1, -2, -3},
 		RepeatedBytes:  [][]byte{[]byte("foo"), []byte("bar")},
 		// RepeatedBool:   []bool{true, false},
-		RepeatedMap: []*CborFixture{{
+		RepeatedMap: []documentFixture{{
 			String: "foo",
 		}, {
 			String: "bar",
 		}},
 	}
 
-	exp := "82pCJU9HhpjB1XgndtpSzby9UT13dCmdbBVFnDyWysGq"
+	exp := "8fp2d3WesUJ7xDzdN6SxFDZaWHvbXM8ejz9ETQM3mtrX"
 
 	t.Run("hash", func(t *testing.T) {
 		h := NewDocumentHash(m.Document())
@@ -47,7 +47,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 		err = gm.UnmarshalJSON(b)
 		require.NoError(t, err)
 
-		g := &CborFixture{}
+		g := &documentFixture{}
 		err = g.FromDocument(gm)
 
 		require.NoError(t, err)
@@ -65,7 +65,7 @@ func TestDocumentHash_Ping(t *testing.T) {
 
 	t.Run("add document id", func(t *testing.T) {
 		m.DocumentID = NewDocumentID(m.Document())
-		exp := "2VMpDXUXnj4cX4UYpQK441x2UKCGn5cCswkxmYWvtyGr"
+		exp := "9fe24XevoiTEXrCcXbX2C72joHwpPms2x7kFpW2LiYJH"
 
 		t.Run("test hashing", func(t *testing.T) {
 			h := NewDocumentHash(m.Document())
@@ -83,12 +83,12 @@ func TestDocumentHash_NewRandomHash(t *testing.T) {
 }
 
 func TestDocumentHash(t *testing.T) {
-	doc := &CborFixture{
+	doc := &documentFixture{
 		String: "foo",
 	}
 
 	hash := NewDocumentHash(doc.Document())
-	require.Equal(t, "4QBmwF9dpvChi39wVAiCWi8cAKEiRpT3hRD4TNopirdT", hash.String())
+	require.Equal(t, "FBgb1MJcVCpPp2tLKJQp1R9E15a5Nntm9o93bB63XWSj", hash.String())
 }
 
 func TestDocumentHash_NewTestRandomDocumentID(t *testing.T) {
@@ -103,7 +103,7 @@ func TestDocumentHash_NewTestRandomDocumentID(t *testing.T) {
 func NewRandomHash(t *testing.T) DocumentHash {
 	t.Helper()
 
-	doc := &CborFixture{
+	doc := &documentFixture{
 		String: uuid.New().String(),
 	}
 

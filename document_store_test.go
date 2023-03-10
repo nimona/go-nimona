@@ -37,7 +37,7 @@ func TestDocumentStore(t *testing.T) {
 	store := NewTestDocumentStore(t)
 
 	// Create a document
-	val := &CborFixture{
+	val := &documentFixture{
 		String: "test",
 		Uint64: 42,
 	}

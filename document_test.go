@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/jimeh/undent"
 	"github.com/stretchr/testify/require"
 
@@ -11,13 +12,13 @@ import (
 )
 
 func TestDocumentMap(t *testing.T) {
-	fix := &CborFixture{
+	fix := &documentFixture{
 		String: "foo",
 		Uint64: 42,
 		Int64:  -42,
 		Bytes:  []byte("bar"),
 		Bool:   true,
-		NestedMap: &CborFixture{
+		MapPtr: &documentFixture{
 			String: "foo",
 		},
 		RepeatedString: []string{"foo", "bar"},
@@ -25,7 +26,7 @@ func TestDocumentMap(t *testing.T) {
 		RepeatedInt64:  []int64{-1, -2, -3},
 		RepeatedBytes:  [][]byte{[]byte("foo"), []byte("bar")},
 		// RepeatedBool:   []bool{true, false},
-		RepeatedMap: []*CborFixture{{
+		RepeatedMap: []documentFixture{{
 			String: "foo",
 		}, {
 			String: "bar",
@@ -43,9 +44,10 @@ func TestDocumentMap(t *testing.T) {
 	  "bool:b": true,
 	  "bytes:d": "YmFy",
 	  "int64:i": -42,
-	  "map:m": {
+	  "mapPtr:m": {
 	    "$type:s": "test/fixture",
-	    "string:s": "foo"
+	    "string:s": "foo",
+	    "stringConst:s": "foo"
 	  },
 	  "repeatedbytes:ad": [
 	    "Zm9v",
@@ -59,11 +61,13 @@ func TestDocumentMap(t *testing.T) {
 	  "repeatedmap:am": [
 	    {
 	      "$type:s": "test/fixture",
-	      "string:s": "foo"
+	      "string:s": "foo",
+	      "stringConst:s": "foo"
 	    },
 	    {
 	      "$type:s": "test/fixture",
-	      "string:s": "bar"
+	      "string:s": "bar",
+	      "stringConst:s": "foo"
 	    }
 	  ],
 	  "repeatedstring:as": [
@@ -76,6 +80,7 @@ func TestDocumentMap(t *testing.T) {
 	    3
 	  ],
 	  "string:s": "foo",
+	  "stringConst:s": "foo",
 	  "uint64:u": 42
 	}`
 
@@ -88,7 +93,7 @@ func TestDocumentMap(t *testing.T) {
 	})
 
 	t.Run("test converting from map", func(t *testing.T) {
-		g := &CborFixture{}
+		g := &documentFixture{}
 		g.FromDocument(fixMap)
 		require.Equal(t, fix, g)
 	})
@@ -104,6 +109,14 @@ func removeUnderscoreKeys(m tilde.Map) {
 			removeUnderscoreKeys(v)
 		}
 	}
+}
+
+func NewTestDocument(t *testing.T) *Document {
+	t.Helper()
+	doc := &documentFixture{
+		String: uuid.New().String(),
+	}
+	return doc.Document()
 }
 
 func EqualDocument(

@@ -15,6 +15,7 @@ func main() {
 		mappings[f] = append(mappings[f], t)
 	}
 
+	addMapping("identity_docgen.go", nimona.IdentityInfo{})
 	addMapping("document_id_docgen.go", nimona.DocumentID{})
 	addMapping("document_metadata_docgen.go", nimona.Metadata{})
 	addMapping("document_metadata_docgen.go", nimona.Permissions{})
@@ -23,9 +24,10 @@ func main() {
 	addMapping("document_metadata_docgen.go", nimona.Signature{})
 	addMapping("document_patch_docgen.go", nimona.DocumentPatch{})
 	addMapping("document_patch_docgen.go", nimona.DocumentPatchOperation{})
-	addMapping("fixtures_docgen.go", nimona.CborFixture{})
 	addMapping("handler_document_docgen.go", nimona.DocumentRequest{})
 	addMapping("handler_document_docgen.go", nimona.DocumentResponse{})
+	addMapping("handler_document_docgen.go", nimona.DocumentStoreRequest{})
+	addMapping("handler_document_docgen.go", nimona.DocumentStoreResponse{})
 	addMapping("handler_document_graph_docgen.go", nimona.DocumentGraphRequest{})
 	addMapping("handler_document_graph_docgen.go", nimona.DocumentGraphResponse{})
 	addMapping("handler_peer_docgen.go", nimona.PeerCapabilitiesRequest{})

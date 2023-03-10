@@ -10,7 +10,7 @@ import (
 func NewTestRandomDocumentID(t *testing.T) DocumentID {
 	t.Helper()
 
-	doc := &CborFixture{
+	doc := &documentFixture{
 		String: uuid.New().String(),
 	}
 

@@ -10,7 +10,7 @@ func TestDocumentSignature_SignVerify(t *testing.T) {
 	_, sk, err := GenerateKey()
 	require.NoError(t, err)
 
-	doc := &CborFixture{
+	doc := &documentFixture{
 		String: "foo",
 	}
 

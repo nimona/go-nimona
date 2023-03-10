@@ -10,31 +10,31 @@ import (
 )
 
 func TestDocumentCodegen_WriteToFile(t *testing.T) {
-	t.Skip("Used to generate fixture_gen.go")
+	// t.Skip("Used to generate fixture_gen.go")
 	err := GenerateDocumentMethods(
-		"document_codegen_fixture_docgen.go",
+		"document_fixture_docgen.go",
 		"nimona",
-		codegenFixture{},
-		codegenFixtureWithType{},
+		documentFixture{},
+		documentFixtureWithType{},
 	)
 	require.NoError(t, err)
 }
 
 func TestDocumentCodegen(t *testing.T) {
-	f1 := codegenFixture{
+	f1 := documentFixture{
 		String:         "string",
 		Uint64:         64,
 		Int64:          -64,
 		Bytes:          []byte("bytes"),
 		Bool:           true,
-		MapPtr:         &codegenFixture{String: "nested"},
+		MapPtr:         &documentFixture{String: "nested"},
 		RepeatedString: []string{"repeated", "string"},
 		RepeatedUint64: []uint64{64, 64},
 		RepeatedInt64:  []int64{-64, -64},
 		RepeatedBytes:  [][]byte{[]byte("repeated"), []byte("bytes")},
 		RepeatedBool:   []bool{true, false},
-		RepeatedMap:    []codegenFixture{{String: "repeated", Uint64: 64}},
-		RepeatedMapPtr: []*codegenFixture{{String: "repeated", Uint64: 64}},
+		RepeatedMap:    []documentFixture{{String: "repeated", Uint64: 64}},
+		RepeatedMapPtr: []*documentFixture{{String: "repeated", Uint64: 64}},
 	}
 
 	m1 := f1.Document()
@@ -50,13 +50,13 @@ func TestDocumentCodegen(t *testing.T) {
 	err = json.Unmarshal(b1, &mm)
 	require.NoError(t, err)
 
-	f2 := &codegenFixture{}
+	f2 := &documentFixture{}
 	f2.FromDocument(m1)
 	require.EqualValues(t, f1, *f2)
 }
 
 func TestDocumentCodegen_WithType(t *testing.T) {
-	f1 := codegenFixtureWithType{
+	f1 := documentFixtureWithType{
 		String: "string",
 	}
 
@@ -73,7 +73,7 @@ func TestDocumentCodegen_WithType(t *testing.T) {
 	err = json.Unmarshal(b1, &mm)
 	require.NoError(t, err)
 
-	f2 := &codegenFixtureWithType{}
+	f2 := &documentFixtureWithType{}
 	f2.FromDocument(m1)
 	require.EqualValues(t, f1, *f2)
 }
