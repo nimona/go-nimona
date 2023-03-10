@@ -1,6 +1,8 @@
 package nimona
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/mr-tron/base58"
@@ -45,6 +47,14 @@ func ParsePublicKey(pk string) (PublicKey, error) {
 	return base58.Decode(pk)
 }
 
+func ParsePublicKeyFromHex(pk string) (PublicKey, error) {
+	return hex.DecodeString(pk)
+}
+
+func ParsePublicKeyFromBase64(pk string) (PublicKey, error) {
+	return base64.StdEncoding.DecodeString(pk)
+}
+
 func (sk PrivateKey) Equal(other PrivateKey) bool {
 	return ed25519.PrivateKey(sk).Equal(ed25519.PrivateKey(other))
 }
@@ -65,6 +75,10 @@ func (sk PrivateKey) Public() PublicKey {
 	return PublicKey(ed25519.PrivateKey(sk).Public().(ed25519.PublicKey))
 }
 
+func (sk PrivateKey) IsZero() bool {
+	return len(sk) == 0
+}
+
 func (sk PrivateKey) X25519() ([]byte, error) {
 	sx := x25519.EdPrivateKeyToX25519(ed25519.PrivateKey(sk))
 	return sx, nil
@@ -72,4 +86,32 @@ func (sk PrivateKey) X25519() ([]byte, error) {
 
 func ParsePrivateKey(sk string) (PrivateKey, error) {
 	return base58.Decode(sk)
+}
+
+func ParsePrivateKeyFromHex(sk string) (PrivateKey, error) {
+	return hex.DecodeString(sk)
+}
+
+func ParsePrivateKeyFromBase64(sk string) (PrivateKey, error) {
+	return base64.StdEncoding.DecodeString(sk)
+}
+
+func SignDocument(rctx *RequestContext, doc *Document) {
+	switch {
+	case rctx == nil:
+		return
+	case doc == nil:
+		return
+	case rctx.PrivateKey.IsZero():
+		return
+	}
+
+	if doc.Metadata.Owner == nil {
+		doc.Metadata.Owner = rctx.Identity
+	}
+
+	doc.Metadata.Signature = NewDocumentSignature(
+		rctx.PrivateKey,
+		NewDocumentHash(doc),
+	)
 }
