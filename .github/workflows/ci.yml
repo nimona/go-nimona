@@ -11,14 +11,12 @@ jobs:
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
         with:
           fetch-depth: 0
-      - name: Install devbox
-        uses: jetpack-io/devbox-install-action@v0.2.0
-        with:
-          enable-cache: true
-      - name: Download dependencies
-        run: devbox run -- task deps
+      - name: Setup rtx
+        uses: jdxcode/rtx-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
-        run: devbox run -- task test
+        run: task test
 
   release:
     runs-on: ubuntu-latest
@@ -32,10 +30,10 @@ jobs:
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
         with:
           fetch-depth: 0
-      - name: Install devbox
-        uses: jetpack-io/devbox-install-action@v0.2.0
-        with:
-          enable-cache: true
+      - name: Setup rtx
+        uses: jdxcode/rtx-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: GitHub Container Registry login
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v1
         with:
@@ -43,4 +41,4 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Create release
-        run: devbox run -- task deps goreleaser
+        run: task deps goreleaser
