@@ -17,12 +17,6 @@ type (
 	}
 )
 
-type (
-	HandlerPing struct {
-		PeerConfig *PeerConfig
-	}
-)
-
 func RequestPing(
 	ctx context.Context,
 	ses *Session,
@@ -40,21 +34,26 @@ func RequestPing(
 	return res, nil
 }
 
-func (h *HandlerPing) HandlePingRequest(
-	ctx context.Context,
-	msg *Request,
-) error {
-	req := Ping{}
-	err := req.FromDocument(msg.Document)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling request: %w", err)
+func HandlePingRequest(
+	sesManager *SessionManager,
+) {
+	handler := func(
+		ctx context.Context,
+		msg *Request,
+	) error {
+		req := Ping{}
+		err := req.FromDocument(msg.Document)
+		if err != nil {
+			return fmt.Errorf("error unmarshaling request: %w", err)
+		}
+		res := &Pong{
+			Nonce: time.Now().Format(time.RFC3339Nano),
+		}
+		err = msg.Respond(res.Document())
+		if err != nil {
+			return fmt.Errorf("error replying: %w", err)
+		}
+		return nil
 	}
-	res := &Pong{
-		Nonce: time.Now().Format(time.RFC3339Nano),
-	}
-	err = msg.Respond(res.Document())
-	if err != nil {
-		return fmt.Errorf("error replying: %w", err)
-	}
-	return nil
+	sesManager.RegisterHandler("test/ping", handler)
 }
