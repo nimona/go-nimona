@@ -3,5 +3,5 @@ package nimona
 //go:generate ./bin/mockgen -package=nimona -source=resolver.go -destination=resolver_mock.go
 
 type Resolver interface {
-	Resolve(NetworkAlias) ([]PeerAddr, error)
+	ResolveIdentityAlias(IdentityAlias) (*IdentityInfo, error)
 }

@@ -33,17 +33,17 @@ func (m *MockResolver) EXPECT() *MockResolverMockRecorder {
 	return m.recorder
 }
 
-// Resolve mocks base method.
-func (m *MockResolver) Resolve(arg0 NetworkAlias) ([]PeerAddr, error) {
+// ResolveIdentityAlias mocks base method.
+func (m *MockResolver) ResolveIdentityAlias(arg0 IdentityAlias) (*IdentityInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Resolve", arg0)
-	ret0, _ := ret[0].([]PeerAddr)
+	ret := m.ctrl.Call(m, "ResolveIdentityAlias", arg0)
+	ret0, _ := ret[0].(*IdentityInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Resolve indicates an expected call of Resolve.
-func (mr *MockResolverMockRecorder) Resolve(arg0 interface{}) *gomock.Call {
+// ResolveIdentityAlias indicates an expected call of ResolveIdentityAlias.
+func (mr *MockResolverMockRecorder) ResolveIdentityAlias(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockResolver)(nil).Resolve), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveIdentityAlias", reflect.TypeOf((*MockResolver)(nil).ResolveIdentityAlias), arg0)
 }

@@ -7,21 +7,14 @@ import (
 )
 
 const (
-	resolverWellKnownProvider = "https://%s/.well-known/nimona.json"
-	resolverWellKnownUser     = "https://%s/.well-known/nimona-%s.json"
+	resolverWellKnownAlias = "https://%s/.well-known/nimona.json"
 )
 
 type ResolverHTTP struct{}
 
-func (r *ResolverHTTP) ResolveIdentityAlias(alias *IdentityAlias) (*NetworkInfo, error) {
-	url := ""
-	if alias.Handle != "" {
-		url = fmt.Sprintf(resolverWellKnownUser, alias.Network.Hostname, alias.Handle)
-	} else {
-		url = fmt.Sprintf(resolverWellKnownProvider, alias.Network.Hostname)
-	}
-
+func (r *ResolverHTTP) ResolveIdentityAlias(alias IdentityAlias) (*IdentityInfo, error) {
 	// make http request to url
+	url := fmt.Sprintf(resolverWellKnownAlias, alias.Hostname)
 	req, err := http.NewRequest("GET", url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("unable to resolve identity: %w", err)
@@ -50,7 +43,7 @@ func (r *ResolverHTTP) ResolveIdentityAlias(alias *IdentityAlias) (*NetworkInfo,
 	}
 
 	// decode document
-	id := &NetworkInfo{}
+	id := &IdentityInfo{}
 	err = id.FromDocument(idDoc)
 	if err != nil {
 		return nil, fmt.Errorf("unable to resolve identity: %w", err)
