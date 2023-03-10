@@ -126,7 +126,7 @@ tasks:
   goreleaser:
     desc: Run GoReleaser either in snapshot or release mode
     vars:
-      SNAPSHOT:
-        sh: 'if [[ $GITHUB_REF != refs/tags/v* ]]; then echo "--snapshot"; fi'
+      NIGHTLY:
+        sh: 'if [[ $GITHUB_REF != refs/tags/v* ]]; then echo "GORELEASER_NIGHTLY=true GORELEASER_CURRENT_TAG=v0"; fi'
     cmds:
-      - goreleaser release --timeout 5m {{ .SNAPSHOT }}
+      - '{{ .NIGHTLY }} goreleaser release --timeout 5m --skip-validate --clean'

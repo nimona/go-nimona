@@ -1,6 +1,5 @@
-before:
-  hooks:
-    - go mod tidy
+env:
+  - 'VERSION={{ if index .Env "GORELEASER_NIGHTLY" }}nightly{{ else }}{{ .Version }}{{ end }}'
 builds:
   - binary: nimona-pong
     main: ./cmd/ping-server/main.go
@@ -10,7 +9,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - "-s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}"
+      - "-s -w -X main.version={{ .Env.VERSION }} -X main.commit={{ .Commit }}"
     goos:
       - "darwin"
       - "freebsd"
@@ -28,14 +27,14 @@ universal_binaries:
   - replace: false
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  name_template: "{{ .Tag }}-dev"
 
 changelog:
   skip: true
 
 dockers:
   - image_templates:
-      - "ghcr.io/nimona/nimona:{{ .Version }}-amd64"
+      - "ghcr.io/nimona/nimona:{{ .Env.VERSION }}-amd64"
     dockerfile: dockerfile
     use: buildx
     goos: linux
@@ -43,7 +42,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
   - image_templates:
-      - "ghcr.io/nimona/nimona:{{ .Version }}-386"
+      - "ghcr.io/nimona/nimona:{{ .Env.VERSION }}-386"
     dockerfile: dockerfile
     use: buildx
     goos: linux
@@ -51,7 +50,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/386"
   - image_templates:
-      - "ghcr.io/nimona/nimona:{{ .Version }}-arm64"
+      - "ghcr.io/nimona/nimona:{{ .Env.VERSION }}-arm64"
     use: buildx
     goos: linux
     goarch: arm64
@@ -59,7 +58,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/arm64"
   - image_templates:
-      - "ghcr.io/nimona/nimona:{{ .Version }}-armv6"
+      - "ghcr.io/nimona/nimona:{{ .Env.VERSION }}-armv6"
     use: buildx
     goos: linux
     goarch: arm
@@ -68,7 +67,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/arm/v6"
   - image_templates:
-      - "ghcr.io/nimona/nimona:{{ .Version }}-armv7"
+      - "ghcr.io/nimona/nimona:{{ .Env.VERSION }}-armv7"
     use: buildx
     goos: linux
     goarch: arm
@@ -78,10 +77,10 @@ dockers:
       - "--platform=linux/arm/v7"
 
 docker_manifests:
-  - name_template: ghcr.io/nimona/nimona:{{ .Version }}
+  - name_template: ghcr.io/nimona/nimona:{{ .Env.VERSION }}
     image_templates:
-      - ghcr.io/nimona/nimona:{{ .Version }}-amd64
-      - ghcr.io/nimona/nimona:{{ .Version }}-386
-      - ghcr.io/nimona/nimona:{{ .Version }}-arm64
-      - ghcr.io/nimona/nimona:{{ .Version }}-armv6
-      - ghcr.io/nimona/nimona:{{ .Version }}-armv7
+      - ghcr.io/nimona/nimona:{{ .Env.VERSION }}-amd64
+      - ghcr.io/nimona/nimona:{{ .Env.VERSION }}-386
+      - ghcr.io/nimona/nimona:{{ .Env.VERSION }}-arm64
+      - ghcr.io/nimona/nimona:{{ .Env.VERSION }}-armv6
+      - ghcr.io/nimona/nimona:{{ .Env.VERSION }}-armv7
