@@ -54,19 +54,6 @@ func main() {
 		panic(fmt.Errorf("error listening: %w", err))
 	}
 
-	// docDB, err := gorm.Open(
-	// 	sqlite.Open("file::memory:?cache=shared"),
-	// 	&gorm.Config{},
-	// )
-	// if err != nil {
-	// 	panic(fmt.Errorf("error opening db: %w", err))
-	// }
-
-	// docStore, err := nimona.NewDocumentStore(docDB)
-	// if err != nil {
-	// 	panic(fmt.Errorf("error creating document store: %w", err))
-	// }
-
 	sesManager, err := nimona.NewSessionManager(
 		transport,
 		listener,
@@ -77,28 +64,10 @@ func main() {
 		panic(fmt.Errorf("error creating session manager: %w", err))
 	}
 
-	peerInfo := &nimona.PeerInfo{
-		PublicKey: publicKey,
-		Addresses: []nimona.PeerAddr{{
-			PublicKey: publicKey,
-			Address:   listener.PeerAddr().Address,
-			Network:   listener.PeerAddr().Network,
-		}},
-	}
-
-	peerConfig := nimona.NewPeerConfig(privateKey, publicKey, peerInfo)
-
-	pingHandler := &nimona.HandlerPing{
-		PeerConfig: peerConfig,
-	}
-
-	sesManager.RegisterHandler(
-		"test/ping",
-		pingHandler.HandlePingRequest,
-	)
+	nimona.HandlePingRequest(sesManager)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, peerConfig.GetPeerInfo().Addresses[0].String())
+		fmt.Fprint(w, listener.PeerAddr().String())
 	})
 
 	http.ListenAndServe("0.0.0.0:80", nil) // nolint: errcheck
