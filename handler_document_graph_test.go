@@ -28,13 +28,10 @@ func TestHandlerStream(t *testing.T) {
 	require.NoError(t, srvDocStore.PutDocument(rootDoc))
 	require.NoError(t, srvDocStore.PutDocument(patchDoc))
 
-	// dial the server
-	ses, err := clt.Dial(context.Background(), srv.PeerAddr())
-	require.NoError(t, err)
-
 	// ask for stream
 	ctx := context.Background()
-	res, err := RequestDocumentGraph(ctx, rootDocID, ses)
+	rctx := NewTestRequestContext(t)
+	res, err := RequestDocumentGraph(ctx, rctx, clt, rootDocID, FromPeerAddr(srv.PeerAddr()))
 	require.NoError(t, err)
 	require.Len(t, res.PatchDocumentIDs, 1)
 	require.Equal(t, rootDocID, res.RootDocumentID)

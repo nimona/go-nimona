@@ -19,14 +19,20 @@ type (
 
 func RequestDocumentGraph(
 	ctx context.Context,
+	rctx *RequestContext,
+	ses *SessionManager,
 	rootID DocumentID,
-	ses *Session,
+	rec RequestRecipientFn,
 ) (*DocumentGraphResponse, error) {
 	req := &DocumentGraphRequest{
 		RootDocumentID: rootID,
 	}
+
+	doc := req.Document()
+	SignDocument(rctx, doc)
+
 	res := DocumentGraphResponse{}
-	msgRes, err := ses.Request(ctx, req.Document())
+	msgRes, err := ses.Request(ctx, doc, rec)
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
