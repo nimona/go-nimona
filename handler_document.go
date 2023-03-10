@@ -25,23 +25,19 @@ type (
 
 func RequestDocument(
 	ctx context.Context,
-	rctx RequestContext,
+	rctx *RequestContext,
+	ses *SessionManager,
 	docID DocumentID,
-	ses *Session,
+	rec RequestRecipientFn,
 ) (*Document, error) {
-	req := &DocumentRequest{
-		Metadata: Metadata{
-			Owner: rctx.Identity,
-		},
+	req := DocumentRequest{
 		DocumentID: docID,
 	}
 
-	req.Metadata.Signature = NewDocumentSignature(
-		rctx.PrivateKey,
-		NewDocumentHash(req.Document()),
-	)
+	doc := req.Document()
+	SignDocument(rctx, doc)
 
-	msgRes, err := ses.Request(ctx, req.Document())
+	msgRes, err := ses.Request(ctx, doc, rec)
 	if err != nil {
 		return nil, fmt.Errorf("error sending message: %w", err)
 	}
@@ -109,4 +105,98 @@ func HandleDocumentRequest(
 		return nil
 	}
 	sesManager.RegisterHandler("core/document.request", handler)
+}
+
+type (
+	DocumentStoreRequest struct {
+		_        string    `nimona:"$type,type=core/documentStore.request"`
+		Metadata Metadata  `nimona:"$metadata,omitempty"`
+		Payload  *Document `nimona:"document"`
+	}
+	DocumentStoreResponse struct {
+		_                string   `nimona:"$type,type=core/documentStore.response"`
+		Metadata         Metadata `nimona:"$metadata,omitempty"`
+		Error            bool     `nimona:"error,omitempty"`
+		ErrorDescription string   `nimona:"errorDescription,omitempty"`
+	}
+)
+
+func RequestDocumentStore(
+	ctx context.Context,
+	ses *SessionManager,
+	rctx *RequestContext,
+	payload *Document,
+	rec RequestRecipientFn,
+) error {
+	req := DocumentStoreRequest{
+		Payload: payload,
+	}
+
+	doc := req.Document()
+	SignDocument(rctx, doc)
+
+	msgRes, err := ses.Request(ctx, doc, rec)
+	if err != nil {
+		return fmt.Errorf("error sending message: %w", err)
+	}
+
+	res := &DocumentStoreResponse{}
+	err = res.FromDocument(msgRes.Document)
+	if err != nil {
+		return fmt.Errorf("error decoding message: %w", err)
+	}
+
+	if res.Error {
+		if res.ErrorDescription != "" {
+			return fmt.Errorf("received error response: %s", res.ErrorDescription)
+		}
+		return fmt.Errorf("received error response")
+	}
+
+	return nil
+}
+
+func HandleDocumentStoreRequest(
+	sesManager *SessionManager,
+	docStore *DocumentStore,
+) {
+	handler := func(
+		ctx context.Context,
+		msg *Request,
+	) error {
+		req := &DocumentStoreRequest{}
+		err := req.FromDocument(msg.Document)
+		if err != nil {
+			return fmt.Errorf("error unmarshaling request: %w", err)
+		}
+
+		respondWithError := func(desc string) error {
+			res := &DocumentStoreResponse{
+				Error:            true,
+				ErrorDescription: desc,
+			}
+			err = msg.Respond(res.Document())
+			if err != nil {
+				return fmt.Errorf("error replying: %w", err)
+			}
+			return nil
+		}
+
+		if req.Payload == nil {
+			return respondWithError("missing document")
+		}
+
+		err = docStore.PutDocument(req.Payload)
+		if err != nil {
+			return fmt.Errorf("error storing document: %w", err)
+		}
+
+		res := &DocumentStoreResponse{}
+		err = msg.Respond(res.Document())
+		if err != nil {
+			return fmt.Errorf("error replying: %w", err)
+		}
+		return nil
+	}
+	sesManager.RegisterHandler("core/documentStore.request", handler)
 }

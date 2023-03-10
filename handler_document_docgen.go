@@ -222,3 +222,171 @@ func (t *DocumentResponse) FromMap(d tilde.Map) error {
 
 	return nil
 }
+func (t *DocumentStoreRequest) Document() *Document {
+	return NewDocument(t.Map())
+}
+
+func (t *DocumentStoreRequest) Map() tilde.Map {
+	m := tilde.Map{}
+
+	// # t.$type
+	//
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		m.Set("$type", tilde.String("core/documentStore.request"))
+	}
+
+	// # t.Metadata
+	//
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Metadata) {
+			m.Set("$metadata", t.Metadata.Map())
+		}
+	}
+
+	// # t.Payload
+	//
+	// Type: nimona.Document, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: true
+	{
+		m.Set("document", t.Payload.Map())
+	}
+
+	return m
+}
+
+func (t *DocumentStoreRequest) FromDocument(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *DocumentStoreRequest) FromMap(d tilde.Map) error {
+	*t = DocumentStoreRequest{}
+
+	// # t.Metadata
+	//
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if v, err := d.Get("$metadata"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := Metadata{}
+				d := NewDocument(v)
+				e.FromDocument(d)
+				t.Metadata = e
+			}
+		}
+	}
+
+	// # t.Payload
+	//
+	// Type: nimona.Document, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: true
+	{
+		if v, err := d.Get("document"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				t.Payload = NewDocument(v)
+			}
+		}
+	}
+
+	return nil
+}
+func (t *DocumentStoreResponse) Document() *Document {
+	return NewDocument(t.Map())
+}
+
+func (t *DocumentStoreResponse) Map() tilde.Map {
+	m := tilde.Map{}
+
+	// # t.$type
+	//
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		m.Set("$type", tilde.String("core/documentStore.response"))
+	}
+
+	// # t.Error
+	//
+	// Type: bool, Kind: bool, TildeKind: Bool
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Error) {
+			m.Set("error", tilde.Bool(t.Error))
+		}
+	}
+
+	// # t.ErrorDescription
+	//
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.ErrorDescription) {
+			m.Set("errorDescription", tilde.String(t.ErrorDescription))
+		}
+	}
+
+	// # t.Metadata
+	//
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Metadata) {
+			m.Set("$metadata", t.Metadata.Map())
+		}
+	}
+
+	return m
+}
+
+func (t *DocumentStoreResponse) FromDocument(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *DocumentStoreResponse) FromMap(d tilde.Map) error {
+	*t = DocumentStoreResponse{}
+
+	// # t.Error
+	//
+	// Type: bool, Kind: bool, TildeKind: Bool
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if v, err := d.Get("error"); err == nil {
+			if v, ok := v.(tilde.Bool); ok {
+				t.Error = bool(v)
+			}
+		}
+	}
+
+	// # t.ErrorDescription
+	//
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if v, err := d.Get("errorDescription"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.ErrorDescription = string(v)
+			}
+		}
+	}
+
+	// # t.Metadata
+	//
+	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if v, err := d.Get("$metadata"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := Metadata{}
+				d := NewDocument(v)
+				e.FromDocument(d)
+				t.Metadata = e
+			}
+		}
+	}
+
+	return nil
+}

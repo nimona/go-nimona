@@ -7,16 +7,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHandlerDocument(t *testing.T) {
+func TestHandler_DocumentRequest(t *testing.T) {
 	ctx := context.Background()
 
-	// Create new session manager
+	// create new session manager
 	srv, clt := newTestSessionManager(t)
 
-	// Create new document store
+	// create new document store
 	store := NewTestDocumentStore(t)
 
-	// Create new document
+	// create new document
 	doc := NewTestDocument(t)
 	docID := NewDocumentID(doc)
 
@@ -24,18 +24,49 @@ func TestHandlerDocument(t *testing.T) {
 	err := store.PutDocument(doc)
 	require.NoError(t, err)
 
-	// Construct a new HandlerDocument
+	// construct a new HandlerDocument
 	HandleDocumentRequest(srv, store)
-
-	// Dial the server
-	ses, err := clt.Dial(context.Background(), srv.PeerAddr())
-	require.NoError(t, err)
 
 	// construct new request context
 	rctx := NewTestRequestContext(t)
 
-	// Request document
-	gotDoc, err := RequestDocument(ctx, rctx, docID, ses)
+	// request document
+	gotDoc, err := RequestDocument(ctx, rctx, clt, docID, FromPeerAddr(srv.PeerAddr()))
+	require.NoError(t, err)
+	require.Equal(t, doc, gotDoc)
+}
+
+func TestHandler_DocumentStoreRequest(t *testing.T) {
+	ctx := context.Background()
+
+	// create new session manager
+	srv, clt := newTestSessionManager(t)
+
+	// create new document store
+	store := NewTestDocumentStore(t)
+
+	// start handling requests
+	HandleDocumentStoreRequest(srv, store)
+	HandleDocumentRequest(srv, store)
+
+	// construct new request context
+	rctx := NewTestRequestContext(t)
+
+	// create new document
+	doc := NewTestDocument(t)
+	docID := NewDocumentID(doc)
+
+	// request server to store document
+	err := RequestDocumentStore(ctx, clt, rctx, doc, FromPeerAddr(srv.PeerAddr()))
+	require.NoError(t, err)
+
+	// request document back
+	gotDoc, err := RequestDocument(ctx, rctx, clt, docID, FromPeerAddr(srv.PeerAddr()))
+	require.NoError(t, err)
+	require.Equal(t, doc, gotDoc)
+
+	// verify that the document is in the store
+	gotDoc, err = store.GetDocument(docID)
 	require.NoError(t, err)
 	require.Equal(t, doc, gotDoc)
 }
