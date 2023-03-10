@@ -3,28 +3,44 @@ on:
   push:
 
 jobs:
-  lint:
-    name: Lint
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
+        with:
+          fetch-depth: 0
       - name: Install devbox
         uses: jetpack-io/devbox-install-action@v0.2.0
         with:
           enable-cache: true
-      - name: Setup Golang caches
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-golang-
       - name: Download dependencies
-        run: devbox shell -- task deps
-      - name: Run linter
-        run: devbox shell -- task lint
+        run: devbox run -- task deps
       - name: Run tests
-        run: devbox shell -- task test
+        run: devbox run -- task test
+
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - test
+    if: github.ref == 'refs/heads/main'
+    env:
+      DOCKER_CLI_EXPERIMENTAL: "enabled"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3
+        with:
+          fetch-depth: 0
+      - name: Install devbox
+        uses: jetpack-io/devbox-install-action@v0.2.0
+        with:
+          enable-cache: true
+      - name: GitHub Container Registry login
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create release
+        run: devbox run -- task deps goreleaser

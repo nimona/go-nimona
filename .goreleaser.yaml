@@ -1,0 +1,87 @@
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - binary: nimona-pong
+    main: ./cmd/ping-server/main.go
+    env:
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}"
+    goos:
+      - "darwin"
+      - "freebsd"
+      - "linux"
+    goarch:
+      - "amd64"
+      - "386"
+      - "arm"
+      - "arm64"
+    goarm:
+      - "6"
+      - "7"
+
+universal_binaries:
+  - replace: false
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  skip: true
+
+dockers:
+  - image_templates:
+      - "ghcr.io/nimona/nimona:{{ .Version }}-amd64"
+    dockerfile: dockerfile
+    use: buildx
+    goos: linux
+    goarch: amd64
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "ghcr.io/nimona/nimona:{{ .Version }}-386"
+    dockerfile: dockerfile
+    use: buildx
+    goos: linux
+    goarch: "386"
+    build_flag_templates:
+      - "--platform=linux/386"
+  - image_templates:
+      - "ghcr.io/nimona/nimona:{{ .Version }}-arm64"
+    use: buildx
+    goos: linux
+    goarch: arm64
+    dockerfile: dockerfile
+    build_flag_templates:
+      - "--platform=linux/arm64"
+  - image_templates:
+      - "ghcr.io/nimona/nimona:{{ .Version }}-armv6"
+    use: buildx
+    goos: linux
+    goarch: arm
+    goarm: "6"
+    dockerfile: dockerfile
+    build_flag_templates:
+      - "--platform=linux/arm/v6"
+  - image_templates:
+      - "ghcr.io/nimona/nimona:{{ .Version }}-armv7"
+    use: buildx
+    goos: linux
+    goarch: arm
+    goarm: "7"
+    dockerfile: dockerfile
+    build_flag_templates:
+      - "--platform=linux/arm/v7"
+
+docker_manifests:
+  - name_template: ghcr.io/nimona/nimona:{{ .Version }}
+    image_templates:
+      - ghcr.io/nimona/nimona:{{ .Version }}-amd64
+      - ghcr.io/nimona/nimona:{{ .Version }}-386
+      - ghcr.io/nimona/nimona:{{ .Version }}-arm64
+      - ghcr.io/nimona/nimona:{{ .Version }}-armv6
+      - ghcr.io/nimona/nimona:{{ .Version }}-armv7

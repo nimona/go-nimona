@@ -2,7 +2,8 @@
   "packages": [
     "go_1_19",
     "go-task",
-    "golangci-lint"
+    "golangci-lint",
+    "goreleaser"
   ],
   "shell": {
     "init_hook": null
