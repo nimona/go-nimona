@@ -8,9 +8,15 @@ import (
 
 type (
 	IdentityAlias struct {
-		Metadata Metadata     `nimona:"$metadata,omitempty,type=core/identity.alias"`
-		Network  NetworkAlias `nimona:"network,omitempty"`
-		Handle   string       `nimona:"handle,omitempty"`
+		_        string `nimona:"$type,type=core/identity.alias"`
+		Hostname string `nimona:"hostname,omitempty"`
+		Path     string `nimona:"path,omitempty"`
+	}
+	IdentityInfo struct {
+		_             Metadata      `nimona:"$metadata,omitempty,type=core/identity/info"`
+		Alias         IdentityAlias `nimona:"alias,omitempty"`
+		Identity      Identity      `nimona:"identity,omitempty"`
+		PeerAddresses []PeerAddr    `nimona:"peerAddresses"`
 	}
 	KeyGraph struct {
 		Metadata Metadata  `nimona:"$metadata,omitempty,type=core/identity"`
@@ -18,23 +24,18 @@ type (
 		Next     PublicKey `nimona:"next"`
 	}
 	Identity struct {
-		Metadata   Metadata   `nimona:"$metadata,omitempty,type=core/identity/id"`
+		_          string     `nimona:"$type,type=core/identity/id"`
+		Use        string     `nimona:"type,omitempty"` // provider, user, etc
 		KeyGraphID DocumentID `nimona:"keyGraphID"`
-	}
-	IdentityIdentifier struct {
-		IdentityAlias *IdentityAlias
-		Identity      *Identity
 	}
 )
 
 func (i *IdentityAlias) String() string {
-	return string(ShorthandIdentityAlias) + i.Network.Hostname + "/" + i.Handle
-}
-
-func (i *IdentityAlias) IdentityIdentifier() IdentityIdentifier {
-	return IdentityIdentifier{
-		IdentityAlias: i,
+	r := string(ShorthandIdentityAlias) + i.Hostname
+	if i.Path != "" {
+		r += "/" + i.Path
 	}
+	return r
 }
 
 func ParseIdentityAlias(alias string) (*IdentityAlias, error) {
@@ -44,12 +45,10 @@ func ParseIdentityAlias(alias string) (*IdentityAlias, error) {
 	}
 
 	alias = strings.TrimPrefix(alias, t)
-	hostname, handle, _ := strings.Cut(alias, "/")
+	hostname, path, _ := strings.Cut(alias, "/")
 	return &IdentityAlias{
-		Network: NetworkAlias{
-			Hostname: hostname,
-		},
-		Handle: handle,
+		Hostname: hostname,
+		Path:     path,
 	}, nil
 }
 
@@ -66,7 +65,8 @@ func (i *IdentityAlias) Scan(value interface{}) error {
 		if err != nil {
 			return fmt.Errorf("unable to scan into IdentityAlias: %w", err)
 		}
-		i.Handle = id.Handle
+		i.Hostname = id.Hostname
+		i.Path = id.Path
 		return nil
 	}
 	return fmt.Errorf("unable to scan into IdentityAlias")
@@ -120,73 +120,4 @@ func ParseIdentity(id string) (*Identity, error) {
 			DocumentHash: dh,
 		},
 	}, nil
-}
-
-func (i IdentityIdentifier) String() string {
-	if i.IdentityAlias != nil {
-		return i.IdentityAlias.String()
-	}
-	if i.Identity != nil {
-		return i.Identity.String()
-	}
-	return ""
-}
-
-// func (i IdentityIdentifier) MarshalCBOR(w io.Writer) error {
-// 	if i.IdentityAlias != nil {
-// 		return i.IdentityAlias.MarshalCBOR(w)
-// 	}
-// 	if i.Identity != nil {
-// 		return i.Identity.MarshalCBOR(w)
-// 	}
-// 	return fmt.Errorf("unable to marshal identity identifier")
-// }
-
-// func (i IdentityIdentifier) UnmarshalCBOR(r io.Reader) (err error) {
-// 	doc := &DocumentBase{}
-// 	err = doc.UnmarshalCBOR(r)
-// 	if err != nil {
-// 		return fmt.Errorf("unable to unmarshal network identifier into doc: %w", err)
-// 	}
-
-// 	switch doc.Type {
-// 	case "core/identity.alias":
-// 		i.IdentityAlias = &IdentityAlias{}
-// 		return UnmarshalJSON(doc.DocumentBytes, i.IdentityAlias)
-// 	case "core/identity":
-// 		i.Identity = &Identity{}
-// 		return UnmarshalJSON(doc.DocumentBytes, i.Identity)
-// 	default:
-// 		return fmt.Errorf("unknown identity identifier type: %s", doc.Type)
-// 	}
-// }
-
-func (i *IdentityIdentifier) Document() *Document {
-	if i.IdentityAlias != nil {
-		return i.IdentityAlias.Document()
-	}
-	if i.Identity != nil {
-		return i.Identity.Document()
-	}
-	return nil
-}
-
-func (i *IdentityIdentifier) FromDocument(m *Document) error {
-	switch m.Type() {
-	case "core/identity.alias":
-		i.IdentityAlias = &IdentityAlias{}
-		err := i.IdentityAlias.FromDocument(m)
-		if err != nil {
-			return fmt.Errorf("unable to unmarshal identity alias: %w", err)
-		}
-		return nil
-	case "core/identity":
-		i.Identity = &Identity{}
-		err := i.Identity.FromDocument(m)
-		if err != nil {
-			return fmt.Errorf("unable to unmarshal identity: %w", err)
-		}
-		return nil
-	}
-	return fmt.Errorf("unknown identity identifier type: %s", m.Type())
 }

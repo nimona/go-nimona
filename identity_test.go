@@ -28,10 +28,8 @@ func NewTestIdentity(t *testing.T) *Identity {
 func TestIdentityAlias(t *testing.T) {
 	s0 := "nimona://id:alias:testing.romdo.io/geoah"
 	n0 := &IdentityAlias{
-		Network: NetworkAlias{
-			Hostname: "testing.romdo.io",
-		},
-		Handle: "geoah",
+		Hostname: "testing.romdo.io",
+		Path:     "geoah",
 	}
 
 	require.Equal(t, s0, n0.String())

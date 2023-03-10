@@ -11,6 +11,126 @@ import (
 var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
+func (t *IdentityInfo) Document() *Document {
+	return NewDocument(t.Map())
+}
+
+func (t *IdentityInfo) Map() tilde.Map {
+	m := tilde.Map{}
+
+	// # t.$type
+	//
+	// Type: string, Kind: string, TildeKind: InvalidValueKind0
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		m.Set("$type", tilde.String("core/identity/info"))
+	}
+
+	// # t.Alias
+	//
+	// Type: nimona.IdentityAlias, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Alias) {
+			m.Set("alias", t.Alias.Map())
+		}
+	}
+
+	// # t.Identity
+	//
+	// Type: nimona.Identity, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Identity) {
+			m.Set("identity", t.Identity.Map())
+		}
+	}
+
+	// # t.PeerAddresses
+	//
+	// Type: []nimona.PeerAddr, Kind: slice, TildeKind: List
+	// IsSlice: true, IsStruct: false, IsPointer: false
+	//
+	// ElemType: nimona.PeerAddr, ElemKind: struct
+	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
+	{
+		sm := tilde.List{}
+		for _, v := range t.PeerAddresses {
+			if !zero.IsZeroVal(t.PeerAddresses) {
+				sm = append(sm, v.Map())
+			}
+		}
+		m.Set("peerAddresses", sm)
+	}
+
+	return m
+}
+
+func (t *IdentityInfo) FromDocument(d *Document) error {
+	return t.FromMap(d.Map())
+}
+
+func (t *IdentityInfo) FromMap(d tilde.Map) error {
+	*t = IdentityInfo{}
+
+	// # t.Alias
+	//
+	// Type: nimona.IdentityAlias, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if v, err := d.Get("alias"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := IdentityAlias{}
+				d := NewDocument(v)
+				e.FromDocument(d)
+				t.Alias = e
+			}
+		}
+	}
+
+	// # t.Identity
+	//
+	// Type: nimona.Identity, Kind: struct, TildeKind: Map
+	// IsSlice: false, IsStruct: true, IsPointer: false
+	{
+		if v, err := d.Get("identity"); err == nil {
+			if v, ok := v.(tilde.Map); ok {
+				e := Identity{}
+				d := NewDocument(v)
+				e.FromDocument(d)
+				t.Identity = e
+			}
+		}
+	}
+
+	// # t.PeerAddresses
+	//
+	// Type: []nimona.PeerAddr, Kind: slice, TildeKind: List
+	// IsSlice: true, IsStruct: false, IsPointer: false
+	//
+	// ElemType: nimona.PeerAddr, ElemKind: struct, ElemTildeKind: Map
+	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
+	{
+		sm := []PeerAddr{}
+		if vs, err := d.Get("peerAddresses"); err == nil {
+			if vs, ok := vs.(tilde.List); ok {
+				for _, vi := range vs {
+					if v, ok := vi.(tilde.Map); ok {
+						e := PeerAddr{}
+						d := NewDocument(v)
+						e.FromDocument(d)
+						sm = append(sm, e)
+					}
+				}
+			}
+		}
+		if len(sm) > 0 {
+			t.PeerAddresses = sm
+		}
+	}
+
+	return nil
+}
 func (t *Identity) Document() *Document {
 	return NewDocument(t.Map())
 }
@@ -34,13 +154,13 @@ func (t *Identity) Map() tilde.Map {
 		m.Set("keyGraphID", t.KeyGraphID.Map())
 	}
 
-	// # t.Metadata
+	// # t.Use
 	//
-	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.Map())
+		if !zero.IsZeroVal(t.Use) {
+			m.Set("type", tilde.String(t.Use))
 		}
 	}
 
@@ -69,17 +189,14 @@ func (t *Identity) FromMap(d tilde.Map) error {
 		}
 	}
 
-	// # t.Metadata
+	// # t.Use
 	//
-	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.Get("$metadata"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				e := Metadata{}
-				d := NewDocument(v)
-				e.FromDocument(d)
-				t.Metadata = e
+		if v, err := d.Get("type"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Use = string(v)
 			}
 		}
 	}
@@ -101,33 +218,23 @@ func (t *IdentityAlias) Map() tilde.Map {
 		m.Set("$type", tilde.String("core/identity.alias"))
 	}
 
-	// # t.Handle
+	// # t.Hostname
 	//
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if !zero.IsZeroVal(t.Handle) {
-			m.Set("handle", tilde.String(t.Handle))
+		if !zero.IsZeroVal(t.Hostname) {
+			m.Set("hostname", tilde.String(t.Hostname))
 		}
 	}
 
-	// # t.Metadata
+	// # t.Path
 	//
-	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if !zero.IsZeroVal(t.Metadata) {
-			m.Set("$metadata", t.Metadata.Map())
-		}
-	}
-
-	// # t.Network
-	//
-	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
-	{
-		if !zero.IsZeroVal(t.Network) {
-			m.Set("network", t.Network.Map())
+		if !zero.IsZeroVal(t.Path) {
+			m.Set("path", tilde.String(t.Path))
 		}
 	}
 
@@ -141,44 +248,26 @@ func (t *IdentityAlias) FromDocument(d *Document) error {
 func (t *IdentityAlias) FromMap(d tilde.Map) error {
 	*t = IdentityAlias{}
 
-	// # t.Handle
+	// # t.Hostname
 	//
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.Get("handle"); err == nil {
+		if v, err := d.Get("hostname"); err == nil {
 			if v, ok := v.(tilde.String); ok {
-				t.Handle = string(v)
+				t.Hostname = string(v)
 			}
 		}
 	}
 
-	// # t.Metadata
+	// # t.Path
 	//
-	// Type: nimona.Metadata, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.Get("$metadata"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				e := Metadata{}
-				d := NewDocument(v)
-				e.FromDocument(d)
-				t.Metadata = e
-			}
-		}
-	}
-
-	// # t.Network
-	//
-	// Type: nimona.NetworkAlias, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
-	{
-		if v, err := d.Get("network"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				e := NetworkAlias{}
-				d := NewDocument(v)
-				e.FromDocument(d)
-				t.Network = e
+		if v, err := d.Get("path"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Path = string(v)
 			}
 		}
 	}
