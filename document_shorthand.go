@@ -11,9 +11,6 @@ const (
 
 	ShorthandIdentity      Shorthand = "nimona://id:"       // ...<keystreamID>
 	ShorthandIdentityAlias Shorthand = "nimona://id:alias:" // ...<handle>@<hostname>
-
-	ShorthandNetwork      Shorthand = "nimona://net:"       // ...<keystreamID>
-	ShorthandNetworkAlias Shorthand = "nimona://net:alias:" // ...<hostname>
 )
 
 func (t Shorthand) String() string {
