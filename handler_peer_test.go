@@ -11,13 +11,7 @@ func TestHandlerNetworkCapabilities(t *testing.T) {
 	srv, clt := newTestSessionManager(t)
 
 	caps := []string{"core/peer/capabilities"}
-	hnd := &HandlerPeerCapabilities{
-		Capabilities: caps,
-	}
-	srv.RegisterHandler(
-		"core/peer/capabilities.request",
-		hnd.HandlePeerCapabilitiesRequest,
-	)
+	HandlePeerCapabilitiesRequest(srv, caps)
 
 	// dial the server
 	ses, err := clt.Dial(context.Background(), srv.PeerAddr())

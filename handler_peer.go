@@ -15,10 +15,6 @@ type (
 	}
 )
 
-type HandlerPeerCapabilities struct {
-	Capabilities []string
-}
-
 func RequestPeerCapabilities(
 	ctx context.Context,
 	ses *Session,
@@ -36,24 +32,30 @@ func RequestPeerCapabilities(
 	return res, nil
 }
 
-func (h *HandlerPeerCapabilities) HandlePeerCapabilitiesRequest(
-	ctx context.Context,
-	msg *Request,
-) error {
-	req := PeerCapabilitiesRequest{}
-	err := req.FromDocument(msg.Document)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling request: %w", err)
+func HandlePeerCapabilitiesRequest(
+	sesManager *SessionManager,
+	capabilities []string,
+) {
+	handler := func(
+		ctx context.Context,
+		msg *Request,
+	) error {
+		req := PeerCapabilitiesRequest{}
+		err := req.FromDocument(msg.Document)
+		if err != nil {
+			return fmt.Errorf("error unmarshaling request: %w", err)
+		}
+		if msg.Type != "core/peer/capabilities.request" {
+			return fmt.Errorf("invalid request type: %s", msg.Type)
+		}
+		res := &PeerCapabilitiesResponse{
+			Capabilities: capabilities,
+		}
+		err = msg.Respond(res.Document())
+		if err != nil {
+			return fmt.Errorf("error replying: %w", err)
+		}
+		return nil
 	}
-	if msg.Type != "core/peer/capabilities.request" {
-		return fmt.Errorf("invalid request type: %s", msg.Type)
-	}
-	res := &PeerCapabilitiesResponse{
-		Capabilities: h.Capabilities,
-	}
-	err = msg.Respond(res.Document())
-	if err != nil {
-		return fmt.Errorf("error replying: %w", err)
-	}
-	return nil
+	sesManager.RegisterHandler("core/peer/capabilities.request", handler)
 }
