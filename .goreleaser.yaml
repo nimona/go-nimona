@@ -35,6 +35,9 @@ changelog:
 release:
   skip_upload: true
 
+source:
+  enabled: false
+
 dockers:
   - image_templates:
       - "ghcr.io/nimona/nimona:{{ .Env.VERSION }}-amd64"
