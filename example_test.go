@@ -10,10 +10,9 @@ import (
 )
 
 func TestExample_Graph(t *testing.T) {
-	peerOneContext := NewTestRequestContext(t)
-	peerTwoContext := NewTestRequestContext(t)
-
+	// these are considered well known for the purposes of this test
 	var providerAddress PeerAddr
+	var peerOneIdentity *Identity
 
 	t.Run("setup server", func(t *testing.T) {
 		srvCtx := context.Background()
@@ -31,6 +30,7 @@ func TestExample_Graph(t *testing.T) {
 		docStore := NewTestDocumentStore(t)
 
 		// register handlers
+		HandlePingRequest(srv)
 		HandleDocumentRequest(srv, docStore)
 		HandleDocumentStoreRequest(srv, docStore)
 		HandleDocumentGraphRequest(srv, docStore)
@@ -69,23 +69,27 @@ func TestExample_Graph(t *testing.T) {
 		// replace resolver with a fake one
 		csm.resolver = fakeResolver
 
+		// create a new request context
+		rctx := NewTestRequestContext(t)
+		peerOneIdentity = rctx.Identity
+
 		// create new profile and publish it
 		profile := &Profile{
 			Metadata: Metadata{
-				Owner: peerOneContext.Identity,
+				Owner: rctx.Identity,
 			},
 		}
 		profileDoc := profile.Document()
 		profileDocID := NewDocumentID(profileDoc)
 		ctx := context.Background()
 		prv := FromAlias(IdentityAlias{Hostname: "nimona.dev"})
-		err = RequestDocumentStore(ctx, csm, peerOneContext, profileDoc, prv)
+		err = RequestDocumentStore(ctx, csm, rctx, profileDoc, prv)
 		require.NoError(t, err)
 
 		// create profile patch and publish it
 		profilePatch := &DocumentPatch{
 			Metadata: Metadata{
-				Owner: peerOneContext.Identity,
+				Owner: rctx.Identity,
 				Root:  &profileDocID,
 			},
 			Operations: []DocumentPatchOperation{{
@@ -95,7 +99,7 @@ func TestExample_Graph(t *testing.T) {
 			}},
 		}
 		profilePatchDoc := profilePatch.Document()
-		err = RequestDocumentStore(ctx, csm, peerOneContext, profilePatchDoc, prv)
+		err = RequestDocumentStore(ctx, csm, rctx, profilePatchDoc, prv)
 		require.NoError(t, err)
 	})
 
@@ -116,10 +120,14 @@ func TestExample_Graph(t *testing.T) {
 		// replace resolver with a fake one
 		csm.resolver = fakeResolver
 
+		// create a new request context
+		rctx := NewTestRequestContext(t)
+		rctx.DocumentStore = NewTestDocumentStore(t)
+
 		// figure out the profile document id to request
 		profile := &Profile{
 			Metadata: Metadata{
-				Owner: peerOneContext.Identity,
+				Owner: peerOneIdentity,
 			},
 		}
 		profileDoc := profile.Document()
@@ -128,27 +136,13 @@ func TestExample_Graph(t *testing.T) {
 		// get graph
 		ctx := context.Background()
 		prv := FromAlias(IdentityAlias{Hostname: "nimona.dev"})
-		res, err := RequestDocumentGraph(ctx, peerTwoContext, csm, profileDocID, prv)
+		res, err := RequestDocumentGraph(ctx, rctx, csm, profileDocID, prv)
 		require.NoError(t, err)
 		require.Len(t, res.PatchDocumentIDs, 1)
 
-		// get all documents
-		gotRootDoc, err := RequestDocument(ctx, peerTwoContext, csm, res.RootDocumentID, prv)
+		// get root document
+		gotRootDoc, gotPatches, err := SyncDocumentGraph(ctx, rctx, csm, res.RootDocumentID, prv)
 		require.NoError(t, err)
-
-		// get patch documents
-		gotPatches := []*DocumentPatch{}
-		gotPatchDocs := []*Document{}
-		for _, gotPatchDocID := range res.PatchDocumentIDs {
-			gotPatchDoc, err := RequestDocument(ctx, peerTwoContext, csm, gotPatchDocID, prv)
-			require.NoError(t, err)
-			gotPatch := &DocumentPatch{}
-			gotPatch.FromDocument(gotPatchDoc)
-			gotPatches = append(gotPatches, gotPatch)
-			gotPatchDocs = append(gotPatchDocs, gotPatchDoc)
-		}
-		require.Len(t, gotPatches, 1)
-		require.Len(t, gotPatchDocs, 1)
 
 		// create aggregate document
 		gotAggregateDoc, err := ApplyDocumentPatch(gotRootDoc, gotPatches...)
@@ -157,5 +151,15 @@ func TestExample_Graph(t *testing.T) {
 			"$type":       tilde.String("core/identity/profile"),
 			"displayName": tilde.String("John Doe"),
 		}), gotAggregateDoc)
+
+		// check stored documents
+		storedRootDoc, err := rctx.DocumentStore.GetDocument(profileDocID)
+		require.NoError(t, err)
+		EqualDocument(t, gotRootDoc, storedRootDoc)
+
+		storedPatchDocs, err := rctx.DocumentStore.GetDocumentsByRootID(profileDocID)
+		require.NoError(t, err)
+		require.Len(t, storedPatchDocs, 1)
+		EqualDocument(t, gotPatches[0].Document(), storedPatchDocs[0])
 	})
 }
