@@ -57,6 +57,16 @@ func (t *Metadata) Map() tilde.Map {
 		}
 	}
 
+	// # t.Sequence
+	//
+	// Type: uint64, Kind: uint64, TildeKind: Uint64
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Sequence) {
+			m.Set("sequence", tilde.Uint64(t.Sequence))
+		}
+	}
+
 	// # t.Signature
 	//
 	// Type: nimona.Signature, Kind: struct, TildeKind: Map
@@ -139,6 +149,18 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 				d := NewDocument(v)
 				e.FromDocument(d)
 				t.Root = &e
+			}
+		}
+	}
+
+	// # t.Sequence
+	//
+	// Type: uint64, Kind: uint64, TildeKind: Uint64
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if v, err := d.Get("sequence"); err == nil {
+			if v, ok := v.(tilde.Uint64); ok {
+				t.Sequence = uint64(v)
 			}
 		}
 	}
