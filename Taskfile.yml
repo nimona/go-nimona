@@ -129,4 +129,4 @@ tasks:
       NIGHTLY:
         sh: 'if [[ $GITHUB_REF != refs/tags/v* ]]; then echo "GORELEASER_NIGHTLY=true GORELEASER_CURRENT_TAG=v0"; fi'
     cmds:
-      - '{{ .NIGHTLY }} goreleaser release --timeout 5m --skip-validate --clean'
+      - '{{ .NIGHTLY }} goreleaser release --timeout 30m --skip-validate --clean'
