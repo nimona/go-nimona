@@ -43,6 +43,65 @@ func RequestDocumentGraph(
 	return &res, nil
 }
 
+func SyncDocumentGraph(
+	ctx context.Context,
+	rctx *RequestContext,
+	ses *SessionManager,
+	rootID DocumentID,
+	rec RequestRecipientFn,
+) (*Document, []*DocumentPatch, error) {
+	graphRes, err := RequestDocumentGraph(
+		ctx,
+		rctx,
+		ses,
+		rootID,
+		rec,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error requesting graph: %w", err)
+	}
+
+	loadOrRequest := func(id DocumentID) (*Document, error) {
+		if rctx.DocumentStore != nil {
+			doc, loadErr := rctx.DocumentStore.GetDocument(id)
+			if loadErr == nil {
+				return doc, nil
+			}
+		}
+		doc, reqErr := RequestDocument(ctx, rctx, ses, id, rec)
+		if reqErr != nil {
+			return nil, fmt.Errorf("error requesting document: %w", err)
+		}
+		if rctx.DocumentStore != nil {
+			rctx.DocumentStore.PutDocument(doc)
+		}
+		return doc, nil
+	}
+
+	// get root document
+	rootDoc, err := loadOrRequest(graphRes.RootDocumentID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error loading root document: %w", err)
+	}
+
+	// get patch documents
+	patches := []*DocumentPatch{}
+	for _, gotPatchDocID := range graphRes.PatchDocumentIDs {
+		gotPatchDoc, err := RequestDocument(ctx, rctx, ses, gotPatchDocID, rec)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error requesting patch document: %w", err)
+		}
+		gotPatch := &DocumentPatch{}
+		err = gotPatch.FromDocument(gotPatchDoc)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error decoding patch document: %w", err)
+		}
+		patches = append(patches, gotPatch)
+	}
+
+	return rootDoc, patches, nil
+}
+
 func HandleDocumentGraphRequest(
 	sesManager *SessionManager,
 	docStore *DocumentStore,
@@ -65,7 +124,7 @@ func HandleDocumentGraphRequest(
 
 		var patchIDs []DocumentID
 		for _, doc := range docs {
-			patchIDs = append(patchIDs, doc.DocumentID)
+			patchIDs = append(patchIDs, NewDocumentID(doc))
 		}
 
 		res := &DocumentGraphResponse{
