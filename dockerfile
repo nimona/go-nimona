@@ -1,5 +1,5 @@
 FROM scratch
 
-COPY nimona-pong /nimona-pong
+ENV PATH /
 
-ENTRYPOINT ["nimona-pong"]
+COPY * /
