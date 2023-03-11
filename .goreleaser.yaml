@@ -32,6 +32,9 @@ snapshot:
 changelog:
   skip: true
 
+release:
+  skip_upload: true
+
 dockers:
   - image_templates:
       - "ghcr.io/nimona/nimona:{{ .Env.VERSION }}-amd64"
