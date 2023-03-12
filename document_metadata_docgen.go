@@ -28,6 +28,25 @@ func (t *Metadata) Map() tilde.Map {
 		}
 	}
 
+	// # t.Parents
+	//
+	// Type: []nimona.DocumentID, Kind: slice, TildeKind: List
+	// IsSlice: true, IsStruct: false, IsPointer: false
+	//
+	// ElemType: nimona.DocumentID, ElemKind: struct
+	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
+	{
+		if !zero.IsZeroVal(t.Parents) {
+			sm := tilde.List{}
+			for _, v := range t.Parents {
+				if !zero.IsZeroVal(t.Parents) {
+					sm = append(sm, v.Map())
+				}
+			}
+			m.Set("parents", sm)
+		}
+	}
+
 	// # t.Permissions
 	//
 	// Type: []nimona.Permissions, Kind: slice, TildeKind: List
@@ -79,11 +98,11 @@ func (t *Metadata) Map() tilde.Map {
 
 	// # t.Timestamp
 	//
-	// Type: uint, Kind: uint, TildeKind: Uint64
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Timestamp) {
-			m.Set("timestamp", tilde.Uint64(t.Timestamp))
+			m.Set("timestamp", tilde.String(t.Timestamp))
 		}
 	}
 
@@ -109,6 +128,32 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 				e.FromDocument(d)
 				t.Owner = &e
 			}
+		}
+	}
+
+	// # t.Parents
+	//
+	// Type: []nimona.DocumentID, Kind: slice, TildeKind: List
+	// IsSlice: true, IsStruct: false, IsPointer: false
+	//
+	// ElemType: nimona.DocumentID, ElemKind: struct, ElemTildeKind: Map
+	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
+	{
+		sm := []DocumentID{}
+		if vs, err := d.Get("parents"); err == nil {
+			if vs, ok := vs.(tilde.List); ok {
+				for _, vi := range vs {
+					if v, ok := vi.(tilde.Map); ok {
+						e := DocumentID{}
+						d := NewDocument(v)
+						e.FromDocument(d)
+						sm = append(sm, e)
+					}
+				}
+			}
+		}
+		if len(sm) > 0 {
+			t.Parents = sm
 		}
 	}
 
@@ -182,12 +227,12 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 
 	// # t.Timestamp
 	//
-	// Type: uint, Kind: uint, TildeKind: Uint64
+	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if v, err := d.Get("timestamp"); err == nil {
-			if v, ok := v.(tilde.Uint64); ok {
-				t.Timestamp = uint(v)
+			if v, ok := v.(tilde.String); ok {
+				t.Timestamp = string(v)
 			}
 		}
 	}

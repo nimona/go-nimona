@@ -8,8 +8,9 @@ type (
 	Metadata struct {
 		Owner       *Identity     `nimona:"owner,omitempty"`
 		Permissions []Permissions `nimona:"permissions,omitempty"`
-		Timestamp   uint          `nimona:"timestamp,omitempty"` // TODO: use time.Time
+		Timestamp   string        `nimona:"timestamp,omitempty"` // TODO: use time.Time
 		Root        *DocumentID   `nimona:"root,omitempty"`
+		Parents     []DocumentID  `nimona:"parents,omitempty"`
 		Sequence    uint64        `nimona:"sequence,omitempty"`
 		Signature   *Signature    `nimona:"_signature,omitempty"`
 	}

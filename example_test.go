@@ -3,6 +3,7 @@ package nimona
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -89,8 +90,11 @@ func TestExample_Graph(t *testing.T) {
 		// create profile patch and publish it
 		profilePatch := &DocumentPatch{
 			Metadata: Metadata{
-				Owner: rctx.Identity,
-				Root:  &profileDocID,
+				Owner:     rctx.Identity,
+				Root:      &profileDocID,
+				Parents:   []DocumentID{profileDocID},
+				Sequence:  1,
+				Timestamp: time.Now().Format(time.RFC3339),
 			},
 			Operations: []DocumentPatchOperation{{
 				Op:    "replace",
