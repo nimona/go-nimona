@@ -95,6 +95,13 @@ func (cm *SessionManager) Dial(
 		return nil, fmt.Errorf("error performing handshake: %w", err)
 	}
 
+	// if we have been given a public key for the remote peer, check it
+	if addr.PublicKey != nil {
+		if !ses.PublicKey().Equal(addr.PublicKey) {
+			return nil, fmt.Errorf("public key mismatch")
+		}
+	}
+
 	// start handling messages
 	go func() {
 		cm.handleSession(ses)
