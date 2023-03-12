@@ -28,7 +28,7 @@ func TestSession_E2E_Pipe(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		serverSession := NewSession(server)
+		serverSession := NewSession(server, nil)
 		serverSession.skipRPC = true
 		err = serverSession.DoServer(serverPublicKey, serverPrivateKey)
 		require.NoError(t, err)
@@ -49,7 +49,7 @@ func TestSession_E2E_Pipe(t *testing.T) {
 	}()
 
 	// Perform the handshake from the client side
-	clientSession := NewSession(client)
+	clientSession := NewSession(client, nil)
 	clientSession.skipRPC = true
 	err = clientSession.DoClient(clientPublicKey, clientPrivateKey)
 	require.NoError(t, err)

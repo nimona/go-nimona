@@ -20,6 +20,7 @@ import (
 // chunk.
 type Session struct {
 	conn  net.Conn
+	addr  *PeerAddr
 	suite cipher.AEAD
 	// available after handshake
 	remotePublicKey PublicKey
@@ -46,10 +47,11 @@ type Response struct {
 }
 
 // NewSession returns a new Session that wraps the given net.Conn.
-func NewSession(conn net.Conn) *Session {
+func NewSession(conn net.Conn, dialledAddr *PeerAddr) *Session {
 	s := &Session{
 		codec: &CodecJSON{},
 		conn:  conn,
+		addr:  dialledAddr,
 	}
 	return s
 }
@@ -97,10 +99,18 @@ func (s *Session) DoServer(
 
 	// store the remote node key and address
 	s.remotePublicKey = PublicKey(clientEphemeral[:])
-	s.remotePeerAddr = PeerAddr{
-		Network:   s.conn.RemoteAddr().Network(),
-		Address:   s.conn.RemoteAddr().String(),
-		PublicKey: s.remotePublicKey,
+
+	// if we dialled the address, use the dialled address,
+	// otherwise use the remote address
+	// TODO should we get the remote address during the handshake?
+	if s.addr != nil {
+		s.remotePeerAddr = *s.addr
+	} else {
+		s.remotePeerAddr = PeerAddr{
+			Network:   s.conn.RemoteAddr().Network(),
+			Address:   s.conn.RemoteAddr().String(),
+			PublicKey: s.remotePublicKey,
+		}
 	}
 
 	// create the rpc

@@ -29,8 +29,8 @@ func NewMockSession(t *testing.T, skipRPC bool) *MockSession {
 	}
 
 	m := &MockSession{
-		Server: NewSession(clientConn),
-		Client: NewSession(serverConn),
+		Server: NewSession(clientConn, nil),
+		Client: NewSession(serverConn, nil),
 	}
 
 	m.Server.skipRPC = skipRPC

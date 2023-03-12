@@ -89,7 +89,7 @@ func (cm *SessionManager) Dial(
 	}
 
 	// wrap the connection in a chunked connection
-	ses := NewSession(conn)
+	ses := NewSession(conn, &addr)
 	err = ses.DoServer(cm.publicKey, cm.privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("error performing handshake: %w", err)
@@ -222,7 +222,7 @@ func (cm *SessionManager) handleConnections() error {
 			// start a new session, and perform the server side of the handshake
 			// this will also perform the key exchange so after this we should
 			// know the public key of the remote peer
-			ses := NewSession(conn)
+			ses := NewSession(conn, nil)
 			err = ses.DoServer(cm.publicKey, cm.privateKey)
 			if err != nil {
 				// TODO: log error
