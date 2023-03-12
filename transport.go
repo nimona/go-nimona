@@ -25,7 +25,7 @@ type (
 
 type listener struct {
 	net.Listener
-	transport string
+	addr PeerAddr
 }
 
 func (l *listener) Accept() (net.Conn, error) {
@@ -41,15 +41,21 @@ func (l *listener) Close() error {
 }
 
 func (l *listener) PeerAddr() PeerAddr {
-	return PeerAddr{
-		Network: l.transport,
-		Address: l.Listener.Addr().String(),
-	}
+	return l.addr
 }
 
-func wrapListener(l net.Listener, transport string) Listener {
+func wrapListener(l net.Listener, transport, publicHost string, publicKey PublicKey) Listener {
+	host := l.Addr().String()
+	if publicHost != "" {
+		_, port, _ := net.SplitHostPort(host)
+		host = net.JoinHostPort(publicHost, port)
+	}
 	return &listener{
-		Listener:  l,
-		transport: transport,
+		Listener: l,
+		addr: PeerAddr{
+			Network:   transport,
+			Address:   host,
+			PublicKey: publicKey,
+		},
 	}
 }
