@@ -1,8 +1,8 @@
 env:
   - 'VERSION={{ if index .Env "GORELEASER_NIGHTLY" }}nightly{{ else }}{{ .Version }}{{ end }}'
 builds:
-  - binary: nimona-pong
-    main: ./cmd/ping-server/main.go
+  - binary: provider
+    main: ./cmd/provider/main.go
     env:
       - CGO_ENABLED=0
     mod_timestamp: "{{ .CommitTimestamp }}"
