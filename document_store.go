@@ -16,13 +16,12 @@ type DocumentStore struct {
 type (
 	// DocumentEntry is a document entry in the database
 	DocumentEntry struct {
-		DocumentID       DocumentID `gorm:"primaryKey"`
-		DocumentType     string     `gorm:"index"`
-		DocumentEncoding string
-		DocumentBytes    []byte      `gorm:"type:bytea"`
-		RootDocumentID   *DocumentID `gorm:"index"`
-		Sequence         uint64
-		CreatedAt        time.Time `gorm:"autoCreateTime"`
+		DocumentID     DocumentID  `gorm:"primaryKey"`
+		DocumentType   string      `gorm:"index"`
+		DocumentJSON   []byte      `gorm:"type:bytea"`
+		RootDocumentID *DocumentID `gorm:"index"`
+		Sequence       uint64
+		CreatedAt      time.Time `gorm:"autoCreateTime"`
 	}
 )
 
@@ -51,32 +50,14 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 	rootID := doc.Metadata.Root
 
 	entry := &DocumentEntry{
-		DocumentID:       docID,
-		DocumentType:     doc.Type(),
-		DocumentEncoding: "cbor",
-		DocumentBytes:    docBytes,
-		RootDocumentID:   rootID,
-		// Sequence:         doc.Metadata.Sequence,
+		DocumentID:     docID,
+		DocumentType:   doc.Type(),
+		DocumentJSON:   docBytes,
+		RootDocumentID: rootID,
+		Sequence:       doc.Metadata.Sequence,
 	}
-	return s.putDocumentEntry(entry)
-}
 
-// putDocumentEntry puts a document entry in the database, if it already exists,
-// returns a ErrDocumentAlreadyExists error.
-func (s *DocumentStore) putDocumentEntry(entry *DocumentEntry) error {
-	if entry.DocumentID.IsEmpty() {
-		return fmt.Errorf("document id is empty")
-	}
-	if entry.DocumentType == "" {
-		return fmt.Errorf("document type is empty")
-	}
-	if entry.DocumentEncoding == "" {
-		return fmt.Errorf("document encoding is empty")
-	}
-	if len(entry.DocumentBytes) == 0 {
-		return fmt.Errorf("document bytes is empty")
-	}
-	err := s.db.
+	err = s.db.
 		Clauses(
 			clause.OnConflict{
 				DoNothing: true,
@@ -101,7 +82,7 @@ func (s *DocumentStore) GetDocument(id DocumentID) (*Document, error) {
 	}
 
 	m := &Document{}
-	err = m.UnmarshalJSON(doc.DocumentBytes)
+	err = m.UnmarshalJSON(doc.DocumentJSON)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling document: %w", err)
 	}
@@ -122,7 +103,7 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) 
 	var ret []*Document
 	for _, doc := range docs {
 		m := &Document{}
-		err = m.UnmarshalJSON(doc.DocumentBytes)
+		err = m.UnmarshalJSON(doc.DocumentJSON)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling document: %w", err)
 		}
@@ -134,7 +115,7 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) 
 
 // GetDocumentsByRootID returns all documents with the given root id, not including
 // the root document itself.
-func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*DocumentEntry, error) {
+func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*Document, error) {
 	var docs []*DocumentEntry
 	err := s.db.
 		Where("root_document_id = ?", id).
@@ -145,7 +126,17 @@ func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*DocumentEntry, e
 		return nil, fmt.Errorf("error getting documents: %w", err)
 	}
 
-	return docs, nil
+	var ret []*Document
+	for _, doc := range docs {
+		m := &Document{}
+		err = m.UnmarshalJSON(doc.DocumentJSON)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling document: %w", err)
+		}
+		ret = append(ret, m)
+	}
+
+	return ret, nil
 }
 
 // nolint: unused // TODO: we should be using this probably, if not remove it

@@ -2,7 +2,6 @@ package nimona
 
 import (
 	"testing"
-	"time"
 
 	_ "modernc.org/sqlite"
 
@@ -49,10 +48,9 @@ func TestDocumentStore(t *testing.T) {
 	// Create an entry
 	docID := NewDocumentID(doc)
 	entry := &DocumentEntry{
-		DocumentID:       docID,
-		DocumentType:     "test/fixture",
-		DocumentEncoding: "cbor",
-		DocumentBytes:    docBytes,
+		DocumentID:   docID,
+		DocumentType: "test/fixture",
+		DocumentJSON: docBytes,
 	}
 
 	// Test putting a document
@@ -70,39 +68,21 @@ func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
 	store := NewTestDocumentStore(t)
 
 	// Create an entry
-	rootEntry := &DocumentEntry{
-		DocumentID:       NewTestRandomDocumentID(t),
-		DocumentType:     "test",
-		DocumentEncoding: "cbor",
-		DocumentBytes:    []byte("root"),
-		Sequence:         0,
-	}
-	childEntry := &DocumentEntry{
-		DocumentID:       NewTestRandomDocumentID(t),
-		DocumentType:     "test",
-		DocumentEncoding: "cbor",
-		DocumentBytes:    []byte("child"),
-		RootDocumentID:   &rootEntry.DocumentID,
-		Sequence:         1,
-	}
+	rootDoc := NewTestDocument(t)
+	childDoc := NewTestDocument(t)
+	rootDocID := NewDocumentID(rootDoc)
+	childDoc.Metadata.Root = &rootDocID
 
-	err := store.putDocumentEntry(rootEntry)
+	err := store.PutDocument(rootDoc)
 	require.NoError(t, err)
 
-	err = store.putDocumentEntry(childEntry)
+	err = store.PutDocument(childDoc)
 	require.NoError(t, err)
 
 	// Test getting the stream
-	gotEntries, err := store.GetDocumentsByRootID(rootEntry.DocumentID)
+	gotEntries, err := store.GetDocumentsByRootID(rootDocID)
 	require.NoError(t, err)
 	require.Len(t, gotEntries, 1)
 
-	// Ignore the datetimes
-	rootEntry.CreatedAt = time.Time{}
-	childEntry.CreatedAt = time.Time{}
-	for _, e := range gotEntries {
-		e.CreatedAt = time.Time{}
-	}
-
-	require.EqualValues(t, childEntry, gotEntries[0])
+	EqualDocument(t, childDoc, gotEntries[0])
 }
