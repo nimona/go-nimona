@@ -289,7 +289,7 @@ func (cm *SessionManager) RegisterHandler(
 
 func (cm *SessionManager) PeerAddr() PeerAddr {
 	return PeerAddr{
-		Network:   cm.listener.PeerAddr().Network,
+		Transport: cm.listener.PeerAddr().Transport,
 		Address:   cm.listener.PeerAddr().Address,
 		PublicKey: cm.publicKey,
 	}

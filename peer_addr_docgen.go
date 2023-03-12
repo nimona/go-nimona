@@ -36,16 +36,6 @@ func (t *PeerAddr) Map() tilde.Map {
 		}
 	}
 
-	// # t.Network
-	//
-	// Type: string, Kind: string, TildeKind: String
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		if !zero.IsZeroVal(t.Network) {
-			m.Set("network", tilde.String(t.Network))
-		}
-	}
-
 	// # t.PublicKey
 	//
 	// Type: nimona.PublicKey, Kind: slice, TildeKind: Bytes
@@ -56,6 +46,16 @@ func (t *PeerAddr) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.PublicKey) {
 			m.Set("publicKey", tilde.Bytes(t.PublicKey))
+		}
+	}
+
+	// # t.Transport
+	//
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Transport) {
+			m.Set("transport", tilde.String(t.Transport))
 		}
 	}
 
@@ -81,18 +81,6 @@ func (t *PeerAddr) FromMap(d tilde.Map) error {
 		}
 	}
 
-	// # t.Network
-	//
-	// Type: string, Kind: string, TildeKind: String
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		if v, err := d.Get("network"); err == nil {
-			if v, ok := v.(tilde.String); ok {
-				t.Network = string(v)
-			}
-		}
-	}
-
 	// # t.PublicKey
 	//
 	// Type: nimona.PublicKey, Kind: slice, TildeKind: Bytes
@@ -104,6 +92,18 @@ func (t *PeerAddr) FromMap(d tilde.Map) error {
 		if v, err := d.Get("publicKey"); err == nil {
 			if v, ok := v.(tilde.Bytes); ok {
 				t.PublicKey = PublicKey(v)
+			}
+		}
+	}
+
+	// # t.Transport
+	//
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if v, err := d.Get("transport"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Transport = string(v)
 			}
 		}
 	}

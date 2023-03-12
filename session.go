@@ -107,7 +107,7 @@ func (s *Session) DoServer(
 		s.remotePeerAddr = *s.addr
 	} else {
 		s.remotePeerAddr = PeerAddr{
-			Network:   s.conn.RemoteAddr().Network(),
+			Transport: s.conn.RemoteAddr().Network(),
 			Address:   s.conn.RemoteAddr().String(),
 			PublicKey: s.remotePublicKey,
 		}
@@ -160,7 +160,7 @@ func (s *Session) DoClient(
 	// store the remote node key and address
 	s.remotePublicKey = PublicKey(serverEphemeral[:])
 	s.remotePeerAddr = PeerAddr{
-		Network:   s.conn.RemoteAddr().Network(),
+		Transport: s.conn.RemoteAddr().Network(),
 		Address:   s.conn.RemoteAddr().String(),
 		PublicKey: s.remotePublicKey,
 	}

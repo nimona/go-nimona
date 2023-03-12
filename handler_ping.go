@@ -53,6 +53,7 @@ func HandlePingRequest(
 		if err != nil {
 			return fmt.Errorf("error replying: %w", err)
 		}
+		fmt.Println("Handled ping request")
 		return nil
 	}
 	sesManager.RegisterHandler("test/ping", handler)

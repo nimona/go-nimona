@@ -18,7 +18,7 @@ type TransportUTP struct {
 }
 
 func (t *TransportUTP) Dial(ctx context.Context, addr PeerAddr) (net.Conn, error) {
-	if addr.Network != "utp" {
+	if addr.Transport != "utp" {
 		return nil, ErrTransportUnsupported
 	}
 

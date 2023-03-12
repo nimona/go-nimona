@@ -25,11 +25,11 @@ func TestResolverFake_ResolveIdentityAlias_E2E(t *testing.T) {
 		},
 		PeerAddresses: []PeerAddr{{
 			Address:   "asimov.testing.reamde.dev:1013",
-			Network:   "utp",
+			Transport: "utp",
 			PublicKey: expAsimovPublicKey,
 		}, {
 			Address:   "banks.testing.reamde.dev:1013",
-			Network:   "utp",
+			Transport: "utp",
 			PublicKey: expBanksPublicKey,
 		}},
 	}

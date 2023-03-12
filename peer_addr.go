@@ -10,7 +10,7 @@ import (
 type PeerAddr struct {
 	_         string    `nimona:"$type,type=core/node.address"`
 	Address   string    `nimona:"address,omitempty"`
-	Network   string    `nimona:"network,omitempty"` // TODO: rename to transport
+	Transport string    `nimona:"transport,omitempty"`
 	PublicKey PublicKey `nimona:"publicKey,omitempty"`
 }
 
@@ -39,7 +39,7 @@ func ParsePeerAddr(addr string) (*PeerAddr, error) {
 		a.PublicKey = key
 	}
 
-	a.Network = transport
+	a.Transport = transport
 	a.Address = fmt.Sprintf("%s:%s", host, port)
 
 	return a, nil
@@ -52,7 +52,7 @@ func (a PeerAddr) String() string {
 		b.WriteString(a.PublicKey.String())
 		b.WriteString("@")
 	}
-	b.WriteString(a.Network)
+	b.WriteString(a.Transport)
 	b.WriteString(":")
 	b.WriteString(a.Address)
 	return b.String()

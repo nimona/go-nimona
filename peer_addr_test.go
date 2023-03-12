@@ -8,11 +8,11 @@ import (
 
 func TestPeerAddr(t *testing.T) {
 	a := &PeerAddr{
-		Network: "utp",
-		Address: "localhost:1234",
+		Transport: "utp",
+		Address:   "localhost:1234",
 	}
 	t.Run("struct addr to string", func(t *testing.T) {
-		require.Equal(t, "utp", a.Network)
+		require.Equal(t, "utp", a.Transport)
 		require.Equal(t, ShorthandPeerAddress.String()+"utp:localhost:1234", a.String())
 	})
 
@@ -27,7 +27,7 @@ func TestPeerAddr(t *testing.T) {
 		require.NoError(t, err)
 
 		a = &PeerAddr{
-			Network:   "utp",
+			Transport: "utp",
 			Address:   "localhost:1234",
 			PublicKey: pub,
 		}

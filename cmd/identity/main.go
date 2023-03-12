@@ -24,23 +24,23 @@ func main() {
 		),
 	}
 
-	networkInfo := nimona.IdentityInfo{
+	identityInfo := nimona.IdentityInfo{
 		Alias: nimona.IdentityAlias{
 			Hostname: "nimona.dev",
 		},
 		Identity: *identity,
 		PeerAddresses: []nimona.PeerAddr{{
 			Address:   "asimov.testing.reamde.dev:1013",
-			Network:   "utp",
+			Transport: "utp",
 			PublicKey: asimovPublicKey,
 		}, {
 			Address:   "banks.testing.reamde.dev:1013",
-			Network:   "utp",
+			Transport: "utp",
 			PublicKey: banksPublicKey,
 		}},
 	}
 
-	doc := networkInfo.Document()
+	doc := identityInfo.Document()
 
 	rctx := &nimona.RequestContext{
 		Identity:   identity,

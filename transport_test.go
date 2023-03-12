@@ -19,7 +19,7 @@ func TestWrapListener(t *testing.T) {
 
 	// Check that the wrapped listener has the correct PeerAddr
 	expectedAddr := PeerAddr{
-		Network:   "dummy",
+		Transport: "dummy",
 		Address:   "some.host:8080",
 		PublicKey: pk,
 	}

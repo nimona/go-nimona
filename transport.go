@@ -53,7 +53,7 @@ func wrapListener(l net.Listener, transport, publicHost string, publicKey Public
 	return &listener{
 		Listener: l,
 		addr: PeerAddr{
-			Network:   transport,
+			Transport: transport,
 			Address:   host,
 			PublicKey: publicKey,
 		},

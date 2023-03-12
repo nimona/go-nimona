@@ -28,12 +28,12 @@ func NewMockConn() *MockConn {
 }
 
 type MockAddr struct {
-	network string
-	address string
+	transport string
+	address   string
 }
 
 func (m *MockAddr) Network() string {
-	return m.network
+	return m.transport
 }
 
 func (m *MockAddr) String() string {
@@ -59,15 +59,15 @@ func (m *MockConnEndpoint) Close() error {
 
 func (m *MockConnEndpoint) LocalAddr() net.Addr {
 	return &MockAddr{
-		network: "mock",
-		address: "local",
+		transport: "mock",
+		address:   "local",
 	}
 }
 
 func (m *MockConnEndpoint) RemoteAddr() net.Addr {
 	return &MockAddr{
-		network: "mock",
-		address: "remote",
+		transport: "mock",
+		address:   "remote",
 	}
 }
 
