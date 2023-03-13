@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 type Document struct {

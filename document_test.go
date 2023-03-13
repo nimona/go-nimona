@@ -8,7 +8,7 @@ import (
 	"github.com/jimeh/undent"
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 func TestDocumentMap(t *testing.T) {

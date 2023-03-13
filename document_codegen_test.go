@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 func TestDocumentCodegen_WriteToFile(t *testing.T) {

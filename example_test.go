@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 func TestExample_Graph(t *testing.T) {

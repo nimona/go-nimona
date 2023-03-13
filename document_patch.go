@@ -3,7 +3,7 @@ package nimona
 import (
 	"fmt"
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 type (

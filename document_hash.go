@@ -11,7 +11,7 @@ import (
 	"github.com/mr-tron/base58"
 	"github.com/vikyd/zero"
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 var errDocumentHashValueIsNil = fmt.Errorf("value is nil")

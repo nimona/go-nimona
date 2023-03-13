@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/template"
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 // Notes on the code generation:
@@ -335,7 +335,7 @@ import (
 	"{{ $pkgPath }}"
 	{{ end }}
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 var _ = zero.IsZeroVal

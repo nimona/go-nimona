@@ -5,7 +5,7 @@ package nimona
 import (
 	"github.com/vikyd/zero"
 
-	"nimona.io/internal/tilde"
+	"nimona.io/tilde"
 )
 
 var _ = zero.IsZeroVal
