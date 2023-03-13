@@ -7,15 +7,15 @@ import (
 )
 
 func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
-	expIdentityShort := "nimona://id:2ySDAozmRvfceoHQB1wcABQTzBYfaFydsprLEDPasGP4"
+	expIdentityShort := "nimona://id:4Ghn6vjWDZYUQjAN5hEWWGdhocj8oroSLHgZibUNTxbQ"
 
-	expKeyGraphID, err := ParseDocumentID("nimona://doc:2ySDAozmRvfceoHQB1wcABQTzBYfaFydsprLEDPasGP4")
+	expKeyGraphID, err := ParseDocumentID("nimona://doc:4Ghn6vjWDZYUQjAN5hEWWGdhocj8oroSLHgZibUNTxbQ")
 	require.NoError(t, err)
 
-	expAsimovPublicKey, err := ParsePublicKey("9BfGM1GnGZXRvqVdpJUamdTLrmziAbdA8QZB1eMVYmoi")
+	expAsimovPublicKey, err := ParsePublicKey("33f64ioT9yjPdKQ39uVsdUgTriBFMSKFR8EXquRDCmtx")
 	require.NoError(t, err)
 
-	expBanksPublicKey, err := ParsePublicKey("CyN3L7rmCu5wnkCAcAMWv9iD5n2gJLaeLz6wpK6z31j9")
+	expBanksPublicKey, err := ParsePublicKey("E1ZmqKeDEaCpkMviyiEK9mMoxLGtnE6VNawnwe9KhLkw")
 	require.NoError(t, err)
 
 	alias, err := ParseIdentityAlias("nimona://id:alias:nimona.dev")
@@ -41,6 +41,12 @@ func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
 
 	res := ResolverHTTP{}
 	got, err := res.ResolveIdentityAlias(*alias)
+
+	// fmt.Println(got.Identity.String())
+	// fmt.Println(got.Identity.KeyGraphID.String())
+	// fmt.Println(got.PeerAddresses[0].PublicKey.String())
+	// fmt.Println(got.PeerAddresses[1].PublicKey.String())
+
 	require.NoError(t, err)
 	require.Equal(t, exp, got)
 	require.Equal(t, expIdentityShort, got.Identity.String())
