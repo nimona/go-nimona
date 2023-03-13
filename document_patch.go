@@ -33,6 +33,11 @@ func ApplyDocumentPatch(
 				if err != nil {
 					return nil, fmt.Errorf("error applying patch: %w", err)
 				}
+			case "append":
+				err := docMap.Append(operation.Path, operation.Value)
+				if err != nil {
+					return nil, fmt.Errorf("error applying patch: %w", err)
+				}
 			default:
 				return nil, fmt.Errorf("unsupported operation: %s", operation.Op)
 			}
