@@ -121,6 +121,7 @@ type (
 	}
 )
 
+// TODO rename to PublishDocument
 func RequestDocumentStore(
 	ctx context.Context,
 	ses *SessionManager,

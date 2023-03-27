@@ -115,12 +115,39 @@ func (t *DocumentPatchOperation) Document() *Document {
 func (t *DocumentPatchOperation) Map() tilde.Map {
 	m := tilde.Map{}
 
+	// # t.Key
+	//
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Key) {
+			m.Set("key", tilde.String(t.Key))
+		}
+	}
+
 	// # t.Op
 	//
 	// Type: string, Kind: string, TildeKind: String
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		m.Set("op", tilde.String(t.Op))
+	}
+
+	// # t.Partition
+	//
+	// Type: []string, Kind: slice, TildeKind: List
+	// IsSlice: true, IsStruct: false, IsPointer: false
+	//
+	// ElemType: string, ElemKind: string
+	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
+	{
+		if !zero.IsZeroVal(t.Partition) {
+			s := make(tilde.List, len(t.Partition))
+			for i, v := range t.Partition {
+				s[i] = tilde.String(v)
+			}
+			m.Set("partition", s)
+		}
 	}
 
 	// # t.Path
@@ -151,6 +178,18 @@ func (t *DocumentPatchOperation) FromDocument(d *Document) error {
 func (t *DocumentPatchOperation) FromMap(d tilde.Map) error {
 	*t = DocumentPatchOperation{}
 
+	// # t.Key
+	//
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if v, err := d.Get("key"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Key = string(v)
+			}
+		}
+	}
+
 	// # t.Op
 	//
 	// Type: string, Kind: string, TildeKind: String
@@ -159,6 +198,27 @@ func (t *DocumentPatchOperation) FromMap(d tilde.Map) error {
 		if v, err := d.Get("op"); err == nil {
 			if v, ok := v.(tilde.String); ok {
 				t.Op = string(v)
+			}
+		}
+	}
+
+	// # t.Partition
+	//
+	// Type: []string, Kind: slice, TildeKind: List
+	// IsSlice: true, IsStruct: false, IsPointer: false
+	//
+	// ElemType: string, ElemKind: string, ElemTildeKind: String
+	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
+	{
+		if v, err := d.Get("partition"); err == nil {
+			if v, ok := v.(tilde.List); ok {
+				s := make([]string, len(v))
+				for i, vi := range v {
+					if vi, ok := vi.(tilde.String); ok {
+						s[i] = string(vi)
+					}
+				}
+				t.Partition = s
 			}
 		}
 	}

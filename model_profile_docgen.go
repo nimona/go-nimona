@@ -205,11 +205,13 @@ func (t *ProfileRepository) Map() tilde.Map {
 	// ElemType: string, ElemKind: string
 	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
 	{
-		s := make(tilde.List, len(t.DocumentTypes))
-		for i, v := range t.DocumentTypes {
-			s[i] = tilde.String(v)
+		if !zero.IsZeroVal(t.DocumentTypes) {
+			s := make(tilde.List, len(t.DocumentTypes))
+			for i, v := range t.DocumentTypes {
+				s[i] = tilde.String(v)
+			}
+			m.Set("documentTypes", s)
 		}
-		m.Set("documentTypes", s)
 	}
 
 	// # t.Handle
@@ -229,6 +231,33 @@ func (t *ProfileRepository) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.Identity) {
 			m.Set("identity", t.Identity.Map())
+		}
+	}
+
+	// # t.Key
+	//
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if !zero.IsZeroVal(t.Key) {
+			m.Set("_key", tilde.String(t.Key))
+		}
+	}
+
+	// # t.Partition
+	//
+	// Type: []string, Kind: slice, TildeKind: List
+	// IsSlice: true, IsStruct: false, IsPointer: false
+	//
+	// ElemType: string, ElemKind: string
+	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
+	{
+		if !zero.IsZeroVal(t.Partition) {
+			s := make(tilde.List, len(t.Partition))
+			for i, v := range t.Partition {
+				s[i] = tilde.String(v)
+			}
+			m.Set("_partition", s)
 		}
 	}
 
@@ -298,6 +327,39 @@ func (t *ProfileRepository) FromMap(d tilde.Map) error {
 				d := NewDocument(v)
 				e.FromDocument(d)
 				t.Identity = e
+			}
+		}
+	}
+
+	// # t.Key
+	//
+	// Type: string, Kind: string, TildeKind: String
+	// IsSlice: false, IsStruct: false, IsPointer: false
+	{
+		if v, err := d.Get("_key"); err == nil {
+			if v, ok := v.(tilde.String); ok {
+				t.Key = string(v)
+			}
+		}
+	}
+
+	// # t.Partition
+	//
+	// Type: []string, Kind: slice, TildeKind: List
+	// IsSlice: true, IsStruct: false, IsPointer: false
+	//
+	// ElemType: string, ElemKind: string, ElemTildeKind: String
+	// IsElemSlice: false, IsElemStruct: false, IsElemPointer: false
+	{
+		if v, err := d.Get("_partition"); err == nil {
+			if v, ok := v.(tilde.List); ok {
+				s := make([]string, len(v))
+				for i, vi := range v {
+					if vi, ok := vi.(tilde.String); ok {
+						s[i] = string(vi)
+					}
+				}
+				t.Partition = s
 			}
 		}
 	}

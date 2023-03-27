@@ -12,6 +12,9 @@ type (
 		Identity      Identity `nimona:"identity,omitempty"`
 		Alias         string   `nimona:"alias,omitempty"`
 		Handle        string   `nimona:"handle,omitempty"`
-		DocumentTypes []string `nimona:"documentTypes"`
+		DocumentTypes []string `nimona:"documentTypes,omitempty"`
+		// patch metadata
+		Key       string   `nimona:"_key,omitempty"`
+		Partition []string `nimona:"_partition,omitempty"`
 	}
 )

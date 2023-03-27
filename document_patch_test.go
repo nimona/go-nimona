@@ -32,9 +32,11 @@ func TestDocumentPatch_Apply(t *testing.T) {
 			Root: &rootDocID,
 		},
 		Operations: []DocumentPatchOperation{{
-			Op:    "append",
-			Path:  "strings",
-			Value: tilde.String("foo"),
+			Op:        "append",
+			Path:      "strings",
+			Value:     tilde.String("foo"),
+			Key:       "a6ed7f26-41b3-4cc8-9288-6450f5f8d2ae",
+			Partition: []string{"2023", "03"},
 		}},
 	}
 
@@ -43,11 +45,30 @@ func TestDocumentPatch_Apply(t *testing.T) {
 			Root: &rootDocID,
 		},
 		Operations: []DocumentPatchOperation{{
-			Op:    "append",
-			Path:  "strings",
-			Value: tilde.String("bar"),
+			Op:        "append",
+			Path:      "strings",
+			Value:     tilde.String("bar"),
+			Key:       "9e81fff2-ec7a-44e2-aa05-617c84bbaf5e",
+			Partition: []string{"2023", "04"},
 		}},
 	}
+
+	// patch4doc := &ProfileRepository{
+	// 	Alias:  "testing.nimona.dev",
+	// 	Handle: "foo",
+	// }
+	// patch4 := &DocumentPatch{
+	// 	Metadata: Metadata{
+	// 		Root: &rootDocID,
+	// 	},
+	// 	Operations: []DocumentPatchOperation{{
+	// 		Op:        "append",
+	// 		Path:      "repositories",
+	// 		Value:     patch4doc.Map(),
+	// 		Key:       "9e81fff2-ec7a-44e2-aa05-617c84bbaf5e",
+	// 		Partition: []string{"2023", "04"},
+	// 	}},
+	// }
 
 	exp := NewDocument(
 		tilde.Map{
@@ -59,6 +80,11 @@ func TestDocumentPatch_Apply(t *testing.T) {
 			},
 		},
 	)
+
+	DumpDocument(rootDoc)
+	DumpDocument(patch1.Document())
+	DumpDocument(patch2.Document())
+	DumpDocument(patch3.Document())
 
 	applied, err := ApplyDocumentPatch(
 		rootDoc,

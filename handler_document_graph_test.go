@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestHandlerStream(t *testing.T) {
+func TestHandlerGraph(t *testing.T) {
 	// construct server and client
 	srv, clt := newTestSessionManager(t)
 	srvDocStore := NewTestDocumentStore(t)
@@ -21,6 +21,8 @@ func TestHandlerStream(t *testing.T) {
 
 	rootDocID := NewDocumentID(rootDoc)
 	patchDoc.Metadata.Root = &rootDocID
+	patchDoc.Metadata.Parents = []DocumentID{rootDocID}
+	patchDoc.Metadata.Sequence = 1
 
 	patchDocID := NewDocumentID(patchDoc)
 

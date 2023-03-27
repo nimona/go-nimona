@@ -72,9 +72,13 @@ func TestExample_Graph(t *testing.T) {
 
 		// create a new request context
 		rctx := NewTestRequestContext(t)
+		rctx.Identity = NewTestIdentity(t)
 		peerOneIdentity = rctx.Identity
 
-		// create new profile and publish it
+		// construct a new document store
+		docStore := NewTestDocumentStore(t)
+
+		// create new profile
 		profile := &Profile{
 			Metadata: Metadata{
 				Owner: rctx.Identity,
@@ -82,18 +86,29 @@ func TestExample_Graph(t *testing.T) {
 		}
 		profileDoc := profile.Document()
 		profileDocID := NewDocumentID(profileDoc)
+
+		DumpDocument(profileDoc)
+
+		// store profile
+		err = docStore.PutDocument(profileDoc)
+		require.NoError(t, err)
+
+		// publish profile
 		ctx := context.Background()
 		prv := FromAlias(IdentityAlias{Hostname: "nimona.dev"})
 		err = RequestDocumentStore(ctx, csm, rctx, profileDoc, prv)
 		require.NoError(t, err)
 
-		// create profile patch and publish it
+		// create profile patch
+		leaves, seq, err := docStore.GetDocumentLeaves(profileDocID)
+		require.NoError(t, err)
+
 		profilePatch := &DocumentPatch{
 			Metadata: Metadata{
 				Owner:     rctx.Identity,
 				Root:      &profileDocID,
-				Parents:   []DocumentID{profileDocID},
-				Sequence:  1,
+				Parents:   leaves,
+				Sequence:  seq + 1,
 				Timestamp: time.Now().Format(time.RFC3339),
 			},
 			Operations: []DocumentPatchOperation{{
@@ -148,11 +163,20 @@ func TestExample_Graph(t *testing.T) {
 		gotRootDoc, gotPatches, err := SyncDocumentGraph(ctx, rctx, csm, res.RootDocumentID, prv)
 		require.NoError(t, err)
 
+		// print graph
+		DumpDocument(gotRootDoc)
+		for _, p := range gotPatches {
+			DumpDocument(p.Document())
+		}
+
 		// create aggregate document
 		gotAggregateDoc, err := ApplyDocumentPatch(gotRootDoc, gotPatches...)
 		require.NoError(t, err)
 		EqualDocument(t, NewDocument(tilde.Map{
-			"$type":       tilde.String("core/identity/profile"),
+			"$type": tilde.String("core/identity/profile"),
+			"$metadata": tilde.Map{
+				"owner": peerOneIdentity.Map(),
+			},
 			"displayName": tilde.String("John Doe"),
 		}), gotAggregateDoc)
 

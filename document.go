@@ -14,6 +14,11 @@ type Document struct {
 	Schema   *tilde.Schema
 }
 
+type DocumentMapper interface {
+	FromDocument(doc *Document) error
+	Document() *Document
+}
+
 func NewDocument(m tilde.Map) *Document {
 	doc := &Document{
 		Metadata: Metadata{},
