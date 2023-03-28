@@ -34,7 +34,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Setup rtx
-        uses: jdxcode/rtx-action@v1
+        uses: jdxcode/rtx-action@v1.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: GitHub Container Registry login
