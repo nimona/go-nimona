@@ -145,6 +145,7 @@ func nameIsExported(name string) bool {
 	return strings.ToUpper(name[0:1]) == name[0:1]
 }
 
+// nolint: funlen
 func documentType(i interface{}) (*DocumentInfo, error) {
 	t := reflect.TypeOf(i)
 

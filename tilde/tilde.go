@@ -73,7 +73,6 @@ type (
 	Value interface {
 		hint() Hint
 	}
-	xx struct{}
 
 	Int64  int64
 	Uint64 uint64

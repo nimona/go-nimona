@@ -60,7 +60,11 @@ func (doc *Document) Map() tilde.Map {
 	docMap := tilde.Copy(doc.data)
 	metaMap := doc.Metadata.Map()
 	if len(metaMap) > 0 {
-		docMap.Set("$metadata", metaMap)
+		err := docMap.Set("$metadata", metaMap)
+		if err != nil {
+			// TODO: handle this better
+			panic(fmt.Errorf("error setting metadata: %w", err))
+		}
 	}
 	return docMap
 }

@@ -57,6 +57,7 @@ func NewDocumentHash(dm *Document) (h DocumentHash) {
 	return
 }
 
+// nolint: gocyclo
 func documentHashAny(valueAny tilde.Value) (h []byte, err error) {
 	switch value := valueAny.(type) {
 	case tilde.Ref:

@@ -100,7 +100,7 @@ func (s *Session) DoServer(
 	// store the remote node key and address
 	s.remotePublicKey = PublicKey(clientEphemeral[:])
 
-	// if we dialled the address, use the dialled address,
+	// if we dialed the address, use the dialled address,
 	// otherwise use the remote address
 	// TODO should we get the remote address during the handshake?
 	if s.addr != nil {

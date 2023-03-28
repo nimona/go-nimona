@@ -133,9 +133,9 @@ func FromAlias(alias IdentityAlias) RequestRecipientFn {
 	}
 }
 
-func FromIdentity(identity Identity) RequestRecipientFn {
+func FromIdentity(identity *Identity) RequestRecipientFn {
 	return func(r *requestRecipient) {
-		r.Identity = &identity
+		r.Identity = identity
 	}
 }
 
