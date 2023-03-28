@@ -26,7 +26,7 @@ type (
 	Identity struct {
 		_          string     `nimona:"$type,type=core/identity/id"`
 		Use        string     `nimona:"type,omitempty"` // provider, user, etc
-		KeyGraphID DocumentID `nimona:"keyGraphID"`
+		KeyGraphID DocumentID `nimona:"keyGraphID"`     // TODO(geoah) change this to DocumentHash
 	}
 )
 
@@ -72,12 +72,27 @@ func (i *IdentityAlias) Scan(value interface{}) error {
 	return fmt.Errorf("unable to scan into IdentityAlias")
 }
 
+func NewKeyGraph(current, next PublicKey) *KeyGraph {
+	// TODO(@geoah) add metadata.permissions, etc
+	return &KeyGraph{
+		Keys: current,
+		Next: next,
+	}
+}
+
 func (i *KeyGraph) Identity() *Identity {
 	if i == nil {
 		return nil
 	}
 	return &Identity{
 		KeyGraphID: NewDocumentID(i.Document()),
+	}
+}
+
+func NewIdentity(use string, kg *KeyGraph) *Identity {
+	return &Identity{
+		Use:        use,
+		KeyGraphID: NewDocumentID(kg.Document()),
 	}
 }
 
