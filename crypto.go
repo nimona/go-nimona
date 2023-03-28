@@ -11,16 +11,32 @@ import (
 )
 
 type (
+	KeyPair struct {
+		PrivateKey PrivateKey
+		PublicKey  PublicKey
+	}
 	PrivateKey ed25519.PrivateKey
 	PublicKey  ed25519.PublicKey
 )
 
+// TODO(geoah) deprecate
 func GenerateKey() (PublicKey, PrivateKey, error) {
 	pk, sk, err := ed25519.GenerateKey(nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating key pair: %w", err)
 	}
 	return PublicKey(pk), PrivateKey(sk), nil
+}
+
+func GenerateKeyPair() (*KeyPair, error) {
+	pk, sk, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		return nil, fmt.Errorf("error generating key pair: %w", err)
+	}
+	return &KeyPair{
+		PrivateKey: PrivateKey(sk),
+		PublicKey:  PublicKey(pk),
+	}, nil
 }
 
 func (pk PublicKey) String() string {

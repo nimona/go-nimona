@@ -6,22 +6,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func NewTestKeyGraph(t *testing.T) *KeyGraph {
+func NewTestKeyGraph(t *testing.T) (*KeyGraph, *KeyPair, *KeyPair) {
 	t.Helper()
 
-	pk, _, err := GenerateKey()
+	kp1, err := GenerateKeyPair()
 	require.NoError(t, err)
 
-	return &KeyGraph{
-		Keys: pk,
-	}
+	kp2, err := GenerateKeyPair()
+	require.NoError(t, err)
+
+	return NewKeyGraph(kp1.PublicKey, kp2.PublicKey), kp1, kp2
 }
 
 func NewTestIdentity(t *testing.T) *Identity {
 	t.Helper()
 
+	kg, _, _ := NewTestKeyGraph(t)
 	return &Identity{
-		KeyGraphID: NewDocumentID(NewTestKeyGraph(t).Document()),
+		KeyGraphID: NewDocumentID(kg.Document()),
 	}
 }
 
@@ -48,7 +50,7 @@ func TestIdentityAlias(t *testing.T) {
 }
 
 func TestKeyGraph(t *testing.T) {
-	kg := NewTestKeyGraph(t)
+	kg, _, _ := NewTestKeyGraph(t)
 
 	t.Run("test hash", func(t *testing.T) {
 		h := NewDocumentHash(kg.Document())
