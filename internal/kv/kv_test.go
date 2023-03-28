@@ -17,7 +17,7 @@ func TestKVStore(t *testing.T) {
 	}
 
 	// Create a new SQLStore instance
-	store, err := NewSQLStore[TestValue](db)
+	store, err := NewSQLStore[string, TestValue](db)
 	assert.NoError(t, err)
 
 	// Set a new key-value pair with a struct as value
