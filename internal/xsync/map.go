@@ -3,12 +3,12 @@ package xsync
 import "sync"
 
 // Map wraps sync.Map to add generics support.
-type Map[K comparable, V any] struct {
+type Map[K, V any] struct {
 	m sync.Map
 }
 
 // NewMap returns a new Map.
-func NewMap[K comparable, V any]() *Map[K, V] {
+func NewMap[K, V any]() *Map[K, V] {
 	return &Map[K, V]{}
 }
 

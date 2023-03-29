@@ -1,71 +1,48 @@
 package kv
 
 import (
-	"encoding/json"
 	"fmt"
-
-	"gorm.io/gorm"
+	"reflect"
+	"strings"
 )
 
 type Store[K, V any] interface {
 	Set(K, *V) error
 	Get(K) (*V, error)
+	GetPrefix(K) ([]*V, error)
 }
 
-type record struct {
-	Key   []byte `gorm:"primaryKey"`
-	Value []byte
-}
-
-func NewSQLStore[K, V any](db *gorm.DB) (Store[K, V], error) {
-	err := db.AutoMigrate(&record{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to migrate record: %w", err)
+func keyToString(key interface{}) string {
+	if str, ok := key.(interface{ String() string }); ok {
+		return str.String()
 	}
-
-	return &SQLStore[K, V]{
-		db: db,
-	}, nil
-}
-
-type SQLStore[K, V any] struct {
-	db *gorm.DB
-}
-
-func (s *SQLStore[K, V]) Set(key K, value *V) error {
-	jsonKey, err := json.Marshal(key)
-	if err != nil {
-		return err
+	switch reflect.TypeOf(key).Kind() {
+	case reflect.Struct:
+		keys := []string{}
+		val := reflect.ValueOf(key)
+		for i := 0; i < val.NumField(); i++ {
+			field := val.Field(i)
+			if !field.CanInterface() {
+				continue
+			}
+			part := fmt.Sprintf("%v", field.Interface())
+			if part != "" {
+				keys = append(keys, part)
+			}
+		}
+		return strings.Join(keys, "/") + "/"
+	case reflect.Slice:
+		keys := []string{}
+		val := reflect.ValueOf(key)
+		for i := 0; i < val.Len(); i++ {
+			elem := val.Index(i)
+			part := fmt.Sprintf("%v", elem.Interface())
+			if part != "" {
+				keys = append(keys, part)
+			}
+		}
+		return strings.Join(keys, "/") + "/"
+	default:
+		return fmt.Sprintf("%v", key) + "/"
 	}
-
-	jsonValue, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-
-	keyValue := &record{
-		Key:   jsonKey,
-		Value: jsonValue,
-	}
-
-	return s.db.Create(keyValue).Error
-}
-
-func (s *SQLStore[K, V]) Get(key K) (*V, error) {
-	jsonKey, err := json.Marshal(key)
-	if err != nil {
-		return nil, err
-	}
-
-	var keyValue record
-	if err := s.db.First(&keyValue, "key=?", jsonKey).Error; err != nil {
-		return nil, err
-	}
-
-	value := new(V)
-	if err := json.Unmarshal(keyValue.Value, value); err != nil {
-		return nil, err
-	}
-
-	return value, nil
 }
