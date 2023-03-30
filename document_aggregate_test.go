@@ -5,21 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"nimona.io/internal/ckv"
+	"nimona.io/internal/kv"
 	"nimona.io/tilde"
 )
 
 func TestDocumentAggregate_Apply(t *testing.T) {
-	// db, err := gorm.Open(
-	// 	sqlite.Open("./test.db?cache=shared"),
-	// 	&gorm.Config{},
-	// )
-	// require.NoError(t, err)
-
-	db := NewTestDocumentDB(t)
-	store := ckv.NewSQLStore(db)
 	aggregate := &AggregateStore{
-		Store: store,
+		aggregates: kv.NewMemoryStore[aggregateKey, []byte](),
 	}
 
 	root := &Profile{

@@ -5,11 +5,19 @@ import (
 	"fmt"
 	"reflect"
 
-	"nimona.io/internal/ckv"
+	"nimona.io/internal/kv"
 )
 
+// TODO(geoah) move to DocumentStore
+// TODO can we store the tilde.Value directly?
 type AggregateStore struct {
-	Store ckv.Store
+	aggregates kv.Store[aggregateKey, []byte]
+}
+
+type aggregateKey struct {
+	RootDocumentID DocumentID
+	Path           string
+	Key            string
 }
 
 func (s *AggregateStore) Apply(doc *Document) error {
@@ -20,12 +28,11 @@ func (s *AggregateStore) Apply(doc *Document) error {
 		if err != nil {
 			return err
 		}
-		err = s.Store.Put(
-			fmt.Sprintf(
-				"%s/",
-				NewDocumentID(doc).String(),
-			),
-			body,
+		err = s.aggregates.Set(
+			aggregateKey{
+				RootDocumentID: NewDocumentID(doc),
+			},
+			&body,
 		)
 		if err != nil {
 			return fmt.Errorf("error storing root doc: %w", err)
@@ -48,14 +55,13 @@ func (s *AggregateStore) Apply(doc *Document) error {
 			if err != nil {
 				return fmt.Errorf("error marshaling op value: %w", err)
 			}
-			err = s.Store.Put(
-				fmt.Sprintf(
-					"%s/%s/%s/",
-					patch.Metadata.Root.String(),
-					operation.Path,
-					operation.Key,
-				),
-				body,
+			err = s.aggregates.Set(
+				aggregateKey{
+					RootDocumentID: *patch.Metadata.Root,
+					Path:           operation.Path,
+					Key:            operation.Key,
+				},
+				&body,
 			)
 			if err != nil {
 				return fmt.Errorf("error storing op value: %w", err)
@@ -72,8 +78,11 @@ func (s *AggregateStore) GetAggregateNested(
 	path string,
 	target any, // *[]DocumentMapper,
 ) error {
-	key := fmt.Sprintf("%s/%s/", rootHash.String(), path)
-	bodies, err := s.Store.Get(key)
+	key := aggregateKey{
+		RootDocumentID: rootHash,
+		Path:           path,
+	}
+	bodies, err := s.aggregates.GetPrefix(key)
 	if err != nil {
 		return fmt.Errorf("error getting aggregate: %w", err)
 	}
@@ -94,7 +103,7 @@ func (s *AggregateStore) GetAggregateNested(
 
 	for _, body := range bodies {
 		doc := &Document{}
-		err := doc.UnmarshalJSON(body)
+		err := doc.UnmarshalJSON(*body)
 		if err != nil {
 			return fmt.Errorf("error unmarshaling aggregate: %w", err)
 		}
