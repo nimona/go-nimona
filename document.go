@@ -57,6 +57,9 @@ func (doc *Document) Get(path string) (tilde.Value, error) {
 }
 
 func (doc *Document) Map() tilde.Map {
+	if doc == nil {
+		return nil
+	}
 	docMap := tilde.Copy(doc.data)
 	metaMap := doc.Metadata.Map()
 	if len(metaMap) > 0 {
