@@ -30,6 +30,10 @@ func (h DocumentHash) IsEqual(other DocumentHash) bool {
 	return bytes.Equal(h[:], other[:])
 }
 
+func (h DocumentHash) IsEmpty() bool {
+	return zero.IsZeroVal(h)
+}
+
 func ParseDocumentHash(s string) (DocumentHash, error) {
 	var h DocumentHash
 	b, err := base58.Decode(s)
