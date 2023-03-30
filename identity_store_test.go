@@ -1,7 +1,6 @@
 package nimona
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +13,6 @@ func TestIdentityStore_E2E(t *testing.T) {
 
 	id, err := st.NewIdentity("test")
 	require.NoError(t, err)
-	fmt.Println(id.String())
 
 	kg, err := st.GetKeyGraph(id)
 	require.NoError(t, err)

@@ -16,11 +16,11 @@ type IdentityStoreInterface interface {
 }
 
 func NewIdentityStore(db *gorm.DB) (*IdentityStore, error) {
-	kgStore, err := kv.NewSQLStore[Identity, KeyGraph](db)
+	kgStore, err := kv.NewSQLStore[Identity, KeyGraph](db, "keygraphs")
 	if err != nil {
 		return nil, fmt.Errorf("error creating key graph store: %w", err)
 	}
-	kpStore, err := kv.NewSQLStore[PublicKey, KeyPair](db)
+	kpStore, err := kv.NewSQLStore[PublicKey, KeyPair](db, "keypairs")
 	if err != nil {
 		return nil, fmt.Errorf("error creating key pair store: %w", err)
 	}
@@ -94,4 +94,24 @@ func (p *IdentityStore) GetKeyPairs(id *Identity) (*KeyPair, *KeyPair, error) {
 	}
 
 	return kpc, kpn, nil
+}
+
+func (p *IdentityStore) SignDocument(id *Identity, doc *Document) (*Document, error) {
+	kpc, _, err := p.GetKeyPairs(id)
+	if err != nil {
+		return nil, fmt.Errorf("error getting key pairs: %w", err)
+	}
+
+	doc = doc.Copy()
+
+	if doc.Metadata.Owner == nil {
+		doc.Metadata.Owner = id
+	}
+
+	doc.Metadata.Signature = NewDocumentSignature(
+		kpc.PrivateKey,
+		NewDocumentHash(doc),
+	)
+
+	return doc, nil
 }
