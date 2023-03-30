@@ -96,6 +96,9 @@ func SyncDocumentGraph(
 		if err != nil {
 			return nil, nil, fmt.Errorf("error decoding patch document: %w", err)
 		}
+		if rctx.DocumentStore != nil {
+			rctx.DocumentStore.PutDocument(gotPatchDoc)
+		}
 		patches = append(patches, gotPatch)
 	}
 
@@ -124,7 +127,11 @@ func HandleDocumentGraphRequest(
 
 		var patchIDs []DocumentID
 		for _, doc := range docs {
-			patchIDs = append(patchIDs, NewDocumentID(doc))
+			docID := NewDocumentID(doc)
+			if req.RootDocumentID.IsEqual(docID) {
+				continue
+			}
+			patchIDs = append(patchIDs, docID)
 		}
 
 		res := &DocumentGraphResponse{
