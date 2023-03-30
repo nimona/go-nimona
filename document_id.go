@@ -35,6 +35,9 @@ func ParseDocumentID(pID string) (DocumentID, error) {
 }
 
 func (p DocumentID) String() string {
+	if p.DocumentHash.IsEmpty() {
+		return ""
+	}
 	return string(ShorthandDocumentID) + p.DocumentHash.String()
 }
 
