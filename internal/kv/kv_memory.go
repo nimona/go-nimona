@@ -6,10 +6,10 @@ import (
 	"nimona.io/internal/xsync"
 )
 
-func NewMemoryStore[K, V any]() (Store[K, V], error) {
+func NewMemoryStore[K, V any]() Store[K, V] {
 	return &Memory[K, V]{
 		items: &xsync.Map[string, V]{},
-	}, nil
+	}
 }
 
 type Memory[K, V any] struct {

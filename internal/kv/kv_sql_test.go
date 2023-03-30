@@ -16,7 +16,7 @@ func Test_SQLStore(t *testing.T) {
 	// Create a new SQLStore instance
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	assert.NoError(t, err)
-	store, err := NewSQLStore[string, TestValue](db)
+	store, err := NewSQLStore[string, TestValue](db, "test")
 	assert.NoError(t, err)
 
 	// Set a new key-value pair with a struct as value
@@ -90,7 +90,7 @@ func Test_SQLStorePrefix(t *testing.T) {
 		// Create a new SQLStore instance
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		assert.NoError(t, err)
-		store, err := NewSQLStore[testKey, string](db)
+		store, err := NewSQLStore[testKey, string](db, "test")
 		assert.NoError(t, err)
 
 		// Set a new key-value pair with a struct as value

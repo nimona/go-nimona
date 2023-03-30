@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type record struct {
@@ -12,19 +13,27 @@ type record struct {
 	Value []byte
 }
 
-func NewSQLStore[K, V any](db *gorm.DB) (Store[K, V], error) {
-	err := db.AutoMigrate(&record{})
+func NewSQLStore[K, V any](db *gorm.DB, table string) (Store[K, V], error) {
+	s := &SQLStore[K, V]{
+		db:    db,
+		table: table,
+	}
+
+	err := s.getDB().AutoMigrate(&record{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate record: %w", err)
 	}
 
-	return &SQLStore[K, V]{
-		db: db,
-	}, nil
+	return s, nil
 }
 
 type SQLStore[K, V any] struct {
-	db *gorm.DB
+	db    *gorm.DB
+	table string
+}
+
+func (s *SQLStore[K, V]) getDB() *gorm.DB {
+	return s.db.Table(s.table)
 }
 
 func (s *SQLStore[K, V]) Set(key K, value *V) error {
@@ -39,18 +48,41 @@ func (s *SQLStore[K, V]) Set(key K, value *V) error {
 		Value: jsonValue,
 	}
 
-	return s.db.Create(keyValue).Error
+	err = s.getDB().
+		Clauses(
+			clause.OnConflict{
+				DoNothing: true,
+			},
+		).
+		Create(keyValue).
+		Error
+	if err != nil {
+		return fmt.Errorf("failed to set: %w", err)
+	}
+
+	return nil
 }
 
 func (s *SQLStore[K, V]) Get(key K) (*V, error) {
 	keyString := keyToString(key)
-	var keyValue record
-	if err := s.db.First(&keyValue, "key=?", keyString).Error; err != nil {
+	var keyValues []record
+	err := s.getDB().
+		Where("key = ?", keyString).
+		Find(&keyValues).
+		Error
+	if err != nil {
 		return nil, err
 	}
 
+	if len(keyValues) == 0 {
+		return nil, fmt.Errorf("value not found")
+	}
+
+	keyValue := keyValues[0]
+
 	value := new(V)
-	if err := json.Unmarshal(keyValue.Value, value); err != nil {
+	err = json.Unmarshal(keyValue.Value, value)
+	if err != nil {
 		return nil, err
 	}
 
@@ -60,7 +92,7 @@ func (s *SQLStore[K, V]) Get(key K) (*V, error) {
 func (s *SQLStore[K, V]) GetPrefix(key K) ([]*V, error) {
 	keyString := keyToString(key)
 	var keyValues []record
-	err := s.db.
+	err := s.getDB().
 		Where("key LIKE ?", keyString+"%").
 		Find(&keyValues).
 		Error

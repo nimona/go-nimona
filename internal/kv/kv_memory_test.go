@@ -12,12 +12,11 @@ func Test_MemoryStore(t *testing.T) {
 	}
 
 	// Create a new Memory instance
-	store, err := NewMemoryStore[string, TestValue]()
-	assert.NoError(t, err)
+	store := NewMemoryStore[string, TestValue]()
 
 	// Set a new key-value pair with a struct as value
 	testValue := &TestValue{Foo: "bar"}
-	err = store.Set("structValue", testValue)
+	err := store.Set("structValue", testValue)
 	assert.NoError(t, err)
 
 	// Get the value back and check that it matches the original value
@@ -58,6 +57,27 @@ func Test_MemoryStorePrefix(t *testing.T) {
 			"value-for-foo-baz",
 		},
 	}, {
+		name: "simple, includes root",
+		insert: []testPair{{
+			key:   testKey{Foo: "foo"},
+			value: "value-for-foo",
+		}, {
+			key:   testKey{Foo: "foo", Bar: "bar"},
+			value: "value-for-foo-bar",
+		}, {
+			key:   testKey{Foo: "foo", Bar: "baz"},
+			value: "value-for-foo-baz",
+		}, {
+			key:   testKey{Foo: "not-foo", Bar: "qux"},
+			value: "value-for-not-foo-qux",
+		}},
+		prefix: testKey{Foo: "foo"},
+		results: []string{
+			"value-for-foo",
+			"value-for-foo-bar",
+			"value-for-foo-baz",
+		},
+	}, {
 		name: "exact",
 		insert: []testPair{{
 			key:   testKey{Foo: "foo", Bar: "bar"},
@@ -84,12 +104,11 @@ func Test_MemoryStorePrefix(t *testing.T) {
 	}}
 	for _, test := range tests {
 		// Create a new Memory instance
-		store, err := NewMemoryStore[testKey, string]()
-		assert.NoError(t, err)
+		store := NewMemoryStore[testKey, string]()
 
 		// Set a new key-value pair with a struct as value
 		for _, pair := range test.insert {
-			err = store.Set(pair.key, &pair.value)
+			err := store.Set(pair.key, &pair.value)
 			assert.NoError(t, err)
 		}
 
