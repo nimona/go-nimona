@@ -6,11 +6,37 @@ import (
 	"time"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
+
+	"nimona.io/internal/kv"
+)
+
+type (
+	edgeKey struct {
+		RootDocumentID   DocumentID
+		ParentDocumentID DocumentID
+		ChildDocumentID  DocumentID
+	}
+	edgeValue struct {
+		RootDocumentID   DocumentID
+		ParentDocumentID DocumentID
+		ChildDocumentID  DocumentID
+		Sequence         uint64
+	}
+	keyGraphIndex struct {
+		RootDocumentID DocumentID
+		DocumentID     DocumentID
+	}
+	keyTypeIndex struct {
+		Type       string
+		DocumentID DocumentID
+	}
 )
 
 type DocumentStore struct {
-	db *gorm.DB
+	documents kv.Store[DocumentID, Document]
+	edges     kv.Store[edgeKey, edgeValue]
+	types     kv.Store[keyTypeIndex, DocumentID]
+	graphs    kv.Store[keyGraphIndex, DocumentID]
 }
 
 type (
@@ -32,123 +58,105 @@ type (
 )
 
 func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
-	s := &DocumentStore{
-		db: db,
+	db = db.Debug()
+	docStore, err := kv.NewSQLStore[DocumentID, Document](db, "documents")
+	if err != nil {
+		return nil, fmt.Errorf("error creating document store: %w", err)
 	}
 
-	err := db.AutoMigrate(
-		&DocumentEntry{},
-		&DocumentEdge{},
-	)
+	edgeStore, err := kv.NewSQLStore[edgeKey, edgeValue](db, "edges")
 	if err != nil {
-		return nil, fmt.Errorf("error migrating database: %w", err)
+		return nil, fmt.Errorf("error creating edge store: %w", err)
+	}
+
+	typeStore, err := kv.NewSQLStore[keyTypeIndex, DocumentID](db, "types")
+	if err != nil {
+		return nil, fmt.Errorf("error creating type store: %w", err)
+	}
+
+	graphStore, err := kv.NewSQLStore[keyGraphIndex, DocumentID](db, "graphs")
+	if err != nil {
+		return nil, fmt.Errorf("error creating graph store: %w", err)
+	}
+
+	s := &DocumentStore{
+		documents: docStore,
+		edges:     edgeStore,
+		types:     typeStore,
+		graphs:    graphStore,
 	}
 
 	return s, nil
 }
 
 func (s *DocumentStore) PutDocument(doc *Document) error {
-	docBytes, err := doc.MarshalJSON()
-	if err != nil {
-		return fmt.Errorf("error marshaling document: %w", err)
-	}
-
 	docID := NewDocumentID(doc)
 	rootID := doc.Metadata.Root
 
-	entry := &DocumentEntry{
-		DocumentID:     docID,
-		DocumentType:   doc.Type(),
-		DocumentJSON:   docBytes,
-		RootDocumentID: rootID,
-		Sequence:       doc.Metadata.Sequence,
-	}
-
-	err = s.db.
-		Clauses(
-			clause.OnConflict{
-				DoNothing: true,
-			},
-		).
-		Create(entry).
-		Error
+	err := s.documents.Set(docID, doc)
 	if err != nil {
 		return fmt.Errorf("error putting document: %w", err)
 	}
 
-	// // for root documents, create a single edge to itself
-	// // TODO should only consier patches as child documents?
-	// // if doc.Type() != "core/stream/patch" {
-	// if doc.Metadata.Root == nil && len(doc.Metadata.Parents) == 0 {
-	// 	edge := &DocumentEdge{
-	// 		RootDocumentID:   docID,
-	// 		ParentDocumentID: docID,
-	// 		ChildDocumentID:  docID,
-	// 		Sequence:         0,
-	// 	}
-	// 	err = s.db.
-	// 		Clauses(
-	// 			clause.OnConflict{
-	// 				DoNothing: true,
-	// 			},
-	// 		).
-	// 		Create(edge).
-	// 		Error
-	// 	if err != nil {
-	// 		return fmt.Errorf("error putting document: %w", err)
-	// 	}
-	// }
+	err = s.types.Set(
+		keyTypeIndex{
+			Type:       doc.Type(),
+			DocumentID: docID,
+		},
+		&docID,
+	)
+	if err != nil {
+		return fmt.Errorf("error putting document type: %w", err)
+	}
 
 	if doc.Metadata.Root == nil {
 		return nil
+	}
+
+	err = s.graphs.Set(
+		keyGraphIndex{
+			RootDocumentID: *rootID,
+			DocumentID:     docID,
+		},
+		&docID,
+	)
+	if err != nil {
+		return fmt.Errorf("error putting document graph: %w", err)
 	}
 
 	if len(doc.Metadata.Parents) == 0 {
 		return errors.New("non root documents must have at least one parent")
 	}
 
-	edges := []*DocumentEdge{}
 	for _, parentID := range doc.Metadata.Parents {
 		if doc.Metadata.Sequence == 0 {
 			return errors.New("non root documents must have a sequence number greater than 0")
 		}
-		edges = append(edges, &DocumentEdge{
-			RootDocumentID:   *doc.Metadata.Root,
-			ParentDocumentID: parentID,
-			ChildDocumentID:  docID,
-			Sequence:         doc.Metadata.Sequence,
-		})
-	}
-
-	err = s.db.
-		Clauses(
-			clause.OnConflict{
-				DoNothing: true,
+		err = s.edges.Set(
+			edgeKey{
+				RootDocumentID:   *rootID,
+				ParentDocumentID: parentID,
+				ChildDocumentID:  docID,
 			},
-		).
-		Create(edges).
-		Error
-	if err != nil {
-		return fmt.Errorf("error putting document: %w", err)
+			&edgeValue{
+				RootDocumentID:   *rootID,
+				ParentDocumentID: parentID,
+				ChildDocumentID:  docID,
+				Sequence:         doc.Metadata.Sequence,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("error putting document: %w", err)
+		}
 	}
 
 	return nil
 }
 
 func (s *DocumentStore) GetDocument(id DocumentID) (*Document, error) {
-	doc := &DocumentEntry{}
-	err := s.db.
-		Where("document_id = ?", id).
-		First(doc).
-		Error
+	m, err := s.documents.Get(id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting document: %w", err)
-	}
-
-	m := &Document{}
-	err = m.UnmarshalJSON(doc.DocumentJSON)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshaling document: %w", err)
 	}
 
 	return m, nil
@@ -157,17 +165,11 @@ func (s *DocumentStore) GetDocument(id DocumentID) (*Document, error) {
 // GetDocumentLeaves returns the leaves of a document graph, as well as the max sequence
 // of the leaves.
 func (s *DocumentStore) GetDocumentLeaves(id DocumentID) ([]DocumentID, uint64, error) {
-	var edges []*DocumentEdge
-	err := s.db.
-		Where(`
-			root_document_id = ?
-			AND child_document_id NOT IN (
-				SELECT DISTINCT parent_document_id
-				FROM document_edges
-				WHERE root_document_id = ?
-			)`, id, id).
-		Find(&edges).
-		Error
+	edges, err := s.edges.GetPrefix(
+		edgeKey{
+			RootDocumentID: id,
+		},
+	)
 	if err != nil {
 		return nil, 0, fmt.Errorf("error getting document: %w", err)
 	}
@@ -177,34 +179,41 @@ func (s *DocumentStore) GetDocumentLeaves(id DocumentID) ([]DocumentID, uint64, 
 		return []DocumentID{id}, 0, nil
 	}
 
-	var maxSeq uint64
-	var ret []DocumentID
+	// keep a list of all the parents
+	parents := map[DocumentID]struct{}{}
 	for _, edge := range edges {
-		ret = append(ret, edge.ChildDocumentID)
+		parents[edge.ParentDocumentID] = struct{}{}
+	}
+
+	var filtered []DocumentID
+	var maxSeq uint64
+	for _, edge := range edges {
 		if edge.Sequence > maxSeq {
 			maxSeq = edge.Sequence
 		}
+		if _, ok := parents[edge.ChildDocumentID]; !ok {
+			filtered = append(filtered, edge.ChildDocumentID)
+		}
 	}
 
-	return ret, maxSeq, nil
+	return filtered, maxSeq, nil
 }
 
 func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) {
-	var docs []*DocumentEntry
-	err := s.db.
-		Where("document_type = ?", docType).
-		Find(&docs).
-		Error
+	docIDs, err := s.types.GetPrefix(
+		keyTypeIndex{
+			Type: docType,
+		},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("error getting documents: %w", err)
+		return nil, fmt.Errorf("error getting documents from type index: %w", err)
 	}
 
 	var ret []*Document
-	for _, doc := range docs {
-		m := &Document{}
-		err = m.UnmarshalJSON(doc.DocumentJSON)
+	for _, docID := range docIDs {
+		m, err := s.documents.Get(*docID)
 		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling document: %w", err)
+			return nil, fmt.Errorf("error getting document: %w", err)
 		}
 		ret = append(ret, m)
 	}
@@ -215,31 +224,22 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) 
 // GetDocumentsByRootID returns all documents with the given root id, not including
 // the root document itself.
 func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*Document, error) {
-	var docs []*DocumentEntry
-	err := s.db.
-		Where("root_document_id = ?", id).
-		Order("sequence ASC").
-		Find(&docs).
-		Error
+	key := keyGraphIndex{
+		RootDocumentID: id,
+	}
+	docIDs, err := s.graphs.GetPrefix(key)
 	if err != nil {
 		return nil, fmt.Errorf("error getting documents: %w", err)
 	}
 
-	var ret []*Document
-	for _, doc := range docs {
-		m := &Document{}
-		err = m.UnmarshalJSON(doc.DocumentJSON)
+	var docs []*Document
+	for _, docID := range docIDs {
+		m, err := s.documents.Get(*docID)
 		if err != nil {
-			return nil, fmt.Errorf("error unmarshaling document: %w", err)
+			return nil, fmt.Errorf("error getting document: %w", err)
 		}
-		ret = append(ret, m)
+		docs = append(docs, m)
 	}
 
-	return ret, nil
-}
-
-// nolint: unused // TODO: we should be using this probably, if not remove it
-func gormErrUniqueViolation(err error) bool {
-	e := errors.New("UNIQUE constraint failed")
-	return !errors.Is(err, e)
+	return docs, nil
 }

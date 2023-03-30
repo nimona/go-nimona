@@ -5,6 +5,8 @@ import (
 
 	_ "modernc.org/sqlite"
 
+	"nimona.io/tilde"
+
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -14,7 +16,7 @@ func NewTestDocumentDB(t *testing.T) *gorm.DB {
 	t.Helper()
 
 	db, err := gorm.Open(
-		sqlite.Open("file::memory:?cache=shared"),
+		sqlite.Open("file::memory:"),
 		&gorm.Config{},
 	)
 	require.NoError(t, err)
@@ -83,10 +85,53 @@ func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
 
 	// Test getting the stream
 	gotEntries, err := store.GetDocumentsByRootID(rootDocID)
+
 	require.NoError(t, err)
 	require.Len(t, gotEntries, 1)
 
 	EqualDocument(t, childDoc, gotEntries[0])
+}
+
+func TestDocumentStore_GetDocumentsByType(t *testing.T) {
+	// Set up test DB
+	store := NewTestDocumentStore(t)
+
+	// Create documents
+	doc1 := NewDocument(
+		tilde.Map{
+			"$type": tilde.String("type-a"),
+			"foo":   tilde.String("foo"),
+		},
+	)
+	doc2 := NewDocument(
+		tilde.Map{
+			"$type": tilde.String("type-a"),
+			"foo":   tilde.String("bar"),
+		},
+	)
+	doc3 := NewDocument(
+		tilde.Map{
+			"$type": tilde.String("type-b"),
+			"foo":   tilde.String("baz"),
+		},
+	)
+
+	err := store.PutDocument(doc1)
+	require.NoError(t, err)
+
+	err = store.PutDocument(doc2)
+	require.NoError(t, err)
+
+	err = store.PutDocument(doc3)
+	require.NoError(t, err)
+
+	// Test getting by type
+	gotEntries, err := store.GetDocumentsByType("type-a")
+	require.NoError(t, err)
+	require.Len(t, gotEntries, 2)
+
+	EqualDocument(t, doc1, gotEntries[0])
+	EqualDocument(t, doc2, gotEntries[1])
 }
 
 func TestDocumentStore_GetDocumentLeaves_Empty(t *testing.T) {
