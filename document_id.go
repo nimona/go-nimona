@@ -35,14 +35,14 @@ func ParseDocumentID(pID string) (DocumentID, error) {
 }
 
 func (p DocumentID) String() string {
-	if p.DocumentHash.IsEmpty() {
+	if p.IsEmpty() {
 		return ""
 	}
 	return string(ShorthandDocumentID) + p.DocumentHash.String()
 }
 
 func (p DocumentID) IsEmpty() bool {
-	return len(p.DocumentHash) == 0
+	return p.DocumentHash.IsEmpty()
 }
 
 func (p DocumentID) IsEqual(other DocumentID) bool {

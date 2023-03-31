@@ -23,6 +23,9 @@ type (
 )
 
 func (h DocumentHash) String() string {
+	if h.IsEmpty() {
+		return ""
+	}
 	return base58.Encode(h[:])
 }
 
