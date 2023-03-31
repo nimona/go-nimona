@@ -11,12 +11,12 @@ import (
 )
 
 type (
-	edgeKey struct {
+	keyEdge struct {
 		RootDocumentID   DocumentID
 		ParentDocumentID DocumentID
 		ChildDocumentID  DocumentID
 	}
-	edgeValue struct {
+	vallueEdge struct {
 		RootDocumentID   DocumentID
 		ParentDocumentID DocumentID
 		ChildDocumentID  DocumentID
@@ -34,7 +34,7 @@ type (
 
 type DocumentStore struct {
 	documents kv.Store[DocumentID, Document]
-	edges     kv.Store[edgeKey, edgeValue]
+	edges     kv.Store[keyEdge, vallueEdge]
 	types     kv.Store[keyTypeIndex, DocumentID]
 	graphs    kv.Store[keyGraphIndex, DocumentID]
 }
@@ -64,7 +64,7 @@ func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 		return nil, fmt.Errorf("error creating document store: %w", err)
 	}
 
-	edgeStore, err := kv.NewSQLStore[edgeKey, edgeValue](db, "edges")
+	edgeStore, err := kv.NewSQLStore[keyEdge, vallueEdge](db, "edges")
 	if err != nil {
 		return nil, fmt.Errorf("error creating edge store: %w", err)
 	}
@@ -133,12 +133,12 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 			return errors.New("non root documents must have a sequence number greater than 0")
 		}
 		err = s.edges.Set(
-			edgeKey{
+			keyEdge{
 				RootDocumentID:   *rootID,
 				ParentDocumentID: parentID,
 				ChildDocumentID:  docID,
 			},
-			&edgeValue{
+			&vallueEdge{
 				RootDocumentID:   *rootID,
 				ParentDocumentID: parentID,
 				ChildDocumentID:  docID,
@@ -166,7 +166,7 @@ func (s *DocumentStore) GetDocument(id DocumentID) (*Document, error) {
 // of the leaves.
 func (s *DocumentStore) GetDocumentLeaves(id DocumentID) ([]DocumentID, uint64, error) {
 	edges, err := s.edges.GetPrefix(
-		edgeKey{
+		keyEdge{
 			RootDocumentID: id,
 		},
 	)
