@@ -1,8 +1,10 @@
 package nimona
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	reflect "reflect"
 	"time"
 
 	"gorm.io/gorm"
@@ -30,13 +32,19 @@ type (
 		Type       string
 		DocumentID DocumentID
 	}
+	keyAggregate struct {
+		RootDocumentID DocumentID
+		Path           string
+		Key            string
+	}
 )
 
 type DocumentStore struct {
-	documents kv.Store[DocumentID, Document]
-	edges     kv.Store[keyEdge, vallueEdge]
-	types     kv.Store[keyTypeIndex, DocumentID]
-	graphs    kv.Store[keyGraphIndex, DocumentID]
+	documents  kv.Store[DocumentID, Document]
+	edges      kv.Store[keyEdge, vallueEdge]
+	types      kv.Store[keyTypeIndex, DocumentID]
+	graphs     kv.Store[keyGraphIndex, DocumentID]
+	aggregates kv.Store[keyAggregate, []byte]
 }
 
 type (
@@ -79,11 +87,17 @@ func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 		return nil, fmt.Errorf("error creating graph store: %w", err)
 	}
 
+	aggregateStore, err := kv.NewSQLStore[keyAggregate, []byte](db, "aggregates")
+	if err != nil {
+		return nil, fmt.Errorf("error creating graph store: %w", err)
+	}
+
 	s := &DocumentStore{
-		documents: docStore,
-		edges:     edgeStore,
-		types:     typeStore,
-		graphs:    graphStore,
+		documents:  docStore,
+		edges:      edgeStore,
+		types:      typeStore,
+		graphs:     graphStore,
+		aggregates: aggregateStore,
 	}
 
 	return s, nil
@@ -242,4 +256,102 @@ func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*Document, error)
 	}
 
 	return docs, nil
+}
+
+func (s *DocumentStore) Apply(doc *Document) error {
+	doc = doc.Copy()
+
+	if doc.Type() != "core/stream/patch" {
+		body, err := doc.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		err = s.aggregates.Set(
+			keyAggregate{
+				RootDocumentID: NewDocumentID(doc),
+			},
+			&body,
+		)
+		if err != nil {
+			return fmt.Errorf("error storing root doc: %w", err)
+		}
+		return nil
+	}
+
+	patch := &DocumentPatch{}
+	err := patch.FromDocument(doc)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling patch: %w", err)
+	}
+
+	for _, operation := range patch.Operations {
+		switch operation.Op {
+		case "replace":
+			// TODO: implement
+		case "append":
+			body, err := json.Marshal(operation.Value)
+			if err != nil {
+				return fmt.Errorf("error marshaling op value: %w", err)
+			}
+			err = s.aggregates.Set(
+				keyAggregate{
+					RootDocumentID: *patch.Metadata.Root,
+					Path:           operation.Path,
+					Key:            operation.Key,
+				},
+				&body,
+			)
+			if err != nil {
+				return fmt.Errorf("error storing op value: %w", err)
+			}
+		default:
+			return fmt.Errorf("unsupported operation: %s", operation.Op)
+		}
+	}
+	return nil
+}
+
+func (s *DocumentStore) GetAggregateNested(
+	rootHash DocumentID,
+	path string,
+	target any, // *[]DocumentMapper,
+) error {
+	key := keyAggregate{
+		RootDocumentID: rootHash,
+		Path:           path,
+	}
+	bodies, err := s.aggregates.GetPrefix(key)
+	if err != nil {
+		return fmt.Errorf("error getting aggregate: %w", err)
+	}
+
+	// check if target is a pointer to a slice
+	res := reflect.ValueOf(target).Elem()
+	if res.Kind() != reflect.Slice {
+		return fmt.Errorf("target is not a slice")
+	}
+
+	// check if target is a pointer to a slice of pointers
+	if res.Type().Elem().Kind() != reflect.Ptr {
+		return fmt.Errorf("target is not a slice of pointers")
+	}
+
+	// get the type of the slice elements
+	typ := reflect.TypeOf(target).Elem().Elem().Elem()
+
+	for _, body := range bodies {
+		doc := &Document{}
+		err := doc.UnmarshalJSON(*body)
+		if err != nil {
+			return fmt.Errorf("error unmarshaling aggregate: %w", err)
+		}
+		val := reflect.New(typ).Interface().(DocumentMapper)
+		err = (val).FromDocument(doc)
+		if err != nil {
+			return fmt.Errorf("error unmarshaling aggregate: %w", err)
+		}
+		res.Set(reflect.Append(res, reflect.ValueOf(val)))
+	}
+
+	return nil
 }

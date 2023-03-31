@@ -219,3 +219,57 @@ func TestDocumentStore_GetDocumentLeaves(t *testing.T) {
 		NewDocumentID(docFour),
 	}, gotEntries)
 }
+
+func TestDocumentStore_Aggregate_Apply(t *testing.T) {
+	store := NewTestDocumentStore(t)
+
+	root := &Profile{
+		DisplayName: "foo",
+	}
+
+	rootDoc := root.Document()
+	rootDocID := NewDocumentID(rootDoc)
+
+	patch1 := &DocumentPatch{
+		Metadata: Metadata{
+			Root: &rootDocID,
+		},
+		Operations: []DocumentPatchOperation{{
+			Op:    "replace",
+			Path:  "displayName",
+			Value: tilde.String("bar"),
+		}},
+	}
+
+	patch4doc := &ProfileRepository{
+		Alias:  "testing.nimona.dev",
+		Handle: "foo",
+	}
+
+	patch4 := &DocumentPatch{
+		Metadata: Metadata{
+			Root: &rootDocID,
+		},
+		Operations: []DocumentPatchOperation{{
+			Op:        "append",
+			Path:      "repositories",
+			Value:     patch4doc.Map(),
+			Key:       "9e81fff2-ec7a-44e2-aa05-617c84bbaf5e",
+			Partition: []string{"2023", "04"},
+		}},
+	}
+
+	store.Apply(rootDoc)
+	store.Apply(patch1.Document())
+	store.Apply(patch4.Document())
+
+	res := []*ProfileRepository{}
+	err := store.GetAggregateNested(
+		rootDocID,
+		"repositories",
+		&res,
+	)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(res))
+	require.Equal(t, patch4doc, res[0])
+}
