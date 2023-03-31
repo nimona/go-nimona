@@ -2,6 +2,7 @@ package kv
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +22,7 @@ func NewFileStore[K, V any](baseDir string) (Store[K, V], error) {
 	return &FileStore[K, V]{baseDir: baseDir}, nil
 }
 
-func (s *FileStore[K, V]) Set(key K, value *V) error {
+func (s *FileStore[K, V]) Set(key K, value V) error {
 	keyPath := strings.TrimSuffix(keyToString(key), pathSeparator)
 	filePath := filepath.Join(s.baseDir, keyPath+".json")
 	dirPath := filepath.Dir(filePath)
@@ -39,30 +40,30 @@ func (s *FileStore[K, V]) Set(key K, value *V) error {
 	return os.WriteFile(filePath, data, 0o644)
 }
 
-func (s *FileStore[K, V]) Get(key K) (*V, error) {
+func (s *FileStore[K, V]) Get(key K) (res V, err error) {
 	keyPath := strings.TrimSuffix(keyToString(key), pathSeparator)
 	filePath := filepath.Join(s.baseDir, keyPath+".json")
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return res, fmt.Errorf("key not found: %w", err)
 		}
-		return nil, err
+		return res, err
 	}
 
 	var value V
 	err = json.Unmarshal(data, &value)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 
-	return &value, nil
+	return value, nil
 }
 
-func (s *FileStore[K, V]) GetPrefix(key K) ([]*V, error) {
+func (s *FileStore[K, V]) GetPrefix(key K) ([]V, error) {
 	prefix := strings.TrimSuffix(keyToString(key), pathSeparator)
-	values := []*V{}
+	values := []V{}
 
 	err := filepath.Walk(s.baseDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -92,7 +93,7 @@ func (s *FileStore[K, V]) GetPrefix(key K) ([]*V, error) {
 			return err
 		}
 
-		values = append(values, &value)
+		values = append(values, value)
 		return nil
 	})
 	if err != nil {

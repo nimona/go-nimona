@@ -14,80 +14,80 @@ import (
 
 type (
 	keyEdge struct {
-		RootDocumentID   DocumentID
-		ParentDocumentID DocumentID
-		ChildDocumentID  DocumentID
+		RootDocumentHash   DocumentHash
+		ParentDocumentHash DocumentHash
+		ChildDocumentHash  DocumentHash
 	}
 	vallueEdge struct {
-		RootDocumentID   DocumentID
-		ParentDocumentID DocumentID
-		ChildDocumentID  DocumentID
-		Sequence         uint64
+		RootDocumentHash   DocumentHash
+		ParentDocumentHash DocumentHash
+		ChildDocumentHash  DocumentHash
+		Sequence           uint64
 	}
 	keyGraphIndex struct {
-		RootDocumentID DocumentID
-		DocumentID     DocumentID
+		RootDocumentHash DocumentHash
+		DocumentHash     DocumentHash
 	}
 	keyTypeIndex struct {
-		Type       string
-		DocumentID DocumentID
+		Type         string
+		DocumentHash DocumentHash
 	}
 	keyAggregate struct {
-		RootDocumentID DocumentID
-		Path           string
-		Key            string
+		RootDocumentHash DocumentHash
+		Path             string
+		Key              string
 	}
 )
 
 type DocumentStore struct {
-	documents  kv.Store[DocumentID, Document]
-	edges      kv.Store[keyEdge, vallueEdge]
-	types      kv.Store[keyTypeIndex, DocumentID]
-	graphs     kv.Store[keyGraphIndex, DocumentID]
-	aggregates kv.Store[keyAggregate, []byte]
+	documents  kv.Store[DocumentHash, *Document]
+	edges      kv.Store[keyEdge, *vallueEdge]
+	types      kv.Store[keyTypeIndex, *DocumentHash]
+	graphs     kv.Store[keyGraphIndex, *DocumentHash]
+	aggregates kv.Store[keyAggregate, *[]byte]
 }
 
 type (
 	// DocumentEntry is a document entry in the database
 	DocumentEntry struct {
-		DocumentID     DocumentID  `gorm:"primaryKey"`
-		DocumentType   string      `gorm:"index"`
-		DocumentJSON   []byte      `gorm:"type:bytea"`
-		RootDocumentID *DocumentID `gorm:"index"`
-		Sequence       uint64
-		CreatedAt      time.Time `gorm:"autoCreateTime"`
+		DocumentID       DocumentID  `gorm:"primaryKey"`
+		DocumentType     string      `gorm:"index"`
+		DocumentJSON     []byte      `gorm:"type:bytea"`
+		RootDocumentHash *DocumentID `gorm:"index"`
+		Sequence         uint64
+		CreatedAt        time.Time `gorm:"autoCreateTime"`
 	}
 	DocumentEdge struct {
-		RootDocumentID   DocumentID `gorm:"primaryKey,index"`
-		ParentDocumentID DocumentID `gorm:"primaryKey,index"`
-		ChildDocumentID  DocumentID `gorm:"primaryKey,index"`
-		Sequence         uint64
+		RootDocumentHash   DocumentID `gorm:"primaryKey,index"`
+		ParentDocumentHash DocumentID `gorm:"primaryKey,index"`
+		ChildDocumentHash  DocumentID `gorm:"primaryKey,index"`
+		Sequence           uint64
 	}
 )
 
 func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 	db = db.Debug()
-	docStore, err := kv.NewSQLStore[DocumentID, Document](db, "documents")
+	docStore, err := kv.NewSQLStore[DocumentHash, *Document](db, "documents")
 	if err != nil {
 		return nil, fmt.Errorf("error creating document store: %w", err)
 	}
 
-	edgeStore, err := kv.NewSQLStore[keyEdge, vallueEdge](db, "edges")
+	edgeStore, err := kv.NewSQLStore[keyEdge, *vallueEdge](db, "edges")
 	if err != nil {
 		return nil, fmt.Errorf("error creating edge store: %w", err)
 	}
 
-	typeStore, err := kv.NewSQLStore[keyTypeIndex, DocumentID](db, "types")
+	typeStore, err := kv.NewSQLStore[keyTypeIndex, *DocumentHash](db, "types")
 	if err != nil {
 		return nil, fmt.Errorf("error creating type store: %w", err)
 	}
 
-	graphStore, err := kv.NewSQLStore[keyGraphIndex, DocumentID](db, "graphs")
+	graphStore, err := kv.NewSQLStore[keyGraphIndex, *DocumentHash](db, "graphs")
 	if err != nil {
 		return nil, fmt.Errorf("error creating graph store: %w", err)
 	}
 
-	aggregateStore, err := kv.NewSQLStore[keyAggregate, []byte](db, "aggregates")
+	aggregateStore, err := kv.NewSQLStore[keyAggregate, *[]byte](db, "aggregates")
 	if err != nil {
 		return nil, fmt.Errorf("error creating graph store: %w", err)
 	}
@@ -107,17 +107,17 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 	docID := NewDocumentID(doc)
 	rootID := doc.Metadata.Root
 
-	err := s.documents.Set(docID, doc)
+	err := s.documents.Set(docID.DocumentHash, doc)
 	if err != nil {
 		return fmt.Errorf("error putting document: %w", err)
 	}
 
 	err = s.types.Set(
 		keyTypeIndex{
-			Type:       doc.Type(),
-			DocumentID: docID,
+			Type:         doc.Type(),
+			DocumentHash: docID.DocumentHash,
 		},
-		&docID,
+		&docID.DocumentHash,
 	)
 	if err != nil {
 		return fmt.Errorf("error putting document type: %w", err)
@@ -129,10 +129,10 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 
 	err = s.graphs.Set(
 		keyGraphIndex{
-			RootDocumentID: *rootID,
-			DocumentID:     docID,
+			RootDocumentHash: rootID.DocumentHash,
+			DocumentHash:     docID.DocumentHash,
 		},
-		&docID,
+		&docID.DocumentHash,
 	)
 	if err != nil {
 		return fmt.Errorf("error putting document graph: %w", err)
@@ -148,15 +148,15 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 		}
 		err = s.edges.Set(
 			keyEdge{
-				RootDocumentID:   *rootID,
-				ParentDocumentID: parentID,
-				ChildDocumentID:  docID,
+				RootDocumentHash:   rootID.DocumentHash,
+				ParentDocumentHash: parentID.DocumentHash,
+				ChildDocumentHash:  docID.DocumentHash,
 			},
 			&vallueEdge{
-				RootDocumentID:   *rootID,
-				ParentDocumentID: parentID,
-				ChildDocumentID:  docID,
-				Sequence:         doc.Metadata.Sequence,
+				RootDocumentHash:   rootID.DocumentHash,
+				ParentDocumentHash: parentID.DocumentHash,
+				ChildDocumentHash:  docID.DocumentHash,
+				Sequence:           doc.Metadata.Sequence,
 			},
 		)
 		if err != nil {
@@ -167,8 +167,8 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 	return nil
 }
 
-func (s *DocumentStore) GetDocument(id DocumentID) (*Document, error) {
-	m, err := s.documents.Get(id)
+func (s *DocumentStore) GetDocument(docID DocumentID) (*Document, error) {
+	m, err := s.documents.Get(docID.DocumentHash)
 	if err != nil {
 		return nil, fmt.Errorf("error getting document: %w", err)
 	}
@@ -178,10 +178,10 @@ func (s *DocumentStore) GetDocument(id DocumentID) (*Document, error) {
 
 // GetDocumentLeaves returns the leaves of a document graph, as well as the max sequence
 // of the leaves.
-func (s *DocumentStore) GetDocumentLeaves(id DocumentID) ([]DocumentID, uint64, error) {
+func (s *DocumentStore) GetDocumentLeaves(docID DocumentID) ([]DocumentID, uint64, error) {
 	edges, err := s.edges.GetPrefix(
 		keyEdge{
-			RootDocumentID: id,
+			RootDocumentHash: docID.DocumentHash,
 		},
 	)
 	if err != nil {
@@ -190,13 +190,13 @@ func (s *DocumentStore) GetDocumentLeaves(id DocumentID) ([]DocumentID, uint64, 
 
 	if len(edges) == 0 {
 		// TODO should we check if we have the document first?
-		return []DocumentID{id}, 0, nil
+		return []DocumentID{docID}, 0, nil
 	}
 
 	// keep a list of all the parents
-	parents := map[DocumentID]struct{}{}
+	parents := map[DocumentHash]struct{}{}
 	for _, edge := range edges {
-		parents[edge.ParentDocumentID] = struct{}{}
+		parents[edge.ParentDocumentHash] = struct{}{}
 	}
 
 	var filtered []DocumentID
@@ -205,8 +205,10 @@ func (s *DocumentStore) GetDocumentLeaves(id DocumentID) ([]DocumentID, uint64, 
 		if edge.Sequence > maxSeq {
 			maxSeq = edge.Sequence
 		}
-		if _, ok := parents[edge.ChildDocumentID]; !ok {
-			filtered = append(filtered, edge.ChildDocumentID)
+		if _, ok := parents[edge.ChildDocumentHash]; !ok {
+			filtered = append(filtered, DocumentID{
+				DocumentHash: edge.ChildDocumentHash,
+			})
 		}
 	}
 
@@ -214,7 +216,7 @@ func (s *DocumentStore) GetDocumentLeaves(id DocumentID) ([]DocumentID, uint64, 
 }
 
 func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) {
-	docIDs, err := s.types.GetPrefix(
+	docHashes, err := s.types.GetPrefix(
 		keyTypeIndex{
 			Type: docType,
 		},
@@ -224,8 +226,8 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) 
 	}
 
 	var ret []*Document
-	for _, docID := range docIDs {
-		m, err := s.documents.Get(*docID)
+	for _, docHash := range docHashes {
+		m, err := s.documents.Get(*docHash)
 		if err != nil {
 			return nil, fmt.Errorf("error getting document: %w", err)
 		}
@@ -239,16 +241,16 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) 
 // the root document itself.
 func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*Document, error) {
 	key := keyGraphIndex{
-		RootDocumentID: id,
+		RootDocumentHash: id.DocumentHash,
 	}
-	docIDs, err := s.graphs.GetPrefix(key)
+	docHashes, err := s.graphs.GetPrefix(key)
 	if err != nil {
 		return nil, fmt.Errorf("error getting documents: %w", err)
 	}
 
 	var docs []*Document
-	for _, docID := range docIDs {
-		m, err := s.documents.Get(*docID)
+	for _, docHash := range docHashes {
+		m, err := s.documents.Get(*docHash)
 		if err != nil {
 			return nil, fmt.Errorf("error getting document: %w", err)
 		}
@@ -268,7 +270,7 @@ func (s *DocumentStore) Apply(doc *Document) error {
 		}
 		err = s.aggregates.Set(
 			keyAggregate{
-				RootDocumentID: NewDocumentID(doc),
+				RootDocumentHash: NewDocumentHash(doc),
 			},
 			&body,
 		)
@@ -295,9 +297,9 @@ func (s *DocumentStore) Apply(doc *Document) error {
 			}
 			err = s.aggregates.Set(
 				keyAggregate{
-					RootDocumentID: *patch.Metadata.Root,
-					Path:           operation.Path,
-					Key:            operation.Key,
+					RootDocumentHash: patch.Metadata.Root.DocumentHash,
+					Path:             operation.Path,
+					Key:              operation.Key,
 				},
 				&body,
 			)
@@ -312,13 +314,13 @@ func (s *DocumentStore) Apply(doc *Document) error {
 }
 
 func (s *DocumentStore) GetAggregateNested(
-	rootHash DocumentID,
+	rootID DocumentID,
 	path string,
 	target any, // *[]DocumentMapper,
 ) error {
 	key := keyAggregate{
-		RootDocumentID: rootHash,
-		Path:           path,
+		RootDocumentHash: rootID.DocumentHash,
+		Path:             path,
 	}
 	bodies, err := s.aggregates.GetPrefix(key)
 	if err != nil {

@@ -15,7 +15,7 @@ func Test_MemoryStore(t *testing.T) {
 	store := NewMemoryStore[string, TestValue]()
 
 	// Set a new key-value pair with a struct as value
-	testValue := &TestValue{Foo: "bar"}
+	testValue := TestValue{Foo: "bar"}
 	err := store.Set("structValue", testValue)
 	assert.NoError(t, err)
 
@@ -108,7 +108,7 @@ func Test_MemoryStorePrefix(t *testing.T) {
 
 		// Set a new key-value pair with a struct as value
 		for _, pair := range test.insert {
-			err := store.Set(pair.key, &pair.value)
+			err := store.Set(pair.key, pair.value)
 			assert.NoError(t, err)
 		}
 
@@ -117,7 +117,7 @@ func Test_MemoryStorePrefix(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, returnedValues, len(test.results))
 		for _, result := range test.results {
-			assert.Contains(t, returnedValues, &result)
+			assert.Contains(t, returnedValues, result)
 		}
 	}
 }

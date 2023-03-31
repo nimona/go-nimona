@@ -7,9 +7,15 @@ import (
 )
 
 type Store[K, V any] interface {
-	Set(K, *V) error
-	Get(K) (*V, error)
-	GetPrefix(K) ([]*V, error)
+	Set(K, V) error
+	Get(K) (V, error)
+	GetPrefix(K) ([]V, error)
+}
+
+type ByteStore interface {
+	Set([]byte, []byte) error
+	Get([]byte) ([]byte, error)
+	GetPrefix([]byte) ([][]byte, error)
 }
 
 func keyToString(key interface{}) string {

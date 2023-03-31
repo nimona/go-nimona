@@ -16,11 +16,11 @@ type IdentityStoreInterface interface {
 }
 
 func NewIdentityStore(db *gorm.DB) (*IdentityStore, error) {
-	kgStore, err := kv.NewSQLStore[Identity, KeyGraph](db, "keygraphs")
+	kgStore, err := kv.NewSQLStore[Identity, *KeyGraph](db, "keygraphs")
 	if err != nil {
 		return nil, fmt.Errorf("error creating key graph store: %w", err)
 	}
-	kpStore, err := kv.NewSQLStore[PublicKey, KeyPair](db, "keypairs")
+	kpStore, err := kv.NewSQLStore[PublicKey, *KeyPair](db, "keypairs")
 	if err != nil {
 		return nil, fmt.Errorf("error creating key pair store: %w", err)
 	}
@@ -31,8 +31,8 @@ func NewIdentityStore(db *gorm.DB) (*IdentityStore, error) {
 }
 
 type IdentityStore struct {
-	IdentityStore kv.Store[Identity, KeyGraph]
-	KeyPairStore  kv.Store[PublicKey, KeyPair]
+	IdentityStore kv.Store[Identity, *KeyGraph]
+	KeyPairStore  kv.Store[PublicKey, *KeyPair]
 }
 
 func (p *IdentityStore) NewIdentity(use string) (*Identity, error) {

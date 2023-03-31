@@ -27,6 +27,10 @@ func NewSQLStore[K, V any](db *gorm.DB, table string) (Store[K, V], error) {
 	return s, nil
 }
 
+func NewSQLByteStore(db *gorm.DB, table string) (ByteStore, error) {
+	return NewSQLStore[[]byte, []byte](db, table)
+}
+
 type SQLStore[K, V any] struct {
 	db    *gorm.DB
 	table string
@@ -36,7 +40,7 @@ func (s *SQLStore[K, V]) getDB() *gorm.DB {
 	return s.db.Table(s.table)
 }
 
-func (s *SQLStore[K, V]) Set(key K, value *V) error {
+func (s *SQLStore[K, V]) Set(key K, value V) error {
 	keyString := keyToString(key)
 	jsonValue, err := json.Marshal(value)
 	if err != nil {
@@ -63,33 +67,32 @@ func (s *SQLStore[K, V]) Set(key K, value *V) error {
 	return nil
 }
 
-func (s *SQLStore[K, V]) Get(key K) (*V, error) {
+func (s *SQLStore[K, V]) Get(key K) (res V, err error) {
 	keyString := keyToString(key)
 	var keyValues []record
-	err := s.getDB().
+	err = s.getDB().
 		Where("key = ?", keyString).
 		Find(&keyValues).
 		Error
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 
 	if len(keyValues) == 0 {
-		return nil, fmt.Errorf("value not found")
+		return res, fmt.Errorf("value not found")
 	}
 
 	keyValue := keyValues[0]
 
-	value := new(V)
-	err = json.Unmarshal(keyValue.Value, value)
+	err = json.Unmarshal(keyValue.Value, &res)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 
-	return value, nil
+	return res, nil
 }
 
-func (s *SQLStore[K, V]) GetPrefix(key K) ([]*V, error) {
+func (s *SQLStore[K, V]) GetPrefix(key K) ([]V, error) {
 	keyString := keyToString(key)
 	var keyValues []record
 	err := s.getDB().
@@ -100,14 +103,14 @@ func (s *SQLStore[K, V]) GetPrefix(key K) ([]*V, error) {
 		return nil, fmt.Errorf("failed to get prefix: %w", err)
 	}
 
-	values := []*V{}
+	values := []V{}
 	for _, keyValue := range keyValues {
 		value := new(V)
 		err := json.Unmarshal(keyValue.Value, value)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal value: %w", err)
 		}
-		values = append(values, value)
+		values = append(values, *value)
 	}
 
 	return values, nil
