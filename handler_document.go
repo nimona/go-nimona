@@ -70,7 +70,7 @@ func HandleDocumentRequest(
 		req := &DocumentRequest{}
 		err := req.FromDocument(msg.Document)
 		if err != nil {
-			return fmt.Errorf("error unmarshaling request: %w", err)
+			return fmt.Errorf("document handler - error unmarshaling request: %w", err)
 		}
 
 		respondWithError := func(desc string) error {
@@ -80,14 +80,15 @@ func HandleDocumentRequest(
 			}
 			err = msg.Respond(res.Document())
 			if err != nil {
-				return fmt.Errorf("error replying: %w", err)
+				return fmt.Errorf("document handler - error replying: %w", err)
 			}
 			return nil
 		}
 
 		doc, err := docStore.GetDocument(req.DocumentID)
 		if err != nil {
-			return fmt.Errorf("error getting document: %w", err)
+			respondWithError("document not found")
+			return fmt.Errorf("document handler - error getting document: %w", err)
 		}
 
 		if doc == nil {
@@ -100,7 +101,7 @@ func HandleDocumentRequest(
 		}
 		err = msg.Respond(res.Document())
 		if err != nil {
-			return fmt.Errorf("error replying: %w", err)
+			return fmt.Errorf("document handler - error replying: %w", err)
 		}
 		return nil
 	}
@@ -121,8 +122,7 @@ type (
 	}
 )
 
-// TODO rename to PublishDocument
-func RequestDocumentStore(
+func PublishDocument(
 	ctx context.Context,
 	ses *SessionManager,
 	rctx *RequestContext,

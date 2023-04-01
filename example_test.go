@@ -101,7 +101,7 @@ func TestExample_Graph(t *testing.T) {
 		// publish profile
 		ctx := context.Background()
 		prv := FromAlias(IdentityAlias{Hostname: "nimona.dev"})
-		err = RequestDocumentStore(ctx, csm, rctx, profileDoc, prv)
+		err = PublishDocument(ctx, csm, rctx, profileDoc, prv)
 		require.NoError(t, err)
 
 		// create profile patch
@@ -120,7 +120,7 @@ func TestExample_Graph(t *testing.T) {
 		fmt.Println("profilePatch")
 		DumpDocument(profilePatch)
 
-		err = RequestDocumentStore(ctx, csm, rctx, profilePatch, prv)
+		err = PublishDocument(ctx, csm, rctx, profilePatch, prv)
 		require.NoError(t, err)
 	})
 

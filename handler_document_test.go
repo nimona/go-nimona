@@ -57,7 +57,7 @@ func TestHandler_DocumentStoreRequest(t *testing.T) {
 	docID := NewDocumentID(doc)
 
 	// request server to store document
-	err := RequestDocumentStore(ctx, clt, rctx, doc, FromPeerAddr(srv.PeerAddr()))
+	err := PublishDocument(ctx, clt, rctx, doc, FromPeerAddr(srv.PeerAddr()))
 	require.NoError(t, err)
 
 	// request document back
