@@ -46,8 +46,9 @@ func (t *DocumentPatch) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.Operations) {
 			sm := tilde.List{}
-			for _, v := range t.Operations {
-				if !zero.IsZeroVal(t.Operations) {
+			for i, _ := range t.Operations {
+				v := t.Operations[i]
+				if !zero.IsZeroVal(v) {
 					sm = append(sm, v.Map())
 				}
 			}

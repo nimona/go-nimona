@@ -76,8 +76,9 @@ func (t *Profile) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.Repositories) {
 			sm := tilde.List{}
-			for _, v := range t.Repositories {
-				if !zero.IsZeroVal(t.Repositories) {
+			for i, _ := range t.Repositories {
+				v := t.Repositories[i]
+				if !zero.IsZeroVal(v) {
 					sm = append(sm, v.Map())
 				}
 			}

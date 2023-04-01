@@ -160,8 +160,9 @@ func (t *documentFixture) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.RepeatedMap) {
 			sm := tilde.List{}
-			for _, v := range t.RepeatedMap {
-				if !zero.IsZeroVal(t.RepeatedMap) {
+			for i, _ := range t.RepeatedMap {
+				v := t.RepeatedMap[i]
+				if !zero.IsZeroVal(v) {
 					sm = append(sm, v.Map())
 				}
 			}
@@ -179,8 +180,9 @@ func (t *documentFixture) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.RepeatedMapPtr) {
 			sm := tilde.List{}
-			for _, v := range t.RepeatedMapPtr {
-				if !zero.IsZeroVal(t.RepeatedMapPtr) {
+			for i, _ := range t.RepeatedMapPtr {
+				v := t.RepeatedMapPtr[i]
+				if !zero.IsZeroVal(v) {
 					sm = append(sm, v.Map())
 				}
 			}

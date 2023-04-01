@@ -85,8 +85,9 @@ func (t *DocumentGraphResponse) Map() tilde.Map {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := tilde.List{}
-		for _, v := range t.PatchDocumentIDs {
-			if !zero.IsZeroVal(t.PatchDocumentIDs) {
+		for i, _ := range t.PatchDocumentIDs {
+			v := t.PatchDocumentIDs[i]
+			if !zero.IsZeroVal(v) {
 				sm = append(sm, v.Map())
 			}
 		}

@@ -38,8 +38,9 @@ func (t *Metadata) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.Parents) {
 			sm := tilde.List{}
-			for _, v := range t.Parents {
-				if !zero.IsZeroVal(t.Parents) {
+			for i, _ := range t.Parents {
+				v := t.Parents[i]
+				if !zero.IsZeroVal(v) {
 					sm = append(sm, v.Map())
 				}
 			}
@@ -57,8 +58,9 @@ func (t *Metadata) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.Permissions) {
 			sm := tilde.List{}
-			for _, v := range t.Permissions {
-				if !zero.IsZeroVal(t.Permissions) {
+			for i, _ := range t.Permissions {
+				v := t.Permissions[i]
+				if !zero.IsZeroVal(v) {
 					sm = append(sm, v.Map())
 				}
 			}

@@ -55,8 +55,9 @@ func (t *IdentityInfo) Map() tilde.Map {
 	// IsElemSlice: false, IsElemStruct: true, IsElemPointer: false
 	{
 		sm := tilde.List{}
-		for _, v := range t.PeerAddresses {
-			if !zero.IsZeroVal(t.PeerAddresses) {
+		for i, _ := range t.PeerAddresses {
+			v := t.PeerAddresses[i]
+			if !zero.IsZeroVal(v) {
 				sm = append(sm, v.Map())
 			}
 		}

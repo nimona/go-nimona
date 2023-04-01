@@ -145,7 +145,7 @@ func nameIsExported(name string) bool {
 	return strings.ToUpper(name[0:1]) == name[0:1]
 }
 
-// nolint: funlen
+// nolint: funlen, gocyclo
 func documentType(i interface{}) (*DocumentInfo, error) {
 	t := reflect.TypeOf(i)
 
@@ -373,8 +373,9 @@ func (t *{{ .Name }}) Map() tilde.Map {
 			m.Set("{{ .Tag.Name }}", tilde.Ref(t.{{ .Name }}[:]))
 		{{- else if and .IsSlice .IsElemStruct }}
 			sm := tilde.List{}
-			for _, v := range t.{{ .Name }} {
-				if !zero.IsZeroVal(t.{{ .Name }}) {
+			for i, _ := range t.{{ .Name }} {
+				v := t.{{ .Name }}[i]
+				if !zero.IsZeroVal(v) {
 					sm = append(sm, v.Map())
 				}
 			}

@@ -36,8 +36,9 @@ func (t *PeerInfo) Map() tilde.Map {
 	{
 		if !zero.IsZeroVal(t.Addresses) {
 			sm := tilde.List{}
-			for _, v := range t.Addresses {
-				if !zero.IsZeroVal(t.Addresses) {
+			for i, _ := range t.Addresses {
+				v := t.Addresses[i]
+				if !zero.IsZeroVal(v) {
 					sm = append(sm, v.Map())
 				}
 			}
