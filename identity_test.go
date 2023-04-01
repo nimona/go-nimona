@@ -23,7 +23,7 @@ func NewTestIdentity(t *testing.T) *Identity {
 
 	kg, _, _ := NewTestKeyGraph(t)
 	return &Identity{
-		KeyGraphID: NewDocumentID(kg.Document()),
+		KeyGraph: NewDocumentHash(kg.Document()),
 	}
 }
 

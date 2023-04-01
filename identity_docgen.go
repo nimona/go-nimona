@@ -147,12 +147,12 @@ func (t *Identity) Map() tilde.Map {
 		m.Set("$type", tilde.String("core/identity/id"))
 	}
 
-	// # t.KeyGraphID
+	// # t.KeyGraph
 	//
-	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m.Set("keyGraphID", t.KeyGraphID.Map())
+		m.Set("keyGraph", tilde.Ref(t.KeyGraph[:]))
 	}
 
 	// # t.Use
@@ -175,17 +175,14 @@ func (t *Identity) FromDocument(d *Document) error {
 func (t *Identity) FromMap(d tilde.Map) error {
 	*t = Identity{}
 
-	// # t.KeyGraphID
+	// # t.KeyGraph
 	//
-	// Type: nimona.DocumentID, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.Get("keyGraphID"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				e := DocumentID{}
-				d := NewDocument(v)
-				e.FromDocument(d)
-				t.KeyGraphID = e
+		if v, err := d.Get("keyGraph"); err == nil {
+			if v, ok := v.(tilde.Ref); ok {
+				copy(t.KeyGraph[:], v)
 			}
 		}
 	}

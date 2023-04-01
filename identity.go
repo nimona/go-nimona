@@ -24,9 +24,9 @@ type (
 		Next     PublicKey `nimona:"next"`
 	}
 	Identity struct {
-		_          string     `nimona:"$type,type=core/identity/id"`
-		Use        string     `nimona:"type,omitempty"` // provider, user, etc
-		KeyGraphID DocumentID `nimona:"keyGraphID"`     // TODO(geoah) change this to DocumentHash
+		_        string       `nimona:"$type,type=core/identity/id"`
+		Use      string       `nimona:"type,omitempty"` // provider, user, etc
+		KeyGraph DocumentHash `nimona:"keyGraph"`
 	}
 )
 
@@ -85,19 +85,19 @@ func (i *KeyGraph) Identity() *Identity {
 		return nil
 	}
 	return &Identity{
-		KeyGraphID: NewDocumentID(i.Document()),
+		KeyGraph: NewDocumentHash(i.Document()),
 	}
 }
 
 func NewIdentity(use string, kg *KeyGraph) *Identity {
 	return &Identity{
-		Use:        use,
-		KeyGraphID: NewDocumentID(kg.Document()),
+		Use:      use,
+		KeyGraph: NewDocumentHash(kg.Document()),
 	}
 }
 
 func (i *Identity) String() string {
-	return string(ShorthandIdentity) + i.KeyGraphID.DocumentHash.String()
+	return string(ShorthandIdentity) + i.KeyGraph.String()
 }
 
 func (i *Identity) Value() (driver.Value, error) {
@@ -113,7 +113,7 @@ func (i *Identity) Scan(value interface{}) error {
 		if err != nil {
 			return fmt.Errorf("unable to scan into IdentityID: %w", err)
 		}
-		i.KeyGraphID = id.KeyGraphID
+		i.KeyGraph = id.KeyGraph
 		return nil
 	}
 	return fmt.Errorf("unable to scan into IdentityID")
@@ -131,8 +131,6 @@ func ParseIdentity(id string) (*Identity, error) {
 		return nil, fmt.Errorf("unable to parse identity id: %w", err)
 	}
 	return &Identity{
-		KeyGraphID: DocumentID{
-			DocumentHash: dh,
-		},
+		KeyGraph: dh,
 	}, nil
 }

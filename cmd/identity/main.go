@@ -19,7 +19,8 @@ func main() {
 	}
 
 	identity := &nimona.Identity{
-		KeyGraphID: nimona.NewDocumentID(
+		Use: "provider",
+		KeyGraph: nimona.NewDocumentHash(
 			keyGraph.Document(),
 		),
 	}

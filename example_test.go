@@ -44,7 +44,7 @@ func TestExample_Graph(t *testing.T) {
 					Hostname: "nimona.dev",
 				},
 				Identity: Identity{
-					KeyGraphID: NewTestRandomDocumentID(t),
+					KeyGraph: NewTestRandomDocumentHash(t),
 				},
 				PeerAddresses: []PeerAddr{
 					providerAddress,
