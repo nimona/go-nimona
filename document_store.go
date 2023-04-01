@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"nimona.io/internal/kv"
+	"nimona.io/tilde"
 )
 
 type (
@@ -356,4 +357,56 @@ func (s *DocumentStore) GetAggregateNested(
 	}
 
 	return nil
+}
+
+func (s *DocumentStore) CreatePatch(
+	docID DocumentID,
+	op string,
+	path string,
+	value tilde.Value,
+	sctx SigningContext,
+) (*Document, error) {
+	switch op {
+	case "replace", "append":
+	default:
+		return nil, fmt.Errorf("unsupported operation: %s", op)
+	}
+
+	// check if we have the document
+	_, err := s.documents.Get(docID.DocumentHash)
+	if err != nil {
+		return nil, fmt.Errorf("error getting document: %w", err)
+	}
+
+	// get leaves and max sequence
+	leaves, maxSeq, err := s.GetDocumentLeaves(docID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting document leaves: %w", err)
+	}
+
+	patch := &DocumentPatch{
+		Metadata: Metadata{
+			Owner:     sctx.Identity,
+			Root:      &docID,
+			Parents:   leaves,
+			Sequence:  maxSeq + 1,
+			Timestamp: time.Now().UTC().Format(time.RFC3339Nano),
+		},
+		Operations: []DocumentPatchOperation{{
+			Op:    op,
+			Path:  path,
+			Value: value,
+		}},
+	}
+
+	patchDoc := patch.Document()
+
+	if !sctx.PrivateKey.IsZero() {
+		sig := NewDocumentSignature(sctx.PrivateKey, NewDocumentHash(patchDoc))
+		patchDoc.Metadata.Signature = sig
+	}
+
+	// TODO(geoah) should we store the doc here?
+
+	return patchDoc, nil
 }

@@ -2,8 +2,8 @@ package nimona
 
 import (
 	"context"
+	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -93,6 +93,11 @@ func TestExample_Graph(t *testing.T) {
 		err = docStore.PutDocument(profileDoc)
 		require.NoError(t, err)
 
+		// verify that the document is in the store
+		gotDoc, err := docStore.GetDocument(profileDocID)
+		require.NoError(t, err)
+		EqualDocument(t, profileDoc, gotDoc)
+
 		// publish profile
 		ctx := context.Background()
 		prv := FromAlias(IdentityAlias{Hostname: "nimona.dev"})
@@ -100,25 +105,22 @@ func TestExample_Graph(t *testing.T) {
 		require.NoError(t, err)
 
 		// create profile patch
-		leaves, seq, err := docStore.GetDocumentLeaves(profileDocID)
+		profilePatch, err := docStore.CreatePatch(
+			profileDocID,
+			"replace",
+			"displayName",
+			tilde.String("John Doe"),
+			SigningContext{
+				Identity:   rctx.Identity,
+				PrivateKey: rctx.PrivateKey,
+			},
+		)
 		require.NoError(t, err)
 
-		profilePatch := &DocumentPatch{
-			Metadata: Metadata{
-				Owner:     rctx.Identity,
-				Root:      &profileDocID,
-				Parents:   leaves,
-				Sequence:  seq + 1,
-				Timestamp: time.Now().Format(time.RFC3339),
-			},
-			Operations: []DocumentPatchOperation{{
-				Op:    "replace",
-				Path:  "displayName",
-				Value: tilde.String("John Doe"),
-			}},
-		}
-		profilePatchDoc := profilePatch.Document()
-		err = RequestDocumentStore(ctx, csm, rctx, profilePatchDoc, prv)
+		fmt.Println("profilePatch")
+		DumpDocument(profilePatch)
+
+		err = RequestDocumentStore(ctx, csm, rctx, profilePatch, prv)
 		require.NoError(t, err)
 	})
 

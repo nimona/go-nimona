@@ -34,7 +34,7 @@ func NewTestDocumentStore(t *testing.T) *DocumentStore {
 }
 
 func TestDocumentStore(t *testing.T) {
-	// Set up test DB
+	// Set up test store
 	store := NewTestDocumentStore(t)
 
 	// Create a document
@@ -66,7 +66,7 @@ func TestDocumentStore(t *testing.T) {
 }
 
 func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
-	// Set up test DB
+	// Set up test store
 	store := NewTestDocumentStore(t)
 
 	// Create an entry
@@ -93,7 +93,7 @@ func TestDocumentStore_GetDocumentsByRootID(t *testing.T) {
 }
 
 func TestDocumentStore_GetDocumentsByType(t *testing.T) {
-	// Set up test DB
+	// Set up test store
 	store := NewTestDocumentStore(t)
 
 	// Create documents
@@ -135,7 +135,7 @@ func TestDocumentStore_GetDocumentsByType(t *testing.T) {
 }
 
 func TestDocumentStore_GetDocumentLeaves_Empty(t *testing.T) {
-	// Set up test DB
+	// Set up test store
 	store := NewTestDocumentStore(t)
 
 	idPtr := func(id DocumentID) *DocumentID {
@@ -163,7 +163,7 @@ func TestDocumentStore_GetDocumentLeaves_Empty(t *testing.T) {
 }
 
 func TestDocumentStore_GetDocumentLeaves(t *testing.T) {
-	// Set up test DB
+	// Set up test store
 	store := NewTestDocumentStore(t)
 
 	idPtr := func(id DocumentID) *DocumentID {
@@ -272,4 +272,94 @@ func TestDocumentStore_Aggregate_Apply(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(res))
 	require.Equal(t, patch4doc, res[0])
+}
+
+func TestDocumentStore_CreatePatch(t *testing.T) {
+	// Set up test store
+	store := NewTestDocumentStore(t)
+
+	idPtr := func(id DocumentID) *DocumentID {
+		return &id
+	}
+
+	// Create a graph
+	// One
+	//  | \
+	// Two Three
+	//
+
+	docOne := NewTestDocument(t)
+	docOneID := idPtr(NewDocumentID(docOne))
+
+	err := store.PutDocument(docOne)
+	require.NoError(t, err)
+
+	docTwo := NewTestDocument(t)
+	docTwo.Metadata.Root = docOneID
+	docTwo.Metadata.Parents = []DocumentID{*docOneID}
+	docTwo.Metadata.Sequence = 1
+	docTwoID := idPtr(NewDocumentID(docTwo))
+
+	err = store.PutDocument(docTwo)
+	require.NoError(t, err)
+
+	docThree := NewTestDocument(t)
+	docThree.Metadata.Root = docOneID
+	docThree.Metadata.Parents = []DocumentID{*docOneID}
+	docThree.Metadata.Sequence = 1
+	docThreeID := idPtr(NewDocumentID(docThree))
+
+	err = store.PutDocument(docThree)
+	require.NoError(t, err)
+
+	// Create a new keygraph, keys, and identity
+	kg, kpc, _ := NewTestKeyGraph(t)
+	require.NoError(t, err)
+
+	id := NewIdentity("test", kg)
+
+	// Create a patch
+	patchDoc, err := store.CreatePatch(
+		*docOneID,
+		"replace",
+		"foo",
+		tilde.String("bar"),
+		SigningContext{
+			Identity:   id,
+			PrivateKey: kpc.PrivateKey,
+		},
+	)
+	require.NoError(t, err)
+
+	expDoc := tilde.Map{
+		"$type": tilde.String("core/stream/patch"),
+		"$metadata": tilde.Map{
+			"owner": id.Map(),
+			"root":  docOneID.Map(),
+			"parents": tilde.List{
+				docTwoID.Map(),
+				docThreeID.Map(),
+			},
+			"sequence": tilde.Uint64(2),
+		},
+		"operations": tilde.List{
+			tilde.Map{
+				"op":    tilde.String("replace"),
+				"path":  tilde.String("foo"),
+				"value": tilde.String("bar"),
+			},
+		},
+	}
+
+	// Check timestamp and signature exist
+	require.NotEmpty(t, patchDoc.Metadata.Timestamp)
+	require.NotEmpty(t, patchDoc.Metadata.Signature)
+
+	// And remove them for the comparison
+	patchDoc.Metadata.Timestamp = ""
+	patchDoc.Metadata.Signature = nil
+
+	DumpDocument(patchDoc)
+
+	require.EqualValues(t, expDoc, patchDoc.Map())
 }
