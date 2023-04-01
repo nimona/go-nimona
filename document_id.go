@@ -3,7 +3,6 @@ package nimona
 import (
 	"database/sql/driver"
 	"fmt"
-	"strings"
 )
 
 type (
@@ -17,21 +16,6 @@ func NewDocumentID(m *Document) DocumentID {
 	return DocumentID{
 		DocumentHash: NewDocumentHash(m),
 	}
-}
-
-func ParseDocumentID(pID string) (DocumentID, error) {
-	prefix := string(ShorthandDocumentID)
-	if !strings.HasPrefix(pID, prefix) {
-		return DocumentID{}, fmt.Errorf("invalid resource id")
-	}
-
-	pID = strings.TrimPrefix(pID, prefix)
-	hash, err := ParseDocumentHash(pID)
-	if err != nil {
-		return DocumentID{}, fmt.Errorf("invalid resource id")
-	}
-
-	return DocumentID{DocumentHash: hash}, nil
 }
 
 func (p DocumentID) String() string {
@@ -58,7 +42,7 @@ func (p *DocumentID) Scan(value interface{}) error {
 		return nil
 	}
 	if docIDString, ok := value.(string); ok {
-		docID, err := ParseDocumentID(docIDString)
+		docID, err := ParseDocumentNRI(docIDString)
 		if err != nil {
 			return fmt.Errorf("unable to scan into DocumentID: %w", err)
 		}

@@ -10,7 +10,7 @@ import (
 func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
 	expIdentityShort := "nimona://id:CFCPKiBrMMtdG7hwpFHv32jiAeLFKzu9ML3iuvMmGVkf"
 
-	expKeyGraphID, err := ParseDocumentID("nimona://doc:CFCPKiBrMMtdG7hwpFHv32jiAeLFKzu9ML3iuvMmGVkf")
+	expKeyGraphID, err := ParseDocumentNRI("nimona://doc:CFCPKiBrMMtdG7hwpFHv32jiAeLFKzu9ML3iuvMmGVkf")
 	require.NoError(t, err)
 
 	expAsimovPublicKey, err := ParsePublicKey("AqYceSpfuEWsg6LNKqc1rPn232MLuNYsPcXJ1zhobMVG")

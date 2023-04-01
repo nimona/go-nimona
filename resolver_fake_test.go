@@ -7,7 +7,7 @@ import (
 )
 
 func TestResolverFake_ResolveIdentityAlias_E2E(t *testing.T) {
-	expKeyGraphID, err := ParseDocumentID("nimona://doc:2ySDAozmRvfceoHQB1wcABQTzBYfaFydsprLEDPasGP4")
+	expKeyGraphID, err := ParseDocumentNRI("nimona://doc:2ySDAozmRvfceoHQB1wcABQTzBYfaFydsprLEDPasGP4")
 	require.NoError(t, err)
 
 	expAsimovPublicKey, err := ParsePublicKey("9BfGM1GnGZXRvqVdpJUamdTLrmziAbdA8QZB1eMVYmoi")
