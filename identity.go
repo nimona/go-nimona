@@ -109,7 +109,7 @@ func (i *Identity) Scan(value interface{}) error {
 		return nil
 	}
 	if idString, ok := value.(string); ok {
-		id, err := ParseIdentity(idString)
+		id, err := ParseIdentityNRI(idString)
 		if err != nil {
 			return fmt.Errorf("unable to scan into IdentityID: %w", err)
 		}
@@ -117,20 +117,4 @@ func (i *Identity) Scan(value interface{}) error {
 		return nil
 	}
 	return fmt.Errorf("unable to scan into IdentityID")
-}
-
-func ParseIdentity(id string) (*Identity, error) {
-	t := string(ShorthandIdentity)
-	if !strings.HasPrefix(id, t) {
-		return nil, fmt.Errorf("invalid resource id")
-	}
-
-	id = strings.TrimPrefix(id, t)
-	dh, err := ParseDocumentHash(id)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse identity id: %w", err)
-	}
-	return &Identity{
-		KeyGraph: dh,
-	}, nil
 }

@@ -68,12 +68,6 @@ func TestIdentity(t *testing.T) {
 	id := NewTestIdentity(t)
 	require.Equal(t, id.String(), id.String())
 
-	t.Run("parse", func(t *testing.T) {
-		id, err := ParseIdentity(id.String())
-		require.NoError(t, err)
-		require.Equal(t, id.String(), id.String())
-	})
-
 	t.Run("value/scan", func(t *testing.T) {
 		val, err := id.Value()
 		require.NoError(t, err)
