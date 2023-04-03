@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mitchellh/copystructure"
+
 	"nimona.io/tilde"
 )
 
@@ -88,9 +90,15 @@ func (doc *Document) Type() string {
 }
 
 func (doc *Document) Copy() *Document {
-	return &Document{
-		data: tilde.Copy(doc.data),
+	newMeta, err := copystructure.Copy(doc.Metadata)
+	if err != nil {
+		panic(fmt.Errorf("error copying metadata: %w", err))
 	}
+	newDoc := &Document{
+		Metadata: newMeta.(Metadata),
+		data:     tilde.Copy(doc.data),
+	}
+	return newDoc
 }
 
 func (doc *Document) Document() *Document {
