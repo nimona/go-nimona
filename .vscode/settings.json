@@ -6,7 +6,7 @@
         "files.insertFinalNewline": true,
     },
 
-    // Go Language Server
+    // Golang
     "gopls": {
         "ui.diagnostic.staticcheck": true,
         "formatting.gofumpt": true,
@@ -15,8 +15,7 @@
         // https://github.com/golang/go/issues/29202
         "buildFlags": ["-tags=integration"],
     },
-
-    // Golang linter
+    "go.formatTool": "gofumpt",
     "go.lintTool":"golangci-lint",
     "go.lintFlags": [
       "--fast"
@@ -37,8 +36,6 @@
     "files.exclude": {
         ".vscode": true,
         ".gitignore": true,
-        ".devbox": true,
-        "devbox.json": true,
     },
     "explorer.sortOrder": "type",
 }
