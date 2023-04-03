@@ -2,6 +2,7 @@ package nimona
 
 import (
 	"testing"
+	"time"
 
 	_ "modernc.org/sqlite"
 
@@ -362,4 +363,28 @@ func TestDocumentStore_CreatePatch(t *testing.T) {
 	DumpDocument(patchDoc)
 
 	require.EqualValues(t, expDoc, patchDoc.Map())
+}
+
+func TestDocumentStore_Subscribe(t *testing.T) {
+	// Set up test store
+	store := NewTestDocumentStore(t)
+
+	docOne := NewTestDocument(t)
+
+	sub := store.Subscribe(func(doc *Document) bool {
+		return doc.Type() == "test/fixture"
+	})
+
+	err := store.PutDocument(docOne)
+	require.NoError(t, err)
+
+	var gotDoc *Document
+
+	select {
+	case gotDoc = <-sub.Channel():
+	case <-time.After(1 * time.Second):
+		require.Fail(t, "timed out waiting for document")
+	}
+
+	EqualDocument(t, docOne, gotDoc)
 }

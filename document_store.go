@@ -7,6 +7,7 @@ import (
 	reflect "reflect"
 	"time"
 
+	"github.com/geoah/go-pubsub"
 	"gorm.io/gorm"
 
 	"nimona.io/internal/kv"
@@ -41,11 +42,12 @@ type (
 )
 
 type DocumentStore struct {
-	documents  kv.Store[DocumentHash, *Document]
-	edges      kv.Store[keyEdge, *vallueEdge]
-	types      kv.Store[keyTypeIndex, *DocumentHash]
-	graphs     kv.Store[keyGraphIndex, *DocumentHash]
-	aggregates kv.Store[keyAggregate, *[]byte]
+	documents     kv.Store[DocumentHash, *Document]
+	edges         kv.Store[keyEdge, *vallueEdge]
+	types         kv.Store[keyTypeIndex, *DocumentHash]
+	graphs        kv.Store[keyGraphIndex, *DocumentHash]
+	aggregates    kv.Store[keyAggregate, *[]byte]
+	subscriptions *pubsub.Topic[*Document]
 }
 
 type (
@@ -94,17 +96,20 @@ func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 	}
 
 	s := &DocumentStore{
-		documents:  docStore,
-		edges:      edgeStore,
-		types:      typeStore,
-		graphs:     graphStore,
-		aggregates: aggregateStore,
+		documents:     docStore,
+		edges:         edgeStore,
+		types:         typeStore,
+		graphs:        graphStore,
+		aggregates:    aggregateStore,
+		subscriptions: pubsub.NewTopic[*Document](),
 	}
 
 	return s, nil
 }
 
 func (s *DocumentStore) PutDocument(doc *Document) error {
+	doc = doc.Copy()
+
 	docID := NewDocumentID(doc)
 	rootID := doc.Metadata.Root
 
@@ -125,6 +130,7 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 	}
 
 	if doc.Metadata.Root == nil {
+		go s.subscriptions.Publish(doc)
 		return nil
 	}
 
@@ -165,6 +171,7 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 		}
 	}
 
+	go s.subscriptions.Publish(doc)
 	return nil
 }
 
@@ -409,4 +416,10 @@ func (s *DocumentStore) CreatePatch(
 	// TODO(geoah) should we store the doc here?
 
 	return patchDoc, nil
+}
+
+func (s *DocumentStore) Subscribe(
+	filters ...func(*Document) bool,
+) *pubsub.Subscription[*Document] {
+	return s.subscriptions.Subscribe(filters...)
 }
