@@ -89,12 +89,12 @@ func GenerateDocumentMethods(fname, pkg string, types ...interface{}) error {
 	}
 
 	// Gather imports
-	imports := map[string]struct{}{}
+	imports := map[string]string{}
 
 	// Construct the values
 	values := struct {
 		Package string
-		Imports map[string]struct{} // pkgpath -> alias
+		Imports map[string]string // pkgpath -> alias
 		Types   []*DocumentInfo
 	}{
 		Package: pkg,
@@ -108,6 +108,12 @@ func GenerateDocumentMethods(fname, pkg string, types ...interface{}) error {
 			Funcs(template.FuncMap{
 				"typeName": func(t reflect.Type) string {
 					return strings.TrimPrefix(t.String(), pkg+".")
+				},
+				"nimonaPkg": func() string {
+					if pkg == "nimona" {
+						return ""
+					}
+					return "nimona."
 				},
 			}).
 			Parse(tpl))
@@ -336,6 +342,9 @@ import (
 	"{{ $pkgPath }}"
 	{{ end }}
 
+	{{- if nimonaPkg }}
+	"nimona.io"
+	{{- end }}
 	"nimona.io/tilde"
 )
 
@@ -343,8 +352,8 @@ var _ = zero.IsZeroVal
 var _ = tilde.NewScanner
 
 {{- range .Types }}
-func (t *{{ .Name }}) Document() *Document {
-	return NewDocument(t.Map())
+func (t *{{ .Name }}) Document() *{{ nimonaPkg }}Document {
+	return {{ nimonaPkg }}NewDocument(t.Map())
 }
 
 func (t *{{ .Name }}) Map() tilde.Map {
@@ -401,7 +410,7 @@ func (t *{{ .Name }}) Map() tilde.Map {
 	return m
 }
 
-func (t *{{ .Name }}) FromDocument(d *Document) error {
+func (t *{{ .Name }}) FromDocument(d *{{ nimonaPkg }}Document) error {
 	return t.FromMap(d.Map())
 }
 
@@ -439,7 +448,7 @@ func (t *{{ .Name }}) FromMap(d tilde.Map) error {
 							{{- else }}
 								e := {{ typeName .ElemType }}{}
 							{{- end }}
-							d := NewDocument(v)
+							d := {{ nimonaPkg }}NewDocument(v)
 							e.FromDocument(d)
 							sm = append(sm, e)
 						}
@@ -452,14 +461,14 @@ func (t *{{ .Name }}) FromMap(d tilde.Map) error {
 		{{- else if eq .Type.String "nimona.Document" }}
 			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Map); ok {
-					t.{{ .Name }} = NewDocument(v)
+					t.{{ .Name }} = {{ nimonaPkg }}NewDocument(v)
 				}
 			}
 		{{- else if .IsStruct }}
 			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Map); ok {
 					e := {{ typeName .Type }}{}
-					d := NewDocument(v)
+					d := {{ nimonaPkg }}NewDocument(v)
 					e.FromDocument(d)
 					{{- if .IsPointer }}
 						t.{{ .Name }} = &e
