@@ -78,7 +78,7 @@ type (
 	Uint64 uint64
 	String string
 	Bytes  []byte
-	Ref    []byte
+	Ref    [32]byte
 	Bool   bool
 	Map    map[string]Value
 	List   []Value
@@ -131,6 +131,8 @@ func (k ValueKind) Name() string {
 		return "List"
 	case KindMap:
 		return "Map"
+	case KindRef:
+		return "Ref"
 	case KindAny:
 		return "Value"
 	}
@@ -153,6 +155,8 @@ func (k ValueKind) Hint() Hint {
 		return HintList
 	case KindMap:
 		return HintMap
+	case KindRef:
+		return HintRef
 	case KindAny:
 		return HintAny
 	}
@@ -369,6 +373,10 @@ func (l List) appendPath(path string, value Value) (List, error) {
 	default:
 		return l, fmt.Errorf("index %d is not a map or list", v)
 	}
+}
+
+func (r Ref) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r[:])
 }
 
 func (m *Map) UnmarshalJSON(data []byte) error {

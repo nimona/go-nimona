@@ -75,7 +75,9 @@ func unmarshalValue(v *fastjson.Value, nextHints ...Hint) (Value, error) {
 			if err != nil {
 				return nil, fmt.Errorf("error unmarshaling ref: %w", err)
 			}
-			return Ref(nb), nil
+			nbf := [32]byte{}
+			copy(nbf[:], nb)
+			return Ref(nbf), nil
 		case HintBytes:
 			nb, err := v.StringBytes()
 			if err != nil {

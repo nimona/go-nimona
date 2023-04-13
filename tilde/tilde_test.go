@@ -2,6 +2,7 @@ package tilde
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -60,13 +61,20 @@ var testMap = Map{
 	},
 }
 
+var (
+	testRefFoo [32]byte = [32]byte{1, 2, 3}
+	testRefBar [32]byte = [32]byte{4, 5, 6}
+	testRefBaz [32]byte = [32]byte{7, 8, 9}
+	testRefQux [32]byte = [32]byte{10, 11, 12}
+)
+
 var testMapComplete = Map{
 	"s": String("bar"),
 	"i": Int64(-42),
 	"u": Uint64(42),
 	"b": Bool(true),
 	"d": Bytes([]byte("bar")),
-	"r": Ref("foo"),
+	"r": Ref(testRefFoo),
 	"m": Map{
 		"s": String("qux"),
 	},
@@ -91,8 +99,8 @@ var testMapComplete = Map{
 		Bytes([]byte("bar")),
 	},
 	"ar": List{
-		Ref("foo"),
-		Ref("bar"),
+		Ref(testRefFoo),
+		Ref(testRefBar),
 	},
 	"am": List{
 		Map{
@@ -156,16 +164,16 @@ var testMapComplete = Map{
 	},
 	"aar": List{
 		List{
-			Ref("foo"),
-			Ref("bar"),
+			Ref(testRefFoo),
+			Ref(testRefBar),
 		},
 		List{
-			Ref("bar"),
-			Ref("foo"),
+			Ref(testRefBar),
+			Ref(testRefFoo),
 		},
 		List{
-			Ref("foobar"),
-			Ref("foobaz"),
+			Ref(testRefBaz),
+			Ref(testRefQux),
 		},
 	},
 	"aam": List{
@@ -440,6 +448,8 @@ func TestKind(t *testing.T) {
 func TestJSON_Unmarshal(t *testing.T) {
 	testJSON, err := json.MarshalIndent(testMapComplete, "", "  ")
 	require.NoError(t, err)
+
+	fmt.Println(string(testJSON))
 
 	t.Run("Unmarshal", func(t *testing.T) {
 		var got Map
