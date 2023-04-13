@@ -36,13 +36,13 @@ func (t *IdentityInfo) Map() tilde.Map {
 		}
 	}
 
-	// # t.KeyGraphID
+	// # t.KeygraphID
 	//
-	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// Type: nimona.KeygraphID, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if !zero.IsZeroVal(t.KeyGraphID) {
-			m.Set("keygraph", tilde.Ref(t.KeyGraphID))
+		if !zero.IsZeroVal(t.KeygraphID) {
+			m.Set("keygraph", tilde.Ref(t.KeygraphID))
 		}
 	}
 
@@ -89,14 +89,14 @@ func (t *IdentityInfo) FromMap(d tilde.Map) error {
 		}
 	}
 
-	// # t.KeyGraphID
+	// # t.KeygraphID
 	//
-	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// Type: nimona.KeygraphID, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if v, err := d.Get("keygraph"); err == nil {
 			if v, ok := v.(tilde.Ref); ok {
-				t.KeyGraphID = KeyGraphID(v)
+				t.KeygraphID = KeygraphID(v)
 			}
 		}
 	}
@@ -200,11 +200,11 @@ func (t *IdentityAlias) FromMap(d tilde.Map) error {
 
 	return nil
 }
-func (t *KeyGraph) Document() *Document {
+func (t *Keygraph) Document() *Document {
 	return NewDocument(t.Map())
 }
 
-func (t *KeyGraph) Map() tilde.Map {
+func (t *Keygraph) Map() tilde.Map {
 	m := tilde.Map{}
 
 	// # t.$type
@@ -250,12 +250,12 @@ func (t *KeyGraph) Map() tilde.Map {
 	return m
 }
 
-func (t *KeyGraph) FromDocument(d *Document) error {
+func (t *Keygraph) FromDocument(d *Document) error {
 	return t.FromMap(d.Map())
 }
 
-func (t *KeyGraph) FromMap(d tilde.Map) error {
-	*t = KeyGraph{}
+func (t *Keygraph) FromMap(d tilde.Map) error {
+	*t = Keygraph{}
 
 	// # t.Keys
 	//

@@ -7,7 +7,7 @@ import (
 func Test_Profile(t *testing.T) {
 	p := &Profile{
 		Metadata: Metadata{
-			Owner: NewTestKeyGraphID(t),
+			Owner: NewTestKeygraphID(t),
 		},
 		DisplayName: "test",
 	}

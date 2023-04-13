@@ -314,7 +314,7 @@ func TestDocumentStore_CreatePatch(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create a new keygraph, keys, and identity
-	kg, kpc, _ := NewTestKeyGraph(t)
+	kg, kpc, _ := NewTestKeygraph(t)
 	require.NoError(t, err)
 
 	// Create a patch
@@ -324,7 +324,7 @@ func TestDocumentStore_CreatePatch(t *testing.T) {
 		"foo",
 		tilde.String("bar"),
 		SigningContext{
-			KeyGraphID: kg.ID(),
+			KeygraphID: kg.ID(),
 			PrivateKey: kpc.PrivateKey,
 		},
 	)

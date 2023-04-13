@@ -2,13 +2,13 @@ package nimona
 
 // TODO(geoah) refactor to use IdentityStore
 type RequestContext struct {
-	KeyGraphID    KeyGraphID
+	KeygraphID    KeygraphID
 	PublicKey     PublicKey
 	PrivateKey    PrivateKey
 	DocumentStore *DocumentStore
 }
 
 type SigningContext struct {
-	KeyGraphID KeyGraphID
+	KeygraphID KeygraphID
 	PrivateKey PrivateKey
 }

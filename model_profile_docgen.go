@@ -46,13 +46,13 @@ func (t *Profile) Map() tilde.Map {
 		}
 	}
 
-	// # t.KeyGraphID
+	// # t.KeygraphID
 	//
-	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// Type: nimona.KeygraphID, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if !zero.IsZeroVal(t.KeyGraphID) {
-			m.Set("keygraphID", tilde.Ref(t.KeyGraphID))
+		if !zero.IsZeroVal(t.KeygraphID) {
+			m.Set("keygraphID", tilde.Ref(t.KeygraphID))
 		}
 	}
 
@@ -123,14 +123,14 @@ func (t *Profile) FromMap(d tilde.Map) error {
 		}
 	}
 
-	// # t.KeyGraphID
+	// # t.KeygraphID
 	//
-	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// Type: nimona.KeygraphID, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if v, err := d.Get("keygraphID"); err == nil {
 			if v, ok := v.(tilde.Ref); ok {
-				t.KeyGraphID = KeyGraphID(v)
+				t.KeygraphID = KeygraphID(v)
 			}
 		}
 	}
@@ -232,13 +232,13 @@ func (t *ProfileRepository) Map() tilde.Map {
 		}
 	}
 
-	// # t.KeyGraphID
+	// # t.KeygraphID
 	//
-	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// Type: nimona.KeygraphID, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if !zero.IsZeroVal(t.KeyGraphID) {
-			m.Set("keygraphID", tilde.Ref(t.KeyGraphID))
+		if !zero.IsZeroVal(t.KeygraphID) {
+			m.Set("keygraphID", tilde.Ref(t.KeygraphID))
 		}
 	}
 
@@ -326,14 +326,14 @@ func (t *ProfileRepository) FromMap(d tilde.Map) error {
 		}
 	}
 
-	// # t.KeyGraphID
+	// # t.KeygraphID
 	//
-	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// Type: nimona.KeygraphID, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if v, err := d.Get("keygraphID"); err == nil {
 			if v, ok := v.(tilde.Ref); ok {
-				t.KeyGraphID = KeyGraphID(v)
+				t.KeygraphID = KeygraphID(v)
 			}
 		}
 	}

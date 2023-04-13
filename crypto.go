@@ -123,7 +123,7 @@ func SignDocument(rctx *RequestContext, doc *Document) {
 	}
 
 	if doc.Metadata.Owner.IsEmpty() {
-		doc.Metadata.Owner = rctx.KeyGraphID
+		doc.Metadata.Owner = rctx.KeygraphID
 	}
 
 	doc.Metadata.Signature = NewDocumentSignature(

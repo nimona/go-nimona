@@ -192,7 +192,7 @@ func documentType(i interface{}) (*DocumentInfo, error) {
 		}
 
 		switch t.Name() {
-		case "DocumentHash", "KeyGraphID":
+		case "DocumentHash", "KeygraphID":
 			return tilde.KindRef, nil
 		}
 

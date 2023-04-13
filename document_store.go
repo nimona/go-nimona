@@ -393,7 +393,7 @@ func (s *DocumentStore) CreatePatch(
 
 	patch := &DocumentPatch{
 		Metadata: Metadata{
-			Owner:     sctx.KeyGraphID,
+			Owner:     sctx.KeygraphID,
 			Root:      &docID,
 			Parents:   leaves,
 			Sequence:  maxSeq + 1,

@@ -23,7 +23,7 @@ type SessionManager struct {
 	resolver   Resolver
 	aliases    xsync.Map[IdentityAlias, *IdentityInfo]
 	providers  xsync.Map[IdentityAlias, *IdentityInfo]
-	identities xsync.Map[KeyGraphID, *IdentityInfo]
+	identities xsync.Map[KeygraphID, *IdentityInfo]
 }
 
 type RequestHandlerFunc func(context.Context, *Request) error
@@ -123,7 +123,7 @@ type RequestRecipientFn func(*requestRecipient)
 
 type requestRecipient struct {
 	Alias      *IdentityAlias
-	KeyGraphID KeyGraphID
+	KeygraphID KeygraphID
 	PeerAddr   *PeerAddr
 }
 
@@ -133,9 +133,9 @@ func FromAlias(alias IdentityAlias) RequestRecipientFn {
 	}
 }
 
-func FromIdentity(id KeyGraphID) RequestRecipientFn {
+func FromIdentity(id KeygraphID) RequestRecipientFn {
 	return func(r *requestRecipient) {
-		r.KeyGraphID = id
+		r.KeygraphID = id
 	}
 }
 
@@ -156,8 +156,8 @@ func (cm *SessionManager) Request(
 	switch {
 	case rec.Alias != nil:
 		return cm.requestFromAlias(ctx, *rec.Alias, req)
-	case !rec.KeyGraphID.IsEmpty():
-		return cm.requestFromIdentity(ctx, rec.KeyGraphID, req)
+	case !rec.KeygraphID.IsEmpty():
+		return cm.requestFromIdentity(ctx, rec.KeygraphID, req)
 	case rec.PeerAddr != nil:
 		return cm.requestFromPeerAddr(ctx, *rec.PeerAddr, req)
 	default:
@@ -176,12 +176,12 @@ func (cm *SessionManager) requestFromAlias(
 		return nil, fmt.Errorf("error looking up alias %s: %w", alias, err)
 	}
 
-	return cm.requestFromIdentity(ctx, info.KeyGraphID, req)
+	return cm.requestFromIdentity(ctx, info.KeygraphID, req)
 }
 
 func (cm *SessionManager) requestFromIdentity(
 	ctx context.Context,
-	id KeyGraphID,
+	id KeygraphID,
 	req *Document,
 ) (*Response, error) {
 	// resolve the identity
@@ -313,18 +313,18 @@ func (cm *SessionManager) LookupAlias(alias IdentityAlias) (*IdentityInfo, error
 	}
 
 	cm.aliases.Store(alias, identityInfo)
-	cm.identities.Store(identityInfo.KeyGraphID, identityInfo)
+	cm.identities.Store(identityInfo.KeygraphID, identityInfo)
 
 	// TODO add recursive lookup for user identities
 	// TODO(geoah): fix "use"
-	// if identityInfo.KeyGraphID.Use == "provider" {
+	// if identityInfo.KeygraphID.Use == "provider" {
 	// 	cm.providers.Store(alias, identityInfo)
 	// }
 
 	return identityInfo, nil
 }
 
-func (cm *SessionManager) LookupIdentity(id KeyGraphID) (*IdentityInfo, error) {
+func (cm *SessionManager) LookupIdentity(id KeygraphID) (*IdentityInfo, error) {
 	if info, ok := cm.identities.Load(id); ok {
 		return info, nil
 	}
@@ -364,7 +364,7 @@ func (cm *SessionManager) LookupIdentity(id KeyGraphID) (*IdentityInfo, error) {
 	}
 
 	// TODO(geoah): fix "use"
-	// if identityInfo.KeyGraphID.Use == "provider" {
+	// if identityInfo.KeygraphID.Use == "provider" {
 	// 	cm.providers.Store(identityInfo.Alias, identityInfo)
 	// }
 

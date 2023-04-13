@@ -9,14 +9,14 @@ import (
 )
 
 type IdentityStoreInterface interface {
-	NewKeyGraph() (*KeyGraph, error)
-	GetKeyGraph(KeyGraphID) (*KeyGraph, error)
-	GetKeyPairs(KeyGraphID) (KeyPair, KeyPair, error)
-	SignDocument(KeyGraphID, *Document) (*Document, error)
+	NewKeygraph() (*Keygraph, error)
+	GetKeygraph(KeygraphID) (*Keygraph, error)
+	GetKeyPairs(KeygraphID) (KeyPair, KeyPair, error)
+	SignDocument(KeygraphID, *Document) (*Document, error)
 }
 
-func NewKeyGraphStore(db *gorm.DB) (*KeyGraphStore, error) {
-	kgStore, err := kv.NewSQLStore[KeyGraphID, *KeyGraph](db, "keygraphs")
+func NewKeygraphStore(db *gorm.DB) (*KeygraphStore, error) {
+	kgStore, err := kv.NewSQLStore[KeygraphID, *Keygraph](db, "keygraphs")
 	if err != nil {
 		return nil, fmt.Errorf("error creating key graph store: %w", err)
 	}
@@ -24,18 +24,18 @@ func NewKeyGraphStore(db *gorm.DB) (*KeyGraphStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating key pair store: %w", err)
 	}
-	return &KeyGraphStore{
-		KeyGraphStore: kgStore,
+	return &KeygraphStore{
+		KeygraphStore: kgStore,
 		KeyPairStore:  kpStore,
 	}, nil
 }
 
-type KeyGraphStore struct {
-	KeyGraphStore kv.Store[KeyGraphID, *KeyGraph]
+type KeygraphStore struct {
+	KeygraphStore kv.Store[KeygraphID, *Keygraph]
 	KeyPairStore  kv.Store[PublicKey, *KeyPair]
 }
 
-func (p *KeyGraphStore) NewKeyGraph(use string) (*KeyGraph, error) {
+func (p *KeygraphStore) NewKeygraph(use string) (*Keygraph, error) {
 	kpc, err := GenerateKeyPair()
 	if err != nil {
 		return nil, fmt.Errorf("error generating key pair: %w", err)
@@ -46,9 +46,9 @@ func (p *KeyGraphStore) NewKeyGraph(use string) (*KeyGraph, error) {
 		return nil, fmt.Errorf("error generating key pair: %w", err)
 	}
 
-	kg := NewKeyGraph(kpc.PublicKey, kpn.PublicKey)
+	kg := NewKeygraph(kpc.PublicKey, kpn.PublicKey)
 
-	err = p.KeyGraphStore.Set(kg.ID(), kg)
+	err = p.KeygraphStore.Set(kg.ID(), kg)
 	if err != nil {
 		return nil, fmt.Errorf("error storing key graph: %w", err)
 	}
@@ -66,8 +66,8 @@ func (p *KeyGraphStore) NewKeyGraph(use string) (*KeyGraph, error) {
 	return kg, nil
 }
 
-func (p *KeyGraphStore) GetKeyGraph(id KeyGraphID) (*KeyGraph, error) {
-	kg, err := p.KeyGraphStore.Get(id)
+func (p *KeygraphStore) GetKeygraph(id KeygraphID) (*Keygraph, error) {
+	kg, err := p.KeygraphStore.Get(id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting key graph: %w", err)
 	}
@@ -76,8 +76,8 @@ func (p *KeyGraphStore) GetKeyGraph(id KeyGraphID) (*KeyGraph, error) {
 }
 
 // nolint: gocritic // unnamed result
-func (p *KeyGraphStore) GetKeyPairs(id KeyGraphID) (*KeyPair, *KeyPair, error) {
-	kg, err := p.GetKeyGraph(id)
+func (p *KeygraphStore) GetKeyPairs(id KeygraphID) (*KeyPair, *KeyPair, error) {
+	kg, err := p.GetKeygraph(id)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting key graph: %w", err)
 	}
@@ -95,7 +95,7 @@ func (p *KeyGraphStore) GetKeyPairs(id KeyGraphID) (*KeyPair, *KeyPair, error) {
 	return kpc, kpn, nil
 }
 
-func (p *KeyGraphStore) SignDocument(id KeyGraphID, doc *Document) (*Document, error) {
+func (p *KeygraphStore) SignDocument(id KeygraphID, doc *Document) (*Document, error) {
 	kpc, _, err := p.GetKeyPairs(id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting key pairs: %w", err)

@@ -8,13 +8,13 @@ import (
 
 func TestIdentityStore_E2E(t *testing.T) {
 	db := NewTestDocumentDB(t)
-	st, err := NewKeyGraphStore(db)
+	st, err := NewKeygraphStore(db)
 	require.NoError(t, err)
 
-	kg, err := st.NewKeyGraph("test")
+	kg, err := st.NewKeygraph("test")
 	require.NoError(t, err)
 
-	got, err := st.GetKeyGraph(kg.ID())
+	got, err := st.GetKeygraph(kg.ID())
 	require.NoError(t, err)
 	require.EqualValues(t, kg, got)
 

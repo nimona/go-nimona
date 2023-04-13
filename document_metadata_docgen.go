@@ -20,7 +20,7 @@ func (t *Metadata) Map() tilde.Map {
 
 	// # t.Owner
 	//
-	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// Type: nimona.KeygraphID, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Owner) {
@@ -120,12 +120,12 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 
 	// # t.Owner
 	//
-	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// Type: nimona.KeygraphID, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if v, err := d.Get("owner"); err == nil {
 			if v, ok := v.(tilde.Ref); ok {
-				t.Owner = KeyGraphID(v)
+				t.Owner = KeygraphID(v)
 			}
 		}
 	}

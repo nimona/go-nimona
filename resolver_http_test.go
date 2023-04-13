@@ -8,7 +8,7 @@ import (
 )
 
 func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
-	expKeyGraphID, err := ParseKeyGraphNRI("nimona://id:EbEZ8YXH4YvLrgG4mHCutfEi8oYhZjPrdVQZLiUa74yJ")
+	expKeygraphID, err := ParseKeygraphNRI("nimona://id:EbEZ8YXH4YvLrgG4mHCutfEi8oYhZjPrdVQZLiUa74yJ")
 	require.NoError(t, err)
 
 	expAsimovPublicKey, err := ParsePublicKey("94vLdxU9gpvmsJo1N3GXjbXqRDS53Bkeh4yPyt6cmH71")
@@ -24,7 +24,7 @@ func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
 		Alias: IdentityAlias{
 			Hostname: "nimona.dev",
 		},
-		KeyGraphID: expKeyGraphID,
+		KeygraphID: expKeygraphID,
 		PeerAddresses: []PeerAddr{{
 			Address:   "asimov.testing.reamde.dev:1013",
 			Transport: "utp",
@@ -41,11 +41,11 @@ func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
 
 	DumpDocument(got.Document())
 
-	fmt.Println(got.KeyGraphID.String())
+	fmt.Println(got.KeygraphID.String())
 	fmt.Println(got.PeerAddresses[0].PublicKey.String())
 	fmt.Println(got.PeerAddresses[1].PublicKey.String())
 
 	require.NoError(t, err)
 	require.Equal(t, exp, got)
-	require.Equal(t, expKeyGraphID, got.KeyGraphID)
+	require.Equal(t, expKeygraphID, got.KeygraphID)
 }

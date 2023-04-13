@@ -15,7 +15,7 @@ type (
 	IdentityInfo struct {
 		_             Metadata      `nimona:"$metadata,omitempty,type=core/identity.info"`
 		Alias         IdentityAlias `nimona:"alias,omitempty"`
-		KeyGraphID    KeyGraphID    `nimona:"keygraph,omitempty"`
+		KeygraphID    KeygraphID    `nimona:"keygraph,omitempty"`
 		PeerAddresses []PeerAddr    `nimona:"peerAddresses"`
 	}
 )

@@ -9,79 +9,79 @@ import (
 )
 
 type (
-	KeyGraphID DocumentHash
-	KeyGraph   struct {
+	KeygraphID DocumentHash
+	Keygraph   struct {
 		Metadata Metadata  `nimona:"$metadata,omitempty,type=core/identity"`
 		Keys     PublicKey `nimona:"keys"`
 		Next     PublicKey `nimona:"next"`
 	}
 )
 
-func NewKeyGraph(current, next PublicKey) *KeyGraph {
+func NewKeygraph(current, next PublicKey) *Keygraph {
 	// TODO(@geoah) add metadata.permissions, etc
-	return &KeyGraph{
+	return &Keygraph{
 		Keys: current,
 		Next: next,
 	}
 }
 
-func ParseKeyGraphNRI(nri string) (KeyGraphID, error) {
+func ParseKeygraphNRI(nri string) (KeygraphID, error) {
 	t := string(ShorthandIdentity)
 	if !strings.HasPrefix(nri, t) {
-		return KeyGraphID{}, fmt.Errorf("invalid keygraph nri")
+		return KeygraphID{}, fmt.Errorf("invalid keygraph nri")
 	}
 
 	nri = strings.TrimPrefix(nri, t)
 	dh, err := ParseDocumentHash(nri)
 	if err != nil {
-		return KeyGraphID{}, fmt.Errorf("unable to parse keygraph nri: %w", err)
+		return KeygraphID{}, fmt.Errorf("unable to parse keygraph nri: %w", err)
 	}
-	return KeyGraphID(dh), nil
+	return KeygraphID(dh), nil
 }
 
-func ParseKeyGraphID(s string) (KeyGraphID, error) {
+func ParseKeygraphID(s string) (KeygraphID, error) {
 	dh, err := ParseDocumentHash(s)
 	if err != nil {
-		return KeyGraphID{}, fmt.Errorf("unable to parse keygraph id: %w", err)
+		return KeygraphID{}, fmt.Errorf("unable to parse keygraph id: %w", err)
 	}
-	return KeyGraphID(dh), nil
+	return KeygraphID(dh), nil
 }
 
-func (k *KeyGraph) ID() KeyGraphID {
-	return KeyGraphID(NewDocumentHash(k.Document()))
+func (k *Keygraph) ID() KeygraphID {
+	return KeygraphID(NewDocumentHash(k.Document()))
 }
 
-func (k KeyGraphID) DocumentHash() DocumentHash {
+func (k KeygraphID) DocumentHash() DocumentHash {
 	return DocumentHash(k)
 }
 
-func (k KeyGraphID) NRI() string {
+func (k KeygraphID) NRI() string {
 	return ShorthandIdentity.String() + k.String()
 }
 
-func (k KeyGraphID) DocumentID() DocumentID {
+func (k KeygraphID) DocumentID() DocumentID {
 	return DocumentID{
 		DocumentHash: k.DocumentHash(),
 	}
 }
 
-func (k KeyGraphID) String() string {
+func (k KeygraphID) String() string {
 	return DocumentHash(k).String()
 }
 
-func (k KeyGraphID) IsEmpty() bool {
+func (k KeygraphID) IsEmpty() bool {
 	return DocumentHash(k).IsEmpty()
 }
 
-func (k KeyGraphID) TildeValue() tilde.Value {
+func (k KeygraphID) TildeValue() tilde.Value {
 	return DocumentHash(k).TildeValue()
 }
 
-func (k KeyGraphID) Value() (driver.Value, error) {
+func (k KeygraphID) Value() (driver.Value, error) {
 	return k.String(), nil
 }
 
-func (k *KeyGraphID) Scan(value interface{}) error {
+func (k *KeygraphID) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
@@ -90,7 +90,7 @@ func (k *KeyGraphID) Scan(value interface{}) error {
 		if err != nil {
 			return fmt.Errorf("unable to scan into IdentityAlias: %w", err)
 		}
-		*k = KeyGraphID(id)
+		*k = KeygraphID(id)
 		return nil
 	}
 	return fmt.Errorf("unable to scan into IdentityAlias")

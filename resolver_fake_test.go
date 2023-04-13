@@ -7,7 +7,7 @@ import (
 )
 
 func TestResolverFake_ResolveIdentityAlias_E2E(t *testing.T) {
-	expKeyGraphID, err := ParseDocumentNRI("nimona://doc:2ySDAozmRvfceoHQB1wcABQTzBYfaFydsprLEDPasGP4")
+	expKeygraphID, err := ParseDocumentNRI("nimona://doc:2ySDAozmRvfceoHQB1wcABQTzBYfaFydsprLEDPasGP4")
 	require.NoError(t, err)
 
 	expAsimovPublicKey, err := ParsePublicKey("9BfGM1GnGZXRvqVdpJUamdTLrmziAbdA8QZB1eMVYmoi")
@@ -20,7 +20,7 @@ func TestResolverFake_ResolveIdentityAlias_E2E(t *testing.T) {
 		Alias: IdentityAlias{
 			Hostname: "nimona.dev",
 		},
-		KeyGraphID: KeyGraphID(expKeyGraphID.DocumentHash),
+		KeygraphID: KeygraphID(expKeygraphID.DocumentHash),
 		PeerAddresses: []PeerAddr{{
 			Address:   "asimov.testing.reamde.dev:1013",
 			Transport: "utp",

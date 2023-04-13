@@ -13,7 +13,7 @@ import (
 func TestExample_Graph(t *testing.T) {
 	// these are considered well known for the purposes of this test
 	var providerAddress PeerAddr
-	var peerOneIdentity KeyGraphID
+	var peerOneIdentity KeygraphID
 
 	t.Run("setup server", func(t *testing.T) {
 		srvCtx := context.Background()
@@ -43,7 +43,7 @@ func TestExample_Graph(t *testing.T) {
 				Alias: IdentityAlias{
 					Hostname: "nimona.dev",
 				},
-				KeyGraphID: NewTestKeyGraphID(t),
+				KeygraphID: NewTestKeygraphID(t),
 				PeerAddresses: []PeerAddr{
 					providerAddress,
 				},
@@ -70,8 +70,8 @@ func TestExample_Graph(t *testing.T) {
 
 		// create a new request context
 		rctx := NewTestRequestContext(t)
-		rctx.KeyGraphID = NewTestKeyGraphID(t)
-		peerOneIdentity = rctx.KeyGraphID
+		rctx.KeygraphID = NewTestKeygraphID(t)
+		peerOneIdentity = rctx.KeygraphID
 
 		// construct a new document store
 		docStore := NewTestDocumentStore(t)
@@ -79,7 +79,7 @@ func TestExample_Graph(t *testing.T) {
 		// create new profile
 		profile := &Profile{
 			Metadata: Metadata{
-				Owner: rctx.KeyGraphID,
+				Owner: rctx.KeygraphID,
 			},
 		}
 		profileDoc := profile.Document()
@@ -109,7 +109,7 @@ func TestExample_Graph(t *testing.T) {
 			"displayName",
 			tilde.String("John Doe"),
 			SigningContext{
-				KeyGraphID: rctx.KeyGraphID,
+				KeygraphID: rctx.KeygraphID,
 				PrivateKey: rctx.PrivateKey,
 			},
 		)
