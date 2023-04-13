@@ -26,7 +26,7 @@ type (
 		ChildDocumentHash  DocumentHash
 		Sequence           uint64
 	}
-	keyGraphIndex struct {
+	keygraphIndex struct {
 		RootDocumentHash DocumentHash
 		DocumentHash     DocumentHash
 	}
@@ -45,7 +45,7 @@ type DocumentStore struct {
 	documents     kv.Store[DocumentHash, *Document]
 	edges         kv.Store[keyEdge, *vallueEdge]
 	types         kv.Store[keyTypeIndex, *DocumentHash]
-	graphs        kv.Store[keyGraphIndex, *DocumentHash]
+	graphs        kv.Store[keygraphIndex, *DocumentHash]
 	aggregates    kv.Store[keyAggregate, *[]byte]
 	subscriptions *pubsub.Topic[*Document]
 }
@@ -85,7 +85,7 @@ func NewDocumentStore(db *gorm.DB) (*DocumentStore, error) {
 		return nil, fmt.Errorf("error creating type store: %w", err)
 	}
 
-	graphStore, err := kv.NewSQLStore[keyGraphIndex, *DocumentHash](db, "graphs")
+	graphStore, err := kv.NewSQLStore[keygraphIndex, *DocumentHash](db, "graphs")
 	if err != nil {
 		return nil, fmt.Errorf("error creating graph store: %w", err)
 	}
@@ -135,7 +135,7 @@ func (s *DocumentStore) PutDocument(doc *Document) error {
 	}
 
 	err = s.graphs.Set(
-		keyGraphIndex{
+		keygraphIndex{
 			RootDocumentHash: rootID.DocumentHash,
 			DocumentHash:     docID.DocumentHash,
 		},
@@ -248,7 +248,7 @@ func (s *DocumentStore) GetDocumentsByType(docType string) ([]*Document, error) 
 // GetDocumentsByRootID returns all documents with the given root id, not including
 // the root document itself.
 func (s *DocumentStore) GetDocumentsByRootID(id DocumentID) ([]*Document, error) {
-	key := keyGraphIndex{
+	key := keygraphIndex{
 		RootDocumentHash: id.DocumentHash,
 	}
 	docHashes, err := s.graphs.GetPrefix(key)
