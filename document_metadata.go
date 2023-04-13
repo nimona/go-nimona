@@ -6,7 +6,7 @@ import (
 
 type (
 	Metadata struct {
-		Owner       *Identity     `nimona:"owner,omitempty"`
+		Owner       KeyGraphID    `nimona:"owner,omitempty"`
 		Permissions []Permissions `nimona:"permissions,omitempty"`
 		Timestamp   string        `nimona:"timestamp,omitempty"` // TODO: use time.Time
 		Root        *DocumentID   `nimona:"root,omitempty"`

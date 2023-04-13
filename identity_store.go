@@ -9,14 +9,14 @@ import (
 )
 
 type IdentityStoreInterface interface {
-	NewIdentity() (*Identity, error)
-	GetKeyGraph(*Identity) (*KeyGraph, error)
-	GetKeyPairs(*Identity) (KeyPair, KeyPair, error)
-	SignDocument(*Identity, *Document) (*Document, error)
+	NewKeyGraph() (*KeyGraph, error)
+	GetKeyGraph(KeyGraphID) (*KeyGraph, error)
+	GetKeyPairs(KeyGraphID) (KeyPair, KeyPair, error)
+	SignDocument(KeyGraphID, *Document) (*Document, error)
 }
 
-func NewIdentityStore(db *gorm.DB) (*IdentityStore, error) {
-	kgStore, err := kv.NewSQLStore[Identity, *KeyGraph](db, "keygraphs")
+func NewKeyGraphStore(db *gorm.DB) (*KeyGraphStore, error) {
+	kgStore, err := kv.NewSQLStore[KeyGraphID, *KeyGraph](db, "keygraphs")
 	if err != nil {
 		return nil, fmt.Errorf("error creating key graph store: %w", err)
 	}
@@ -24,18 +24,18 @@ func NewIdentityStore(db *gorm.DB) (*IdentityStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating key pair store: %w", err)
 	}
-	return &IdentityStore{
-		IdentityStore: kgStore,
+	return &KeyGraphStore{
+		KeyGraphStore: kgStore,
 		KeyPairStore:  kpStore,
 	}, nil
 }
 
-type IdentityStore struct {
-	IdentityStore kv.Store[Identity, *KeyGraph]
+type KeyGraphStore struct {
+	KeyGraphStore kv.Store[KeyGraphID, *KeyGraph]
 	KeyPairStore  kv.Store[PublicKey, *KeyPair]
 }
 
-func (p *IdentityStore) NewIdentity(use string) (*Identity, error) {
+func (p *KeyGraphStore) NewKeyGraph(use string) (*KeyGraph, error) {
 	kpc, err := GenerateKeyPair()
 	if err != nil {
 		return nil, fmt.Errorf("error generating key pair: %w", err)
@@ -47,9 +47,8 @@ func (p *IdentityStore) NewIdentity(use string) (*Identity, error) {
 	}
 
 	kg := NewKeyGraph(kpc.PublicKey, kpn.PublicKey)
-	id := NewIdentity(use, kg)
 
-	err = p.IdentityStore.Set(*id, kg)
+	err = p.KeyGraphStore.Set(kg.ID(), kg)
 	if err != nil {
 		return nil, fmt.Errorf("error storing key graph: %w", err)
 	}
@@ -64,11 +63,11 @@ func (p *IdentityStore) NewIdentity(use string) (*Identity, error) {
 		return nil, fmt.Errorf("error storing key pair: %w", err)
 	}
 
-	return id, nil
+	return kg, nil
 }
 
-func (p *IdentityStore) GetKeyGraph(id *Identity) (*KeyGraph, error) {
-	kg, err := p.IdentityStore.Get(*id)
+func (p *KeyGraphStore) GetKeyGraph(id KeyGraphID) (*KeyGraph, error) {
+	kg, err := p.KeyGraphStore.Get(id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting key graph: %w", err)
 	}
@@ -77,7 +76,7 @@ func (p *IdentityStore) GetKeyGraph(id *Identity) (*KeyGraph, error) {
 }
 
 // nolint: gocritic // unnamed result
-func (p *IdentityStore) GetKeyPairs(id *Identity) (*KeyPair, *KeyPair, error) {
+func (p *KeyGraphStore) GetKeyPairs(id KeyGraphID) (*KeyPair, *KeyPair, error) {
 	kg, err := p.GetKeyGraph(id)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting key graph: %w", err)
@@ -96,7 +95,7 @@ func (p *IdentityStore) GetKeyPairs(id *Identity) (*KeyPair, *KeyPair, error) {
 	return kpc, kpn, nil
 }
 
-func (p *IdentityStore) SignDocument(id *Identity, doc *Document) (*Document, error) {
+func (p *KeyGraphStore) SignDocument(id KeyGraphID, doc *Document) (*Document, error) {
 	kpc, _, err := p.GetKeyPairs(id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting key pairs: %w", err)
@@ -104,7 +103,7 @@ func (p *IdentityStore) SignDocument(id *Identity, doc *Document) (*Document, er
 
 	doc = doc.Copy()
 
-	if doc.Metadata.Owner == nil {
+	if doc.Metadata.Owner.IsEmpty() {
 		doc.Metadata.Owner = id
 	}
 

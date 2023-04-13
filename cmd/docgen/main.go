@@ -34,7 +34,6 @@ func main() {
 	addMapping("handler_peer_docgen.go", nimona.PeerCapabilitiesResponse{})
 	addMapping("handler_ping_docgen.go", nimona.Ping{})
 	addMapping("handler_ping_docgen.go", nimona.Pong{})
-	addMapping("identity_docgen.go", nimona.Identity{})
 	addMapping("identity_docgen.go", nimona.IdentityAlias{})
 	addMapping("identity_docgen.go", nimona.KeyGraph{})
 	addMapping("model_profile_docgen.go", nimona.Profile{})

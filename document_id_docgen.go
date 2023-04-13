@@ -28,11 +28,11 @@ func (t *DocumentID) Map() tilde.Map {
 
 	// # t.DocumentHash
 	//
-	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
+	// Type: nimona.DocumentHash, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.DocumentHash) {
-			m.Set("hash", tilde.Ref(t.DocumentHash[:]))
+			m.Set("hash", tilde.Ref(t.DocumentHash))
 		}
 	}
 
@@ -48,12 +48,12 @@ func (t *DocumentID) FromMap(d tilde.Map) error {
 
 	// # t.DocumentHash
 	//
-	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
+	// Type: nimona.DocumentHash, Kind: array, TildeKind: Ref
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if v, err := d.Get("hash"); err == nil {
 			if v, ok := v.(tilde.Ref); ok {
-				copy(t.DocumentHash[:], v)
+				copy(t.DocumentHash[:], v[:])
 			}
 		}
 	}

@@ -20,9 +20,7 @@ func TestResolverFake_ResolveIdentityAlias_E2E(t *testing.T) {
 		Alias: IdentityAlias{
 			Hostname: "nimona.dev",
 		},
-		Identity: Identity{
-			KeyGraph: expKeyGraphID.DocumentHash,
-		},
+		KeyGraphID: KeyGraphID(expKeyGraphID.DocumentHash),
 		PeerAddresses: []PeerAddr{{
 			Address:   "asimov.testing.reamde.dev:1013",
 			Transport: "utp",

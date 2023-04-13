@@ -89,6 +89,21 @@ func (doc *Document) Type() string {
 	return string(v)
 }
 
+func (doc *Document) Context() string {
+	if doc.data == nil {
+		return ""
+	}
+	vi, err := doc.data.Get("$ctx")
+	if err != nil {
+		return ""
+	}
+	v, ok := vi.(tilde.String)
+	if !ok {
+		return ""
+	}
+	return string(v)
+}
+
 func (doc *Document) Copy() *Document {
 	newMeta, err := copystructure.Copy(doc.Metadata)
 	if err != nil {

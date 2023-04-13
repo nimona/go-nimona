@@ -161,6 +161,8 @@ func documentType(i interface{}) (*DocumentInfo, error) {
 		Name: t.Name(),
 	}
 
+	fmt.Println("Generating", out.Name)
+
 	typeDocumentValuer := reflect.TypeOf((*DocumentValuer)(nil)).Elem()
 	typeTildeValue := reflect.TypeOf((*tilde.Value)(nil)).Elem()
 
@@ -189,7 +191,8 @@ func documentType(i interface{}) (*DocumentInfo, error) {
 			return tilde.KindAny, nil
 		}
 
-		if t.Name() == "DocumentHash" {
+		switch t.Name() {
+		case "DocumentHash", "KeyGraphID":
 			return tilde.KindRef, nil
 		}
 
@@ -379,7 +382,7 @@ func (t *{{ .Name }}) Map() tilde.Map {
 		if !zero.IsZeroVal(t.{{ .Name }}) {
 		{{- end }}
 		{{- if eq .Type.String "nimona.DocumentHash" }}
-			m.Set("{{ .Tag.Name }}", tilde.Ref(t.{{ .Name }}[:]))
+			m.Set("{{ .Tag.Name }}", tilde.Ref(t.{{ .Name }}))
 		{{- else if and .IsSlice .IsElemStruct }}
 			sm := tilde.List{}
 			for i, _ := range t.{{ .Name }} {
@@ -480,7 +483,7 @@ func (t *{{ .Name }}) FromMap(d tilde.Map) error {
 		{{- else if eq .Type.String "nimona.DocumentHash" }}
 			if v, err := d.Get("{{ .Tag.Name }}"); err == nil {
 				if v, ok := v.(tilde.Ref); ok {
-					copy(t.{{ .Name }}[:], v)
+					copy(t.{{ .Name }}[:], v[:])
 				}
 			}
 		{{- else if eq .Type.String "[]uint8" }}

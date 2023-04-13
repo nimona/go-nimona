@@ -23,7 +23,7 @@ func (t *IdentityInfo) Map() tilde.Map {
 	// Type: string, Kind: string, TildeKind: InvalidValueKind0
 	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		m.Set("$type", tilde.String("core/identity/info"))
+		m.Set("$type", tilde.String("core/identity.info"))
 	}
 
 	// # t.Alias
@@ -36,13 +36,13 @@ func (t *IdentityInfo) Map() tilde.Map {
 		}
 	}
 
-	// # t.Identity
+	// # t.KeyGraphID
 	//
-	// Type: nimona.Identity, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if !zero.IsZeroVal(t.Identity) {
-			m.Set("identity", t.Identity.Map())
+		if !zero.IsZeroVal(t.KeyGraphID) {
+			m.Set("keygraph", tilde.Ref(t.KeyGraphID))
 		}
 	}
 
@@ -89,17 +89,14 @@ func (t *IdentityInfo) FromMap(d tilde.Map) error {
 		}
 	}
 
-	// # t.Identity
+	// # t.KeyGraphID
 	//
-	// Type: nimona.Identity, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: false
+	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
-		if v, err := d.Get("identity"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				e := Identity{}
-				d := NewDocument(v)
-				e.FromDocument(d)
-				t.Identity = e
+		if v, err := d.Get("keygraph"); err == nil {
+			if v, ok := v.(tilde.Ref); ok {
+				t.KeyGraphID = KeyGraphID(v)
 			}
 		}
 	}
@@ -127,75 +124,6 @@ func (t *IdentityInfo) FromMap(d tilde.Map) error {
 		}
 		if len(sm) > 0 {
 			t.PeerAddresses = sm
-		}
-	}
-
-	return nil
-}
-func (t *Identity) Document() *Document {
-	return NewDocument(t.Map())
-}
-
-func (t *Identity) Map() tilde.Map {
-	m := tilde.Map{}
-
-	// # t.$type
-	//
-	// Type: string, Kind: string, TildeKind: InvalidValueKind0
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		m.Set("$type", tilde.String("core/identity/id"))
-	}
-
-	// # t.KeyGraph
-	//
-	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		m.Set("keyGraph", tilde.Ref(t.KeyGraph[:]))
-	}
-
-	// # t.Use
-	//
-	// Type: string, Kind: string, TildeKind: String
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		if !zero.IsZeroVal(t.Use) {
-			m.Set("type", tilde.String(t.Use))
-		}
-	}
-
-	return m
-}
-
-func (t *Identity) FromDocument(d *Document) error {
-	return t.FromMap(d.Map())
-}
-
-func (t *Identity) FromMap(d tilde.Map) error {
-	*t = Identity{}
-
-	// # t.KeyGraph
-	//
-	// Type: nimona.DocumentHash, Kind: array, TildeKind: InvalidValueKind5
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		if v, err := d.Get("keyGraph"); err == nil {
-			if v, ok := v.(tilde.Ref); ok {
-				copy(t.KeyGraph[:], v)
-			}
-		}
-	}
-
-	// # t.Use
-	//
-	// Type: string, Kind: string, TildeKind: String
-	// IsSlice: false, IsStruct: false, IsPointer: false
-	{
-		if v, err := d.Get("type"); err == nil {
-			if v, ok := v.(tilde.String); ok {
-				t.Use = string(v)
-			}
 		}
 	}
 

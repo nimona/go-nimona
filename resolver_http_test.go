@@ -8,15 +8,13 @@ import (
 )
 
 func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
-	expIdentityShort := "nimona://id:CFCPKiBrMMtdG7hwpFHv32jiAeLFKzu9ML3iuvMmGVkf"
-
-	expKeyGraphID, err := ParseDocumentNRI("nimona://doc:CFCPKiBrMMtdG7hwpFHv32jiAeLFKzu9ML3iuvMmGVkf")
+	expKeyGraphID, err := ParseKeyGraphNRI("nimona://id:EbEZ8YXH4YvLrgG4mHCutfEi8oYhZjPrdVQZLiUa74yJ")
 	require.NoError(t, err)
 
-	expAsimovPublicKey, err := ParsePublicKey("AqYceSpfuEWsg6LNKqc1rPn232MLuNYsPcXJ1zhobMVG")
+	expAsimovPublicKey, err := ParsePublicKey("94vLdxU9gpvmsJo1N3GXjbXqRDS53Bkeh4yPyt6cmH71")
 	require.NoError(t, err)
 
-	expBanksPublicKey, err := ParsePublicKey("GzjFRde8rxJrjoCKxDNtnmkxUZKPAuoLmgkqEgjJeVDe")
+	expBanksPublicKey, err := ParsePublicKey("4GNhCLJ7AMjMHEGNY5YwbVNReTyjtMpoF5E55rB2iPr3")
 	require.NoError(t, err)
 
 	alias, err := ParseIdentityAlias("nimona://id:alias:nimona.dev")
@@ -26,10 +24,7 @@ func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
 		Alias: IdentityAlias{
 			Hostname: "nimona.dev",
 		},
-		Identity: Identity{
-			KeyGraph: expKeyGraphID.DocumentHash,
-			Use:      "provider",
-		},
+		KeyGraphID: expKeyGraphID,
 		PeerAddresses: []PeerAddr{{
 			Address:   "asimov.testing.reamde.dev:1013",
 			Transport: "utp",
@@ -46,12 +41,11 @@ func TestResolverHTTP_ResolveIdentityAlias_E2E(t *testing.T) {
 
 	DumpDocument(got.Document())
 
-	fmt.Println(got.Identity.String())
-	fmt.Println(got.Identity.KeyGraph.String())
+	fmt.Println(got.KeyGraphID.String())
 	fmt.Println(got.PeerAddresses[0].PublicKey.String())
 	fmt.Println(got.PeerAddresses[1].PublicKey.String())
 
 	require.NoError(t, err)
 	require.Equal(t, exp, got)
-	require.Equal(t, expIdentityShort, got.Identity.String())
+	require.Equal(t, expKeyGraphID, got.KeyGraphID)
 }

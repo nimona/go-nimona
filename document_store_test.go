@@ -317,8 +317,6 @@ func TestDocumentStore_CreatePatch(t *testing.T) {
 	kg, kpc, _ := NewTestKeyGraph(t)
 	require.NoError(t, err)
 
-	id := NewIdentity("test", kg)
-
 	// Create a patch
 	patchDoc, err := store.CreatePatch(
 		*docOneID,
@@ -326,7 +324,7 @@ func TestDocumentStore_CreatePatch(t *testing.T) {
 		"foo",
 		tilde.String("bar"),
 		SigningContext{
-			Identity:   id,
+			KeyGraphID: kg.ID(),
 			PrivateKey: kpc.PrivateKey,
 		},
 	)
@@ -335,7 +333,7 @@ func TestDocumentStore_CreatePatch(t *testing.T) {
 	expDoc := tilde.Map{
 		"$type": tilde.String("core/stream/patch"),
 		"$metadata": tilde.Map{
-			"owner": id.Map(),
+			"owner": kg.ID().TildeValue(),
 			"root":  docOneID.Map(),
 			"parents": tilde.List{
 				docTwoID.Map(),

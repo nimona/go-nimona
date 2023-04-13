@@ -23,7 +23,7 @@ type SessionManager struct {
 	resolver   Resolver
 	aliases    xsync.Map[IdentityAlias, *IdentityInfo]
 	providers  xsync.Map[IdentityAlias, *IdentityInfo]
-	identities xsync.Map[DocumentID, *IdentityInfo]
+	identities xsync.Map[KeyGraphID, *IdentityInfo]
 }
 
 type RequestHandlerFunc func(context.Context, *Request) error
@@ -122,9 +122,9 @@ func (cm *SessionManager) connCacheKey(k PublicKey) connCacheKey {
 type RequestRecipientFn func(*requestRecipient)
 
 type requestRecipient struct {
-	Alias    *IdentityAlias
-	Identity *Identity
-	PeerAddr *PeerAddr
+	Alias      *IdentityAlias
+	KeyGraphID KeyGraphID
+	PeerAddr   *PeerAddr
 }
 
 func FromAlias(alias IdentityAlias) RequestRecipientFn {
@@ -133,9 +133,9 @@ func FromAlias(alias IdentityAlias) RequestRecipientFn {
 	}
 }
 
-func FromIdentity(identity *Identity) RequestRecipientFn {
+func FromIdentity(id KeyGraphID) RequestRecipientFn {
 	return func(r *requestRecipient) {
-		r.Identity = identity
+		r.KeyGraphID = id
 	}
 }
 
@@ -156,8 +156,8 @@ func (cm *SessionManager) Request(
 	switch {
 	case rec.Alias != nil:
 		return cm.requestFromAlias(ctx, *rec.Alias, req)
-	case rec.Identity != nil:
-		return cm.requestFromIdentity(ctx, rec.Identity, req)
+	case !rec.KeyGraphID.IsEmpty():
+		return cm.requestFromIdentity(ctx, rec.KeyGraphID, req)
 	case rec.PeerAddr != nil:
 		return cm.requestFromPeerAddr(ctx, *rec.PeerAddr, req)
 	default:
@@ -176,18 +176,18 @@ func (cm *SessionManager) requestFromAlias(
 		return nil, fmt.Errorf("error looking up alias %s: %w", alias, err)
 	}
 
-	return cm.requestFromIdentity(ctx, &info.Identity, req)
+	return cm.requestFromIdentity(ctx, info.KeyGraphID, req)
 }
 
 func (cm *SessionManager) requestFromIdentity(
 	ctx context.Context,
-	identity *Identity,
+	id KeyGraphID,
 	req *Document,
 ) (*Response, error) {
 	// resolve the identity
-	info, err := cm.LookupIdentity(NewDocumentID(identity.Document()))
+	info, err := cm.LookupIdentity(id)
 	if err != nil {
-		return nil, fmt.Errorf("error looking up identity %s: %w", identity, err)
+		return nil, fmt.Errorf("error looking up identity %s: %w", id, err)
 	}
 
 	return cm.requestFromPeerAddr(ctx, info.PeerAddresses[0], req)
@@ -313,18 +313,19 @@ func (cm *SessionManager) LookupAlias(alias IdentityAlias) (*IdentityInfo, error
 	}
 
 	cm.aliases.Store(alias, identityInfo)
-	cm.identities.Store(NewDocumentID(identityInfo.Identity.Document()), identityInfo)
+	cm.identities.Store(identityInfo.KeyGraphID, identityInfo)
 
 	// TODO add recursive lookup for user identities
-	if identityInfo.Identity.Use == "provider" {
-		cm.providers.Store(alias, identityInfo)
-	}
+	// TODO(geoah): fix "use"
+	// if identityInfo.KeyGraphID.Use == "provider" {
+	// 	cm.providers.Store(alias, identityInfo)
+	// }
 
 	return identityInfo, nil
 }
 
-func (cm *SessionManager) LookupIdentity(identityID DocumentID) (*IdentityInfo, error) {
-	if info, ok := cm.identities.Load(identityID); ok {
+func (cm *SessionManager) LookupIdentity(id KeyGraphID) (*IdentityInfo, error) {
+	if info, ok := cm.identities.Load(id); ok {
 		return info, nil
 	}
 
@@ -335,7 +336,7 @@ func (cm *SessionManager) LookupIdentity(identityID DocumentID) (*IdentityInfo, 
 
 		for _, addr := range providerInfo.PeerAddresses {
 			rctx := &RequestContext{}
-			doc, err := RequestDocument(ctx, rctx, cm, identityID, FromPeerAddr(addr))
+			doc, err := RequestDocument(ctx, rctx, cm, id.DocumentID(), FromPeerAddr(addr))
 			if err != nil {
 				continue
 			}
@@ -352,19 +353,20 @@ func (cm *SessionManager) LookupIdentity(identityID DocumentID) (*IdentityInfo, 
 	})
 
 	if identityInfo == nil {
-		return nil, fmt.Errorf("unable to resolve identity %s", identityID)
+		return nil, fmt.Errorf("unable to resolve identity %s", id)
 	}
 
-	cm.identities.Store(identityID, identityInfo)
+	cm.identities.Store(id, identityInfo)
 
 	// TODO verify the alias is indeed correct before storing or returning it
 	if identityInfo.Alias.Hostname != "" {
 		cm.aliases.Store(identityInfo.Alias, identityInfo)
 	}
 
-	if identityInfo.Identity.Use == "provider" {
-		cm.providers.Store(identityInfo.Alias, identityInfo)
-	}
+	// TODO(geoah): fix "use"
+	// if identityInfo.KeyGraphID.Use == "provider" {
+	// 	cm.providers.Store(identityInfo.Alias, identityInfo)
+	// }
 
 	return identityInfo, nil
 }

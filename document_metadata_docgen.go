@@ -20,11 +20,11 @@ func (t *Metadata) Map() tilde.Map {
 
 	// # t.Owner
 	//
-	// Type: nimona.Identity, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: true
+	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if !zero.IsZeroVal(t.Owner) {
-			m.Set("owner", t.Owner.Map())
+			m.Set("owner", tilde.Ref(t.Owner))
 		}
 	}
 
@@ -120,15 +120,12 @@ func (t *Metadata) FromMap(d tilde.Map) error {
 
 	// # t.Owner
 	//
-	// Type: nimona.Identity, Kind: struct, TildeKind: Map
-	// IsSlice: false, IsStruct: true, IsPointer: true
+	// Type: nimona.KeyGraphID, Kind: array, TildeKind: Ref
+	// IsSlice: false, IsStruct: false, IsPointer: false
 	{
 		if v, err := d.Get("owner"); err == nil {
-			if v, ok := v.(tilde.Map); ok {
-				e := Identity{}
-				d := NewDocument(v)
-				e.FromDocument(d)
-				t.Owner = &e
+			if v, ok := v.(tilde.Ref); ok {
+				t.Owner = KeyGraphID(v)
 			}
 		}
 	}

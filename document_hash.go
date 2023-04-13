@@ -16,10 +16,8 @@ import (
 
 var errDocumentHashValueIsNil = fmt.Errorf("value is nil")
 
-const hashLength = 32
-
 type (
-	DocumentHash [hashLength]byte
+	DocumentHash [32]byte
 )
 
 func (h DocumentHash) String() string {
@@ -35,6 +33,10 @@ func (h DocumentHash) IsEqual(other DocumentHash) bool {
 
 func (h DocumentHash) IsEmpty() bool {
 	return zero.IsZeroVal(h)
+}
+
+func (h DocumentHash) TildeValue() tilde.Value {
+	return tilde.Ref(h)
 }
 
 func ParseDocumentHash(s string) (DocumentHash, error) {
@@ -68,7 +70,7 @@ func NewDocumentHash(dm *Document) (h DocumentHash) {
 func documentHashAny(valueAny tilde.Value) (h []byte, err error) {
 	switch value := valueAny.(type) {
 	case tilde.Ref:
-		return []byte(value), nil
+		return value[:], nil
 	case tilde.Uint64:
 		return documentHashRaw(tilde.HintUint64, []byte(fmt.Sprintf("%d", value))), nil
 	case tilde.Int64:

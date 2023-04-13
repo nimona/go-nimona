@@ -13,7 +13,7 @@ import (
 func TestExample_Graph(t *testing.T) {
 	// these are considered well known for the purposes of this test
 	var providerAddress PeerAddr
-	var peerOneIdentity *Identity
+	var peerOneIdentity KeyGraphID
 
 	t.Run("setup server", func(t *testing.T) {
 		srvCtx := context.Background()
@@ -43,9 +43,7 @@ func TestExample_Graph(t *testing.T) {
 				Alias: IdentityAlias{
 					Hostname: "nimona.dev",
 				},
-				Identity: Identity{
-					KeyGraph: NewTestRandomDocumentHash(t),
-				},
+				KeyGraphID: NewTestKeyGraphID(t),
 				PeerAddresses: []PeerAddr{
 					providerAddress,
 				},
@@ -72,8 +70,8 @@ func TestExample_Graph(t *testing.T) {
 
 		// create a new request context
 		rctx := NewTestRequestContext(t)
-		rctx.Identity = NewTestIdentity(t)
-		peerOneIdentity = rctx.Identity
+		rctx.KeyGraphID = NewTestKeyGraphID(t)
+		peerOneIdentity = rctx.KeyGraphID
 
 		// construct a new document store
 		docStore := NewTestDocumentStore(t)
@@ -81,7 +79,7 @@ func TestExample_Graph(t *testing.T) {
 		// create new profile
 		profile := &Profile{
 			Metadata: Metadata{
-				Owner: rctx.Identity,
+				Owner: rctx.KeyGraphID,
 			},
 		}
 		profileDoc := profile.Document()
@@ -111,7 +109,7 @@ func TestExample_Graph(t *testing.T) {
 			"displayName",
 			tilde.String("John Doe"),
 			SigningContext{
-				Identity:   rctx.Identity,
+				KeyGraphID: rctx.KeyGraphID,
 				PrivateKey: rctx.PrivateKey,
 			},
 		)
@@ -177,7 +175,7 @@ func TestExample_Graph(t *testing.T) {
 		EqualDocument(t, NewDocument(tilde.Map{
 			"$type": tilde.String("core/identity/profile"),
 			"$metadata": tilde.Map{
-				"owner": peerOneIdentity.Map(),
+				"owner": peerOneIdentity.TildeValue(),
 			},
 			"displayName": tilde.String("John Doe"),
 		}), gotAggregateDoc)

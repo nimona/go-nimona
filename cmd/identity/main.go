@@ -18,18 +18,11 @@ func main() {
 		Next: nextPublic,
 	}
 
-	identity := &nimona.Identity{
-		Use: "provider",
-		KeyGraph: nimona.NewDocumentHash(
-			keyGraph.Document(),
-		),
-	}
-
 	identityInfo := nimona.IdentityInfo{
 		Alias: nimona.IdentityAlias{
 			Hostname: "nimona.dev",
 		},
-		Identity: *identity,
+		KeyGraphID: keyGraph.ID(),
 		PeerAddresses: []nimona.PeerAddr{{
 			Address:   "asimov.testing.reamde.dev:1013",
 			Transport: "utp",
@@ -44,7 +37,7 @@ func main() {
 	doc := identityInfo.Document()
 
 	rctx := &nimona.RequestContext{
-		Identity:   identity,
+		KeyGraphID: keyGraph.ID(),
 		PublicKey:  currentPublic,
 		PrivateKey: currentPrivateKey,
 	}
@@ -66,7 +59,7 @@ func main() {
 	}, "", "  ")
 	fmt.Println(string(bytes))
 
-	fmt.Println("identity", identity.String())
+	fmt.Println("keygraph id", keyGraph.ID().String())
 	fmt.Println("asimov pk", asimovPublicKey.String())
 	fmt.Println("banks pk", banksPublicKey.String())
 }
