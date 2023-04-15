@@ -55,7 +55,7 @@ func (s *SQLStore[K, V]) Set(key K, value V) error {
 	err = s.getDB().
 		Clauses(
 			clause.OnConflict{
-				DoNothing: true,
+				UpdateAll: true,
 			},
 		).
 		Create(keyValue).

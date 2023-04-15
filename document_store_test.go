@@ -4,13 +4,11 @@ import (
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite"
-
-	"nimona.io/tilde"
-
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	"nimona.io/tilde"
 )
 
 func NewTestDocumentDB(t *testing.T) *gorm.DB {
@@ -221,7 +219,7 @@ func TestDocumentStore_GetDocumentLeaves(t *testing.T) {
 	}, gotEntries)
 }
 
-func TestDocumentStore_Aggregate_Apply(t *testing.T) {
+func TestDocumentStore_Aggregates(t *testing.T) {
 	store := NewTestDocumentStore(t)
 
 	root := &Profile{
@@ -233,7 +231,11 @@ func TestDocumentStore_Aggregate_Apply(t *testing.T) {
 
 	patch1 := &DocumentPatch{
 		Metadata: Metadata{
-			Root: &rootDocID,
+			Root:     &rootDocID,
+			Sequence: 1,
+			Parents: []DocumentID{
+				rootDocID,
+			},
 		},
 		Operations: []DocumentPatchOperation{{
 			Op:    "replace",
@@ -242,37 +244,59 @@ func TestDocumentStore_Aggregate_Apply(t *testing.T) {
 		}},
 	}
 
-	patch4doc := &ProfileRepository{
+	patch1Doc := patch1.Document()
+	patch1ID := NewDocumentID(patch1Doc)
+
+	patch2doc := &ProfileRepository{
 		Alias:  "testing.nimona.dev",
 		Handle: "foo",
 	}
 
-	patch4 := &DocumentPatch{
+	patch2 := &DocumentPatch{
 		Metadata: Metadata{
-			Root: &rootDocID,
+			Root:     &rootDocID,
+			Sequence: 2,
+			Parents: []DocumentID{
+				patch1ID,
+			},
 		},
 		Operations: []DocumentPatchOperation{{
 			Op:        "append",
 			Path:      "repositories",
-			Value:     patch4doc.Map(),
+			Value:     patch2doc.Map(),
 			Key:       "9e81fff2-ec7a-44e2-aa05-617c84bbaf5e",
 			Partition: []string{"2023", "04"},
 		}},
 	}
 
-	store.Apply(rootDoc)
-	store.Apply(patch1.Document())
-	store.Apply(patch4.Document())
+	patch2Doc := patch2.Document()
 
-	res := []*ProfileRepository{}
-	err := store.GetAggregateNested(
-		rootDocID,
-		"repositories",
-		&res,
-	)
+	err := store.PutDocument(rootDoc)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(res))
-	require.Equal(t, patch4doc, res[0])
+
+	err = store.PutDocument(patch1Doc)
+	require.NoError(t, err)
+
+	err = store.PutDocument(patch2Doc)
+	require.NoError(t, err)
+
+	exp := NewDocument(tilde.Map{
+		"$type":       tilde.String("core/identity/profile"),
+		"displayName": tilde.String("bar"),
+		"repositories": tilde.List{
+			tilde.Map{
+				"alias":  tilde.String("testing.nimona.dev"),
+				"handle": tilde.String("foo"),
+			},
+		},
+	})
+
+	doc, err := store.GetAggregate(
+		rootDocID,
+	)
+	DumpDocument(doc)
+	require.NoError(t, err)
+	EqualDocument(t, exp, doc)
 }
 
 func TestDocumentStore_CreatePatch(t *testing.T) {

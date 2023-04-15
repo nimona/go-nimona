@@ -141,6 +141,10 @@ func (doc *Document) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (doc *Document) Query(path string) *tilde.Query {
+	return doc.data.Query()
+}
+
 func DumpDocumentBytes(b []byte) {
 	fmt.Printf("%x\n", b)
 }
