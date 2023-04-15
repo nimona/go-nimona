@@ -1,7 +1,9 @@
 package tilde
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -72,6 +74,7 @@ const (
 type (
 	Value interface {
 		hint() Hint
+		cmp(Value) (int, error)
 	}
 
 	Int64  int64
@@ -452,4 +455,110 @@ func Copy[T Value](v T) T {
 		panic(fmt.Errorf("error copying value of type %T: %w", v, err))
 	}
 	return nv.(T)
+}
+
+// Compare compares two values of the same type.
+// If the first value is less than the second, -1 is returned.
+// If the first value is greater than the second, 1 is returned.
+// If the values are equal, 0 is returned.
+func Compare[V Value](a, b V) (int, error) {
+	return a.cmp(b)
+}
+
+func sameType(a, b Value) bool {
+	return a.hint() == b.hint()
+}
+
+func (a Int64) cmp(v Value) (int, error) {
+	if !sameType(a, v) {
+		return 0, fmt.Errorf("cannot compare %T and %T", a, v)
+	}
+	b := v.(Int64)
+	if a < b {
+		return -1, nil
+	}
+	if a > b {
+		return 1, nil
+	}
+	return 0, nil
+}
+
+func (a Uint64) cmp(v Value) (int, error) {
+	if !sameType(a, v) {
+		return 0, fmt.Errorf("cannot compare %T and %T", a, v)
+	}
+	b := v.(Uint64)
+	if a < b {
+		return -1, nil
+	}
+	if a > b {
+		return 1, nil
+	}
+	return 0, nil
+}
+
+func (a String) cmp(v Value) (int, error) {
+	if !sameType(a, v) {
+		return 0, fmt.Errorf("cannot compare %T and %T", a, v)
+	}
+	b := v.(String)
+	return strings.Compare(string(a), string(b)), nil
+}
+
+func (a Bytes) cmp(v Value) (int, error) {
+	if !sameType(a, v) {
+		return 0, fmt.Errorf("cannot compare %T and %T", a, v)
+	}
+	b := v.(Bytes)
+	return bytes.Compare(a, b), nil
+}
+
+func (a Ref) cmp(v Value) (int, error) {
+	if !sameType(a, v) {
+		return 0, fmt.Errorf("cannot compare %T and %T", a, v)
+	}
+	b := v.(Ref)
+	return bytes.Compare(a[:], b[:]), nil
+}
+
+func (a Bool) cmp(v Value) (int, error) {
+	if !sameType(a, v) {
+		return 0, fmt.Errorf("cannot compare %T and %T", a, v)
+	}
+	b := v.(Bool)
+	if a == b {
+		return 0, nil
+	}
+	if a {
+		return 1, nil
+	}
+	return -1, nil
+}
+
+func (a Map) cmp(v Value) (int, error) {
+	if !sameType(a, v) {
+		return 0, fmt.Errorf("cannot compare %T and %T", a, v)
+	}
+	b := v.(Map)
+	if len(a) < len(b) {
+		return -1, nil
+	}
+	if len(a) > len(b) {
+		return 1, nil
+	}
+	return 0, errors.New("not implemented")
+}
+
+func (a List) cmp(v Value) (int, error) {
+	if !sameType(a, v) {
+		return 0, fmt.Errorf("cannot compare %T and %T", a, v)
+	}
+	b := v.(List)
+	if len(a) < len(b) {
+		return -1, nil
+	}
+	if len(a) > len(b) {
+		return 1, nil
+	}
+	return 0, errors.New("not implemented")
 }

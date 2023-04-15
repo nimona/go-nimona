@@ -12,9 +12,9 @@ type PathValue interface {
 }
 
 type Query struct {
-	m     Value
-	path  string
-	where func(Value) bool
+	m          Value
+	path       string
+	conditions []func(Value) bool
 }
 
 func (m Map) Query() *Query {
@@ -30,8 +30,8 @@ func (q *Query) Select(path string) *Query {
 	return q
 }
 
-func (q *Query) Where(cond func(Value) bool) *Query {
-	q.where = cond
+func (q *Query) Where(cond ...func(Value) bool) *Query {
+	q.conditions = append(q.conditions, cond...)
 	return q
 }
 
@@ -54,13 +54,27 @@ func (q *Query) Exec() (Value, error) {
 	case List:
 		result := List{}
 		for _, item := range v {
-			if q.where == nil || q.where(item) {
+			shouldInclude := true
+			for _, cond := range q.conditions {
+				if !cond(item) {
+					shouldInclude = false
+					break
+				}
+			}
+			if shouldInclude {
 				result = append(result, item)
 			}
 		}
 		return result, nil
 	case Map:
-		if q.where == nil || q.where(value) {
+		shouldInclude := true
+		for _, cond := range q.conditions {
+			if !cond(value) {
+				shouldInclude = false
+				break
+			}
+		}
+		if shouldInclude {
 			return value, nil
 		}
 		return nil, nil
@@ -141,7 +155,11 @@ func Eq(path string, value Value) func(Value) bool {
 			if err != nil {
 				return false
 			}
-			return child == value
+			r, err := child.cmp(value)
+			if err != nil {
+				return false
+			}
+			return r == 0
 		}
 		return false
 	}
@@ -154,20 +172,11 @@ func Gt(path string, value Value) func(Value) bool {
 			if err != nil {
 				return false
 			}
-			switch a := child.(type) {
-			case String:
-				if b, ok := value.(String); ok {
-					return a > b
-				}
-			case Int64:
-				if b, ok := value.(Int64); ok {
-					return a > b
-				}
-			case Uint64:
-				if b, ok := value.(Uint64); ok {
-					return a > b
-				}
+			r, err := child.cmp(value)
+			if err != nil {
+				return false
 			}
+			return r == 1
 		}
 		return false
 	}
@@ -180,20 +189,45 @@ func Lt(path string, value Value) func(Value) bool {
 			if err != nil {
 				return false
 			}
-			switch a := child.(type) {
-			case String:
-				if b, ok := value.(String); ok {
-					return a < b
-				}
-			case Int64:
-				if b, ok := value.(Int64); ok {
-					return a < b
-				}
-			case Uint64:
-				if b, ok := value.(Uint64); ok {
-					return a < b
-				}
+			r, err := child.cmp(value)
+			if err != nil {
+				return false
 			}
+			return r == -1
+		}
+		return false
+	}
+}
+
+func Gte(path string, value Value) func(Value) bool {
+	return func(v Value) bool {
+		if pathValue, ok := v.(PathValue); ok {
+			child, err := pathValue.getChild(path)
+			if err != nil {
+				return false
+			}
+			r, err := child.cmp(value)
+			if err != nil {
+				return false
+			}
+			return r >= 0
+		}
+		return false
+	}
+}
+
+func Lte(path string, value Value) func(Value) bool {
+	return func(v Value) bool {
+		if pathValue, ok := v.(PathValue); ok {
+			child, err := pathValue.getChild(path)
+			if err != nil {
+				return false
+			}
+			r, err := child.cmp(value)
+			if err != nil {
+				return false
+			}
+			return r <= 0
 		}
 		return false
 	}

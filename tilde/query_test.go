@@ -106,10 +106,12 @@ func TestQuery_List(t *testing.T) {
 			"foo": Map{
 				"bar": List{
 					Map{
-						"baz": String("qux"),
+						"baz":  String("qux"),
+						"quux": Int64(10),
 					},
 					Map{
-						"baz": String("xyzzy"),
+						"baz":  String("xyzzy"),
+						"quux": Int64(12),
 					},
 				},
 			},
@@ -119,7 +121,8 @@ func TestQuery_List(t *testing.T) {
 			"foo": Map{
 				"bar": List{
 					Map{
-						"baz": String("quz"),
+						"baz":  String("quz"),
+						"quux": Int64(14),
 					},
 				},
 			},
@@ -138,10 +141,12 @@ func TestQuery_List(t *testing.T) {
 				"foo": Map{
 					"bar": List{
 						Map{
-							"baz": String("qux"),
+							"baz":  String("qux"),
+							"quux": Int64(10),
 						},
 						Map{
-							"baz": String("xyzzy"),
+							"baz":  String("xyzzy"),
+							"quux": Int64(12),
 						},
 					},
 				},
@@ -158,32 +163,106 @@ func TestQuery_List(t *testing.T) {
 			Exec()
 		x1 := List{
 			Map{
-				"baz": String("qux"),
+				"baz":  String("qux"),
+				"quux": Int64(10),
 			},
 			Map{
-				"baz": String("xyzzy"),
+				"baz":  String("xyzzy"),
+				"quux": Int64(12),
 			},
 			Map{
-				"baz": String("quz"),
+				"baz":  String("quz"),
+				"quux": Int64(14),
 			},
 		}
 		require.NoError(t, err)
 		assert.Equal(t, x1, q1)
 	})
 
-	t.Run("Select foo.bar where baz like q%", func(t *testing.T) {
+	t.Run("Select foo.bar where quux < 11", func(t *testing.T) {
 		q1, err := m.Query().
 			Select("foo.bar").
 			Where(
+				Lt("quux", Int64(11)),
+			).
+			Exec()
+		x1 := List{
+			Map{
+				"baz":  String("qux"),
+				"quux": Int64(10),
+			},
+		}
+		require.NoError(t, err)
+		assert.Equal(t, x1, q1)
+	})
+
+	t.Run("Select foo.bar where quux <= 10", func(t *testing.T) {
+		q1, err := m.Query().
+			Select("foo.bar").
+			Where(
+				Lte("quux", Int64(10)),
+			).
+			Exec()
+		x1 := List{
+			Map{
+				"baz":  String("qux"),
+				"quux": Int64(10),
+			},
+		}
+		require.NoError(t, err)
+		assert.Equal(t, x1, q1)
+	})
+
+	t.Run("Select foo.bar where quux > 11", func(t *testing.T) {
+		q1, err := m.Query().
+			Select("foo.bar").
+			Where(
+				Gt("quux", Int64(11)),
+			).
+			Exec()
+		x1 := List{
+			Map{
+				"baz":  String("xyzzy"),
+				"quux": Int64(12),
+			},
+			Map{
+				"baz":  String("quz"),
+				"quux": Int64(14),
+			},
+		}
+		require.NoError(t, err)
+		assert.Equal(t, x1, q1)
+	})
+
+	t.Run("Select foo.bar where baz >= x", func(t *testing.T) {
+		q1, err := m.Query().
+			Select("foo.bar").
+			Where(
+				Gte("baz", String("x")),
+			).
+			Exec()
+		x1 := List{
+			Map{
+				"baz":  String("xyzzy"),
+				"quux": Int64(12),
+			},
+		}
+		require.NoError(t, err)
+		assert.Equal(t, x1, q1)
+	})
+
+	t.Run("Select foo.bar where quux >= 14 and baz like q%", func(t *testing.T) {
+		q1, err := m.Query().
+			Select("foo.bar").
+			Where(
+				Gte("quux", Int64(14)),
 				Like("baz", "q%"),
 			).
 			Exec()
 		x1 := List{
 			Map{
-				"baz": String("qux"),
-			},
-			Map{
-				"baz": String("quz"),
+				"baz":  String("quz"),
+				"quux": Int64(14),
 			},
 		}
 		require.NoError(t, err)
