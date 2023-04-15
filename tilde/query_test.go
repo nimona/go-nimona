@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestQuery(t *testing.T) {
+func TestQuery_Map(t *testing.T) {
 	m := Map{
 		"foo": Map{
 			"bar": List{
@@ -97,5 +97,96 @@ func TestQuery(t *testing.T) {
 		}
 		require.NoError(t, err)
 		assert.Equal(t, x3, q3)
+	})
+}
+
+func TestQuery_List(t *testing.T) {
+	m := List{
+		Map{
+			"foo": Map{
+				"bar": List{
+					Map{
+						"baz": String("qux"),
+					},
+					Map{
+						"baz": String("xyzzy"),
+					},
+				},
+			},
+			"quuz": Int64(42),
+		},
+		Map{
+			"foo": Map{
+				"bar": List{
+					Map{
+						"baz": String("quz"),
+					},
+				},
+			},
+			"quuz": Int64(39),
+		},
+	}
+
+	t.Run("Select . where quuz gt 40", func(t *testing.T) {
+		q1, err := m.Query().
+			Where(
+				Gt("quuz", Int64(40)),
+			).
+			Exec()
+		x1 := List{
+			Map{
+				"foo": Map{
+					"bar": List{
+						Map{
+							"baz": String("qux"),
+						},
+						Map{
+							"baz": String("xyzzy"),
+						},
+					},
+				},
+				"quuz": Int64(42),
+			},
+		}
+		require.NoError(t, err)
+		assert.Equal(t, x1, q1)
+	})
+
+	t.Run("Select all foo.bar", func(t *testing.T) {
+		q1, err := m.Query().
+			Select("foo.bar").
+			Exec()
+		x1 := List{
+			Map{
+				"baz": String("qux"),
+			},
+			Map{
+				"baz": String("xyzzy"),
+			},
+			Map{
+				"baz": String("quz"),
+			},
+		}
+		require.NoError(t, err)
+		assert.Equal(t, x1, q1)
+	})
+
+	t.Run("Select foo.bar where baz like q%", func(t *testing.T) {
+		q1, err := m.Query().
+			Select("foo.bar").
+			Where(
+				Like("baz", "q%"),
+			).
+			Exec()
+		x1 := List{
+			Map{
+				"baz": String("qux"),
+			},
+			Map{
+				"baz": String("quz"),
+			},
+		}
+		require.NoError(t, err)
+		assert.Equal(t, x1, q1)
 	})
 }

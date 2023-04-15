@@ -12,13 +12,17 @@ type PathValue interface {
 }
 
 type Query struct {
-	m     Map
+	m     Value
 	path  string
 	where func(Value) bool
 }
 
 func (m Map) Query() *Query {
 	return &Query{m: m}
+}
+
+func (l List) Query() *Query {
+	return &Query{m: l}
 }
 
 func (q *Query) Select(path string) *Query {
@@ -32,7 +36,16 @@ func (q *Query) Where(cond func(Value) bool) *Query {
 }
 
 func (q *Query) Exec() (Value, error) {
-	value, err := q.m.getByPath(q.path)
+	var value Value
+	var err error
+	switch v := q.m.(type) {
+	case Map:
+		value, err = v.getByPath(q.path)
+	case List:
+		value, err = v.getByPath(q.path)
+	default:
+		return nil, errors.New("unsupported value type")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +90,36 @@ func (m Map) getByPath(path string) (Value, error) {
 	}
 
 	return value, nil
+}
+
+func (l List) getByPath(path string) (Value, error) {
+	subResults := List{}
+
+	for _, item := range l {
+		switch v := item.(type) {
+		case Map:
+			subResult, err := v.getByPath(path)
+			if err != nil {
+				return nil, err
+			}
+			switch subResult := subResult.(type) {
+			case List:
+				subResults = append(subResults, subResult...)
+			default:
+				subResults = append(subResults, subResult)
+			}
+		case List:
+			subResult, err := v.getByPath(path)
+			if err != nil {
+				return nil, err
+			}
+			subResults = append(subResults, subResult.(List)...)
+		default:
+			return nil, errors.New("unsupported value type")
+		}
+	}
+
+	return subResults, nil
 }
 
 func (m Map) getChild(key string) (Value, error) {
