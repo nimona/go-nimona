@@ -3,7 +3,7 @@ module nimona.io
 go 1.20
 
 require (
-	github.com/geoah/go-pubsub v0.0.4
+	github.com/geoah/go-pubsub v0.0.5
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/google/uuid v1.3.0
