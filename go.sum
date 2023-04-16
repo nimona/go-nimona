@@ -64,6 +64,8 @@ github.com/geoah/go-cborgen v0.0.0-20230127181625-2a1ddc8e5693 h1:hx6+l98PyKQcpd
 github.com/geoah/go-cborgen v0.0.0-20230127181625-2a1ddc8e5693/go.mod h1:fgkXqYy7bV2cFeIEOkVTZS/WjXARfBqSH6Q2qHL33hQ=
 github.com/geoah/go-pubsub v0.0.3 h1:NHLwlEg1CQb2d4JY5si9KSSmca6kRcILDFYDsb2sjtA=
 github.com/geoah/go-pubsub v0.0.3/go.mod h1:S6JmM+AQ//ZJyOCJUwLKMvo3Z/j5JDvhK6dnC0bboK8=
+github.com/geoah/go-pubsub v0.0.4 h1:OkCwFygCMdsIdoY3Sh0FkxwUQdKBBMGmxuvBb1mOqng=
+github.com/geoah/go-pubsub v0.0.4/go.mod h1:S6JmM+AQ//ZJyOCJUwLKMvo3Z/j5JDvhK6dnC0bboK8=
 github.com/glycerine/go-unsnap-stream v0.0.0-20180323001048-9f0cb55181dd/go.mod h1:/20jfyN9Y5QPEAprSgKAUr+glWDY39ZiUEAYOEv5dsE=
 github.com/glycerine/go-unsnap-stream v0.0.0-20181221182339-f9677308dec2/go.mod h1:/20jfyN9Y5QPEAprSgKAUr+glWDY39ZiUEAYOEv5dsE=
 github.com/glycerine/go-unsnap-stream v0.0.0-20190901134440-81cf024a9e0a/go.mod h1:/20jfyN9Y5QPEAprSgKAUr+glWDY39ZiUEAYOEv5dsE=

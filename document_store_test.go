@@ -369,7 +369,7 @@ func TestDocumentStore_Subscribe(t *testing.T) {
 
 	docOne := NewTestDocument(t)
 
-	sub := store.Subscribe(func(doc *Document) bool {
+	sub := store.Subscribe(nil, func(doc *Document) bool {
 		return doc.Type() == "test/fixture"
 	})
 

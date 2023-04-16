@@ -418,8 +418,27 @@ func (s *DocumentStore) CreatePatch(
 	return patchDoc, nil
 }
 
+type SubscriptionOptions struct {
+	BufferSize  int
+	AckDeadline time.Duration
+}
+
 func (s *DocumentStore) Subscribe(
+	cfg *SubscriptionOptions,
 	filters ...func(*Document) bool,
 ) *pubsub.Subscription[*Document] {
-	return s.subscriptions.Subscribe(filters...)
+	if cfg == nil {
+		cfg = &SubscriptionOptions{}
+	}
+	if cfg.BufferSize == 0 {
+		cfg.BufferSize = 100
+	}
+	if cfg.AckDeadline == 0 {
+		cfg.AckDeadline = 10 * time.Second
+	}
+	return s.subscriptions.SubscribeWithOptions(
+		cfg.BufferSize,
+		cfg.AckDeadline,
+		filters...,
+	)
 }
