@@ -46,7 +46,7 @@ func (i IdentityAlias) Value() (driver.Value, error) {
 	return i.String(), nil
 }
 
-func (i IdentityAlias) Scan(value interface{}) error {
+func (i *IdentityAlias) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
